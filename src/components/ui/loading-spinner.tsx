@@ -1,5 +1,8 @@
 'use client';
 
+import { cn } from "@/lib/utils";
+import { Skeleton } from "./skeleton";
+
 interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg';
   text?: string;
@@ -18,10 +21,15 @@ export function LoadingSpinner({
   };
 
   return (
-    <div className={`flex flex-col items-center justify-center min-h-[200px] ${className}`}>
-      <div className={`animate-spin rounded-full border-b-2 border-blue-600 ${sizeClasses[size]}`}></div>
+    <div className={cn("flex flex-col items-center justify-center min-h-[200px]", className)}>
+      <div 
+        className={cn(
+          "animate-spin rounded-full border-2 border-muted border-t-primary", 
+          sizeClasses[size]
+        )}
+      />
       {text && (
-        <p className="mt-2 text-sm text-gray-600">{text}</p>
+        <p className="mt-2 text-sm text-muted-foreground">{text}</p>
       )}
     </div>
   );
@@ -29,8 +37,12 @@ export function LoadingSpinner({
 
 export function FullPageLoader({ text = 'Loading...' }: { text?: string }) {
   return (
-    <div className="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
       <LoadingSpinner size="lg" text={text} />
     </div>
   );
+}
+
+export function LoadingSkeleton({ className, ...props }: React.ComponentProps<typeof Skeleton>) {
+  return <Skeleton className={cn("h-4 w-full", className)} {...props} />;
 }

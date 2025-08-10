@@ -12,11 +12,12 @@ describe('Authentication Pages', () => {
       expect(screen.getByTestId('sign-in')).toBeInTheDocument()
     })
 
-    it('should have proper styling container', () => {
+    it('should have shadcn card structure', () => {
       render(<SignInPage />)
       
-      const container = screen.getByTestId('sign-in').parentElement
-      expect(container).toHaveClass('w-full', 'max-w-md')
+      // Check for the card structure that wraps the Clerk component
+      expect(screen.getByText('Welcome Back')).toBeInTheDocument()
+      expect(screen.getByText('Sign in to your SalaryMan account to manage your finances securely')).toBeInTheDocument()
     })
   })
 
@@ -27,11 +28,12 @@ describe('Authentication Pages', () => {
       expect(screen.getByTestId('sign-up')).toBeInTheDocument()
     })
 
-    it('should have proper styling container', () => {
+    it('should have shadcn card structure', () => {
       render(<SignUpPage />)
       
-      const container = screen.getByTestId('sign-up').parentElement
-      expect(container).toHaveClass('w-full', 'max-w-md')
+      // Check for the card structure that wraps the Clerk component
+      expect(screen.getByText('Create Account')).toBeInTheDocument()
+      expect(screen.getByText('Join SalaryMan today and take control of your financial future')).toBeInTheDocument()
     })
   })
 
@@ -42,11 +44,12 @@ describe('Authentication Pages', () => {
       expect(screen.getByTestId('user-profile')).toBeInTheDocument()
     })
 
-    it('should have proper styling container', () => {
+    it('should have shadcn card structure', () => {
       render(<ProfilePage />)
       
-      const container = screen.getByTestId('user-profile').parentElement
-      expect(container).toHaveClass('w-full', 'max-w-4xl')
+      // Check for the card structure that wraps the Clerk component
+      expect(screen.getByText('Profile Settings')).toBeInTheDocument()
+      expect(screen.getByText('Manage your account settings and personal information')).toBeInTheDocument()
     })
   })
 })

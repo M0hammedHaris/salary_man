@@ -1,6 +1,8 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { DashboardUserButton } from '@/components/dashboard-user-button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -10,12 +12,12 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
+    <div className="min-h-screen bg-background">
+      <header className="border-b bg-card">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center">
-              <h1 className="text-xl font-semibold text-gray-900">SalaryMan Dashboard</h1>
+              <h1 className="text-xl font-semibold text-foreground">SalaryMan Dashboard</h1>
             </div>
             <div className="flex items-center space-x-4">
               <DashboardUserButton />
@@ -25,26 +27,57 @@ export default async function DashboardPage() {
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="rounded-lg bg-white p-6 shadow-sm">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Welcome to SalaryMan</h2>
-          <p className="text-gray-600">
-            Your secure personal finance management dashboard. Authentication is working successfully!
-          </p>
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              Welcome to SalaryMan
+              <Badge variant="secondary">Active</Badge>
+            </CardTitle>
+            <CardDescription>
+              Your secure personal finance management dashboard. Authentication is working successfully!
+            </CardDescription>
+          </CardHeader>
+        </Card>
           
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-blue-900">Accounts</h3>
-              <p className="text-blue-700 text-sm">Manage your bank accounts and credit cards</p>
-            </div>
-            <div className="bg-green-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-green-900">Transactions</h3>
-              <p className="text-green-700 text-sm">Track your income and expenses</p>
-            </div>
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-purple-900">Goals</h3>
-              <p className="text-purple-700 text-sm">Set and track your savings goals</p>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="hover:shadow-md transition-shadow">
+            <CardHeader>
+              <CardTitle className="text-blue-600">Accounts</CardTitle>
+              <CardDescription>Manage your bank accounts and credit cards</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <span className="text-2xl font-bold text-foreground">0</span>
+                <Badge variant="outline">Coming Soon</Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-md transition-shadow">
+            <CardHeader>
+              <CardTitle className="text-green-600">Transactions</CardTitle>
+              <CardDescription>Track your income and expenses</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <span className="text-2xl font-bold text-foreground">$0</span>
+                <Badge variant="outline">Coming Soon</Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-md transition-shadow">
+            <CardHeader>
+              <CardTitle className="text-purple-600">Goals</CardTitle>
+              <CardDescription>Set and track your savings goals</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <span className="text-2xl font-bold text-foreground">0</span>
+                <Badge variant="outline">Coming Soon</Badge>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </main>
     </div>
