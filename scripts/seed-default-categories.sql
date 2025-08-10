@@ -1,0 +1,20 @@
+-- Seed default categories for system use
+INSERT INTO categories (user_id, name, type, color, is_default) VALUES
+  ('system', 'Salary', 'income', '#10B981', true),
+  ('system', 'Freelance', 'income', '#059669', true),
+  ('system', 'Investment', 'income', '#047857', true),
+  ('system', 'Bonus', 'income', '#065F46', true),
+  ('system', 'Other Income', 'income', '#064E3B', true),
+  ('system', 'Groceries', 'expense', '#EF4444', true),
+  ('system', 'Housing', 'expense', '#DC2626', true),
+  ('system', 'Transportation', 'expense', '#B91C1C', true),
+  ('system', 'Utilities', 'expense', '#991B1B', true),
+  ('system', 'Healthcare', 'expense', '#7F1D1D', true),
+  ('system', 'Entertainment', 'expense', '#F59E0B', true),
+  ('system', 'Dining Out', 'expense', '#D97706', true),
+  ('system', 'Shopping', 'expense', '#B45309', true),
+  ('system', 'Education', 'expense', '#92400E', true),
+  ('system', 'Insurance', 'expense', '#78350F', true),
+  ('system', 'Savings', 'expense', '#3B82F6', true),
+  ('system', 'Debt Payment', 'expense', '#1D4ED8', true),
+  ('system', 'Other Expense', 'expense', '#1E40AF', true);

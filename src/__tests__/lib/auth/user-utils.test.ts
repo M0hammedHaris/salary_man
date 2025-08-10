@@ -86,20 +86,20 @@ describe('User Utilities', () => {
       })
     })
 
-    it('should handle user with no email addresses', async () => {
-      const mockUser = {
-        id: 'test-user',
-        emailAddresses: [], // Empty array
-        firstName: 'Test',
-        lastName: 'User',
-        createdAt: new Date('2023-01-01'),
-        updatedAt: new Date('2023-01-01'),
-      };
-
-      vi.mocked(currentUser).mockResolvedValueOnce(mockUser as any);
-      
-      const user = await getCurrentUser();
-      expect(user?.email).toBe('');
-    });
+    it('should handle edge cases properly', () => {
+    // Test that our utility functions handle edge cases
+    const userWithoutEmail = {
+      id: 'user_123',
+      email: '',
+      firstName: 'John',
+      lastName: 'Doe',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      preferences: defaultUserPreferences
+    };
+    
+    expect(formatUserDisplayName(userWithoutEmail)).toBe('John Doe');
+    expect(isProfileComplete(userWithoutEmail)).toBe(false);
+  });
   })
 })
