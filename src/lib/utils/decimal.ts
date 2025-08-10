@@ -58,9 +58,9 @@ export function validateFinancialAmount(value: Decimal): boolean {
 }
 
 /**
- * Format Decimal for display (with currency symbol)
+ * Format Decimal or number for display (with currency symbol)
  */
-export function formatCurrency(value: Decimal, currency: string = 'USD'): string {
+export function formatCurrency(value: Decimal | number, currency: string = 'USD'): string {
   const formatter = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: currency,
@@ -68,7 +68,8 @@ export function formatCurrency(value: Decimal, currency: string = 'USD'): string
     maximumFractionDigits: 2,
   });
   
-  return formatter.format(value.toNumber());
+  const numericValue = typeof value === 'number' ? value : value.toNumber();
+  return formatter.format(numericValue);
 }
 
 /**

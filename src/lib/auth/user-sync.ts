@@ -1,7 +1,7 @@
 import { User } from '@/lib/types/user';
 import type { WebhookEvent } from '@clerk/nextjs/server';
 import { repositories } from '@/lib/db/repositories';
-import { seedDefaultCategories } from '@/lib/db/seed';
+import { seedDefaultCategories, seedSampleAccounts } from '@/lib/db/seed';
 
 interface ClerkUserData {
   id: string;
@@ -40,6 +40,10 @@ export async function syncUserWithDatabase(clerkUser: ClerkUserData): Promise<Us
       // Seed default categories for new user
       await seedDefaultCategories(user.id);
       console.log('Seeded default categories for user:', user.id);
+      
+      // Seed sample accounts and transactions for new user
+      await seedSampleAccounts(user.id);
+      console.log('Seeded sample accounts and transactions for user:', user.id);
     } else {
       // Update existing user
       user = await repositories.users.update(clerkUser.id, {
@@ -112,6 +116,9 @@ export async function createOrUpdateUser(userData: {
       
       // Seed default categories for new user
       await seedDefaultCategories(user.id);
+      
+      // Seed sample accounts and transactions for new user
+      await seedSampleAccounts(user.id);
     } else {
       // Update existing user
       user = await repositories.users.update(userData.id, {

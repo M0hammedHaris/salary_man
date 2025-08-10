@@ -167,16 +167,26 @@ export class FinancialService {
   }
 
   private transformAccountToDb(appAccount: Partial<NewAccount>): DbNewAccount {
-    const dbAccount: any = { ...appAccount };
+    const result: Partial<DbNewAccount> = {};
     
+    // Copy non-decimal fields directly
+    if (appAccount.id !== undefined) result.id = appAccount.id;
+    if (appAccount.name !== undefined) result.name = appAccount.name;
+    if (appAccount.type !== undefined) result.type = appAccount.type;
+    if (appAccount.userId !== undefined) result.userId = appAccount.userId;
+    if (appAccount.isActive !== undefined) result.isActive = appAccount.isActive;
+    if (appAccount.createdAt !== undefined) result.createdAt = appAccount.createdAt;
+    if (appAccount.updatedAt !== undefined) result.updatedAt = appAccount.updatedAt;
+    
+    // Transform decimal fields
     if (appAccount.balance !== undefined) {
-      dbAccount.balance = appAccount.balance ? fromDecimalRequired(appAccount.balance) : '0.00';
+      result.balance = appAccount.balance ? fromDecimalRequired(appAccount.balance) : '0.00';
     }
     if (appAccount.creditLimit !== undefined) {
-      dbAccount.creditLimit = appAccount.creditLimit ? fromDecimal(appAccount.creditLimit) : null;
+      result.creditLimit = appAccount.creditLimit ? fromDecimal(appAccount.creditLimit) : null;
     }
     
-    return dbAccount as DbNewAccount;
+    return result as DbNewAccount;
   }
 
   private transformTransactionFromDb(dbTransaction: DbTransaction): Transaction {
@@ -187,13 +197,27 @@ export class FinancialService {
   }
 
   private transformTransactionToDb(appTransaction: Partial<NewTransaction>): DbNewTransaction {
-    const dbTransaction: any = { ...appTransaction };
+    const result: Partial<DbNewTransaction> = {};
     
+    // Copy non-decimal fields directly
+    if (appTransaction.id !== undefined) result.id = appTransaction.id;
+    if (appTransaction.userId !== undefined) result.userId = appTransaction.userId;
+    if (appTransaction.accountId !== undefined) result.accountId = appTransaction.accountId;
+    if (appTransaction.description !== undefined) result.description = appTransaction.description;
+    if (appTransaction.categoryId !== undefined) result.categoryId = appTransaction.categoryId;
+    if (appTransaction.transactionDate !== undefined) result.transactionDate = appTransaction.transactionDate;
+    if (appTransaction.isRecurring !== undefined) result.isRecurring = appTransaction.isRecurring;
+    if (appTransaction.recurringPaymentId !== undefined) result.recurringPaymentId = appTransaction.recurringPaymentId;
+    if (appTransaction.receiptUrl !== undefined) result.receiptUrl = appTransaction.receiptUrl;
+    if (appTransaction.createdAt !== undefined) result.createdAt = appTransaction.createdAt;
+    if (appTransaction.updatedAt !== undefined) result.updatedAt = appTransaction.updatedAt;
+    
+    // Transform decimal fields
     if (appTransaction.amount !== undefined) {
-      dbTransaction.amount = fromDecimalRequired(appTransaction.amount);
+      result.amount = fromDecimalRequired(appTransaction.amount);
     }
     
-    return dbTransaction as DbNewTransaction;
+    return result as DbNewTransaction;
   }
 
   private transformRecurringPaymentFromDb(dbPayment: DbRecurringPayment): RecurringPayment {
@@ -204,13 +228,27 @@ export class FinancialService {
   }
 
   private transformRecurringPaymentToDb(appPayment: Partial<NewRecurringPayment>): DbNewRecurringPayment {
-    const dbPayment: any = { ...appPayment };
+    const result: Partial<DbNewRecurringPayment> = {};
     
+    // Copy non-decimal fields directly
+    if (appPayment.id !== undefined) result.id = appPayment.id;
+    if (appPayment.userId !== undefined) result.userId = appPayment.userId;
+    if (appPayment.accountId !== undefined) result.accountId = appPayment.accountId;
+    if (appPayment.name !== undefined) result.name = appPayment.name;
+    if (appPayment.frequency !== undefined) result.frequency = appPayment.frequency;
+    if (appPayment.nextDueDate !== undefined) result.nextDueDate = appPayment.nextDueDate;
+    if (appPayment.categoryId !== undefined) result.categoryId = appPayment.categoryId;
+    if (appPayment.isActive !== undefined) result.isActive = appPayment.isActive;
+    if (appPayment.lastProcessed !== undefined) result.lastProcessed = appPayment.lastProcessed;
+    if (appPayment.createdAt !== undefined) result.createdAt = appPayment.createdAt;
+    if (appPayment.updatedAt !== undefined) result.updatedAt = appPayment.updatedAt;
+    
+    // Transform decimal fields
     if (appPayment.amount !== undefined) {
-      dbPayment.amount = fromDecimalRequired(appPayment.amount);
+      result.amount = fromDecimalRequired(appPayment.amount);
     }
     
-    return dbPayment as DbNewRecurringPayment;
+    return result as DbNewRecurringPayment;
   }
 }
 

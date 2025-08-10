@@ -1,5 +1,5 @@
 import { repositories } from './repositories';
-import type { NewCategory } from './schema';
+import type { NewCategory, NewAccount } from './schema';
 
 // Default categories for new users
 const DEFAULT_CATEGORIES: Omit<NewCategory, 'userId'>[] = [
@@ -64,8 +64,139 @@ export async function seedDefaultCategories(userId: string): Promise<void> {
 }
 
 /**
- * Get all global default categories (for system initialization)
+ * Seed sample accounts for a new user
  */
+export async function seedSampleAccounts(userId: string): Promise<void> {
+  try {
+    const existingAccounts = await repositories.accounts.findByUserId(userId);
+    
+    // Only seed if user has no accounts yet
+    if (existingAccounts.length === 0) {
+      console.log(`Seeding sample accounts for user: ${userId}`);
+      
+      const sampleAccounts: Omit<NewAccount, 'id' | 'createdAt' | 'updatedAt'>[] = [
+        {
+          name: 'Main Checking',
+          type: 'checking',
+          balance: '2500.00',
+          isActive: true,
+          userId,
+        },
+        {
+          name: 'High Yield Savings',
+          type: 'savings',
+          balance: '15000.00',
+          isActive: true,
+          userId,
+        },
+        {
+          name: 'Chase Credit Card',
+          type: 'credit_card',
+          balance: '-850.00',
+          isActive: true,
+          userId,
+          creditLimit: '5000.00',
+        },
+      ];
+      
+      const createdAccounts = [];
+      for (const account of sampleAccounts) {
+        try {
+          const created = await repositories.accounts.create(account);
+          createdAccounts.push(created);
+        } catch (accountError) {
+          console.error(`Failed to create account ${account.name} for user ${userId}:`, accountError);
+        }
+      }
+      
+      // Seed some sample transactions
+      await seedSampleTransactions(userId, createdAccounts);
+      
+      console.log(`Successfully seeded ${sampleAccounts.length} sample accounts for user: ${userId}`);
+    } else {
+      console.log(`User ${userId} already has ${existingAccounts.length} accounts, skipping sample accounts`);
+    }
+  } catch (error) {
+    console.error(`Error seeding sample accounts for user ${userId}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Seed sample transactions for a new user
+ */
+async function seedSampleTransactions(userId: string, accounts: Array<{ id: string; type: string; name: string }>): Promise<void> {
+  try {
+    if (accounts.length === 0) return;
+    
+    // Get user categories
+    const categories = await repositories.categories.findByUserId(userId);
+    if (categories.length === 0) return;
+    
+    const checkingAccount = accounts.find(a => a.type === 'checking');
+    const creditCardAccount = accounts.find(a => a.type === 'credit_card');
+    
+    if (!checkingAccount) return;
+    
+    // Sample transactions for the last 30 days
+    const now = new Date();
+    
+    const sampleTransactions = [
+      {
+        description: 'Salary Deposit',
+        amount: '3500.00',
+        categoryId: categories.find(c => c.name === 'Salary')?.id || categories[0].id,
+        accountId: checkingAccount.id,
+        transactionDate: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+        userId,
+      },
+      {
+        description: 'Grocery Store',
+        amount: '-127.50',
+        categoryId: categories.find(c => c.name === 'Groceries')?.id || categories[0].id,
+        accountId: creditCardAccount?.id || checkingAccount.id,
+        transactionDate: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
+        userId,
+      },
+      {
+        description: 'Electric Bill',
+        amount: '-89.25',
+        categoryId: categories.find(c => c.name === 'Utilities')?.id || categories[0].id,
+        accountId: checkingAccount.id,
+        transactionDate: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+        userId,
+      },
+      {
+        description: 'Coffee Shop',
+        amount: '-4.75',
+        categoryId: categories.find(c => c.name === 'Dining Out')?.id || categories[0].id,
+        accountId: creditCardAccount?.id || checkingAccount.id,
+        transactionDate: new Date(now.getTime() - 6 * 60 * 60 * 1000), // 6 hours ago
+        userId,
+      },
+      {
+        description: 'Gas Station',
+        amount: '-45.00',
+        categoryId: categories.find(c => c.name === 'Transportation')?.id || categories[0].id,
+        accountId: creditCardAccount?.id || checkingAccount.id,
+        transactionDate: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000), // 4 days ago
+        userId,
+      },
+    ];
+    
+    for (const transaction of sampleTransactions) {
+      try {
+        await repositories.transactions.create(transaction);
+      } catch (transactionError) {
+        console.error(`Failed to create transaction ${transaction.description}:`, transactionError);
+      }
+    }
+    
+    console.log(`Successfully seeded ${sampleTransactions.length} sample transactions for user: ${userId}`);
+  } catch (error) {
+    console.error(`Error seeding sample transactions for user ${userId}:`, error);
+  }
+}
 export async function getDefaultCategories() {
   return repositories.categories.findDefaultCategories();
 }

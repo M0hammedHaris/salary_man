@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { migrate } from 'drizzle-orm/neon-serverless/migrator';
-import * as schema from './schema.js';
+import * as schema from './schema';
 
 // Configure Neon for serverless environments
 neonConfig.fetchConnectionCache = true;

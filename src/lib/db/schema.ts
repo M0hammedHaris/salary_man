@@ -9,7 +9,6 @@ import {
   uuid
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
-import { Decimal } from 'decimal.js';
 
 // Remove the decimal transformation functions and complex types
 // Keep the schema simple and handle decimal conversion in service layer
