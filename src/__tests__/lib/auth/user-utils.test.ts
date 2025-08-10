@@ -1,6 +1,12 @@
-import { describe, it, expect } from 'vitest'
-import { formatUserDisplayName, isProfileComplete } from '@/lib/auth/user-utils'
+import { describe, it, expect, vi } from 'vitest'
+import { formatUserDisplayName, isProfileComplete, getCurrentUser } from '@/lib/auth/user-utils'
 import { User, defaultUserPreferences } from '@/lib/types/user'
+import { currentUser } from '@clerk/nextjs/server'
+
+// Mock the currentUser function from Clerk
+vi.mock('@clerk/nextjs/server', () => ({
+  currentUser: vi.fn(),
+}))
 
 const mockUser: User = {
   id: 'test-user-id',
@@ -79,5 +85,21 @@ describe('User Utilities', () => {
         },
       })
     })
+
+    it('should handle user with no email addresses', async () => {
+      const mockUser = {
+        id: 'test-user',
+        emailAddresses: [], // Empty array
+        firstName: 'Test',
+        lastName: 'User',
+        createdAt: new Date('2023-01-01'),
+        updatedAt: new Date('2023-01-01'),
+      };
+
+      vi.mocked(currentUser).mockResolvedValueOnce(mockUser as any);
+      
+      const user = await getCurrentUser();
+      expect(user?.email).toBe('');
+    });
   })
 })
