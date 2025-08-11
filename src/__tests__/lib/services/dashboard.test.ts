@@ -122,7 +122,7 @@ describe('Dashboard Service', () => {
     expect(result.financialHealthScore.trend).toMatch(/^(up|down|stable)$/);
     
     expect(result.accountSummary).toBeDefined();
-    expect(result.accountSummary.totalBalance).toBeInstanceOf(Decimal);
+    expect(result.accountSummary.totalBalance).toBe(500); // Correctly expect number, not Decimal
     expect(result.accountSummary.accounts).toHaveLength(2);
     
     expect(result.creditCardUtilization).toBeDefined();
@@ -143,10 +143,10 @@ describe('Dashboard Service', () => {
 
     const result = await getDashboardData(mockUserId);
 
-    expect(result.accountSummary.checkingBalance.toString()).toBe('1000');
-    expect(result.accountSummary.savingsBalance.toString()).toBe('0');
-    expect(result.accountSummary.creditCardBalance.toString()).toBe('-500');
-    expect(result.accountSummary.totalBalance.toString()).toBe('500'); // 1000 + (-500)
+    expect(result.accountSummary.checkingBalance).toBe(1000);
+    expect(result.accountSummary.savingsBalance).toBe(0);
+    expect(result.accountSummary.creditCardBalance).toBe(-500);
+    expect(result.accountSummary.totalBalance).toBe(500); // 1000 + (-500)
   });
 
   it('should calculate credit card utilization correctly', async () => {
@@ -204,7 +204,7 @@ describe('Dashboard Service', () => {
     expect(result.recentTransactions[0].categoryName).toBe('Groceries');
     expect(result.recentTransactions[0].categoryColor).toBe('#22c55e');
     expect(result.recentTransactions[0].accountName).toBe('Checking Account');
-    expect(result.recentTransactions[0].amount).toBeInstanceOf(Decimal);
+    expect(result.recentTransactions[0].amount).toBe(-50); // Correctly expect number, not Decimal
   });
 
   it('should calculate financial health score based on factors', async () => {
