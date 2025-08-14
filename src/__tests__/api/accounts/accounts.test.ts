@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET, POST } from '@/app/api/accounts/route';
 import { repositories } from '@/lib/db/repositories';
+import { NextRequest } from 'next/server';
 
 // Mock the entire modules to avoid type issues
 vi.mock('@clerk/nextjs/server', () => ({
@@ -87,7 +88,7 @@ describe('Account API Integration Tests', () => {
       mockAuth.mockResolvedValue({ userId: 'user123' });
       mockRepo.create.mockResolvedValue(mockAccount);
 
-      const request = new Request('http://localhost/api/accounts', {
+      const request = new NextRequest('http://localhost/api/accounts', {
         method: 'POST',
         body: JSON.stringify({
           name: 'New Account',
@@ -95,7 +96,7 @@ describe('Account API Integration Tests', () => {
           balance: '1000.00',
         }),
         headers: { 'Content-Type': 'application/json' },
-      }) as any; // Simplified for testing
+      }); // Properly typed for testing
 
       const response = await POST(request);
       const data = await response.json();
@@ -109,7 +110,7 @@ describe('Account API Integration Tests', () => {
       // @ts-expect-error - Mocking partial auth response
       mockAuth.mockResolvedValue({ userId: 'user123' });
 
-      const request = new Request('http://localhost/api/accounts', {
+      const request = new NextRequest('http://localhost/api/accounts', {
         method: 'POST',
         body: JSON.stringify({
           name: '', // Invalid: empty name
@@ -117,7 +118,7 @@ describe('Account API Integration Tests', () => {
           balance: 'invalid', // Invalid: non-numeric balance
         }),
         headers: { 'Content-Type': 'application/json' },
-      }) as any; // Simplified for testing
+      }); // Type assertion for testing
 
       const response = await POST(request);
       const data = await response.json();

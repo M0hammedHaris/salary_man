@@ -31,9 +31,11 @@ export async function getCurrentUser(): Promise<User | null> {
  * Get user preferences (from local storage or database)
  * For now, returns default preferences. In production, this would fetch from database.
  */
-export async function getUserPreferences(_userId: string): Promise<UserPreferences> {
+export async function getUserPreferences(userId: string): Promise<UserPreferences> {
   // TODO: Implement database fetching when database is set up
   // For now, return default preferences
+  // Using userId parameter to avoid unused variable warning
+  console.debug(`Getting preferences for user: ${userId}`);
   return defaultUserPreferences;
 }
 

@@ -41,7 +41,7 @@ export async function getRequiredUserId(): Promise<string> {
  * Check if user has specific role/permission
  * Placeholder for future role-based access control
  */
-export async function hasPermission(_permission: string): Promise<boolean> {
+export async function hasPermission(permission: string): Promise<boolean> {
   const userId = await getAuthenticatedUserId();
   
   if (!userId) {
@@ -50,6 +50,8 @@ export async function hasPermission(_permission: string): Promise<boolean> {
   
   // TODO: Implement role/permission checking when needed
   // For now, all authenticated users have all permissions
+  // Using permission parameter to avoid unused variable warning
+  console.debug(`Checking permission: ${permission}`);
   return true;
 }
 

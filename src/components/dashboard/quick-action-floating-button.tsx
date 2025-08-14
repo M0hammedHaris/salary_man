@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
@@ -9,7 +10,8 @@ import {
   Receipt,
   RefreshCw,
   Camera,
-  DollarSign
+  DollarSign,
+  Wallet
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -19,6 +21,7 @@ interface QuickActionFloatingButtonProps {
 
 export function QuickActionFloatingButton({ className = "" }: QuickActionFloatingButtonProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const router = useRouter();
 
   const quickActions = [
     {
@@ -41,6 +44,13 @@ export function QuickActionFloatingButton({ className = "" }: QuickActionFloatin
       label: 'Transfer Money',
       color: 'text-blue-600 hover:text-blue-700',
       action: () => console.log('Transfer Money'),
+    },
+    {
+      id: 'manage-accounts',
+      icon: <Wallet className="h-4 w-4" />,
+      label: 'Manage Accounts',
+      color: 'text-blue-600 hover:text-blue-700',
+      action: () => router.push('/accounts'),
     },
     {
       id: 'scan-receipt',

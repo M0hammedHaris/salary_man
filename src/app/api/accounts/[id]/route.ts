@@ -7,7 +7,7 @@ import { ZodError } from 'zod';
 // GET /api/accounts/[id] - Get specific account
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -15,6 +15,8 @@ export async function GET(
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const params = await context.params;
 
     const account = await repositories.accounts.findById(params.id, userId);
     
@@ -47,7 +49,7 @@ export async function GET(
 // PUT /api/accounts/[id] - Update account (with balance protection)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -55,6 +57,8 @@ export async function PUT(
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const params = await context.params;
 
     // Verify account exists and belongs to user
     const existingAccount = await repositories.accounts.findById(params.id, userId);
@@ -112,7 +116,7 @@ export async function PUT(
 // DELETE /api/accounts/[id] - Delete account with transaction dependency check
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -120,6 +124,8 @@ export async function DELETE(
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const params = await context.params;
 
     // Verify account exists and belongs to user
     const existingAccount = await repositories.accounts.findById(params.id, userId);

@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getDashboardData } from '@/lib/services/dashboard';
 import { repositories } from '@/lib/db/repositories';
-import { Decimal } from 'decimal.js';
 
 // Mock the repositories
 vi.mock('@/lib/db/repositories', () => ({

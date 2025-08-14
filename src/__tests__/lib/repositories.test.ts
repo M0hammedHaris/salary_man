@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { repositories } from '@/lib/db/repositories';
 import { db } from '@/lib/db';
-import { accounts, transactions, transactionCategories } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { accounts } from '@/lib/db/schema';
 
 // Mock the database connection for unit tests
 vi.mock('@/lib/db', () => ({

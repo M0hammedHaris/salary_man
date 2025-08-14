@@ -5,7 +5,7 @@ import { repositories } from '@/lib/db/repositories';
 // PUT /api/accounts/[id]/balance - Recalculate and update account balance
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -14,6 +14,8 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const params = await context.params;
+    
     // Verify account exists and belongs to user
     const existingAccount = await repositories.accounts.findById(params.id, userId);
     if (!existingAccount) {

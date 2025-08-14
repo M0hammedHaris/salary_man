@@ -40,8 +40,9 @@ describe('AccountList', () => {
 
     render(<AccountList />);
     
-    // Should show loading skeletons
-    expect(screen.getAllByRole('generic')).toHaveLength(expect.any(Number));
+    // Should show loading skeletons - check that skeleton components are present
+    const skeletons = document.querySelectorAll('[data-testid="skeleton"], .animate-pulse');
+    expect(skeletons.length).toBeGreaterThan(0);
   });
 
   it('displays empty state when no accounts exist', async () => {
@@ -88,7 +89,9 @@ describe('AccountList', () => {
     
     await waitFor(() => {
       // Net worth = 1000 (checking) - 500 (credit card debt) = 500
-      expect(screen.getByText(/Net Worth:.*\$500\.00/)).toBeInTheDocument();
+      // Use a more flexible text matcher since the text spans multiple elements
+      expect(screen.getByText('Net Worth:')).toBeInTheDocument();
+      expect(screen.getByText('$500.00')).toBeInTheDocument();
     });
   });
 

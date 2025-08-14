@@ -1,9 +1,11 @@
 "use client";
 
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatCurrency } from '@/lib/utils/decimal';
-import { CreditCard, PiggyBank, Wallet, AlertCircle, CheckCircle } from 'lucide-react';
+import { CreditCard, PiggyBank, Wallet, AlertCircle, CheckCircle, Settings } from 'lucide-react';
 
 interface AccountSummaryProps {
   totalBalance: number;
@@ -187,6 +189,16 @@ export function AccountBalanceSummary({
             <p className="text-sm">No accounts found. Add your first account to get started.</p>
           </div>
         )}
+
+        {/* Navigation to Account Management */}
+        <div className="pt-3 border-t">
+          <Link href="/accounts" passHref>
+            <Button variant="outline" size="sm" className="w-full">
+              <Settings className="h-4 w-4 mr-2" />
+              Manage Accounts
+            </Button>
+          </Link>
+        </div>
       </CardContent>
     </Card>
   );

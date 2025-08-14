@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
-import { formatUserDisplayName, isProfileComplete, getCurrentUser } from '@/lib/auth/user-utils'
+import { formatUserDisplayName, isProfileComplete } from '@/lib/auth/user-utils'
 import { User, defaultUserPreferences } from '@/lib/types/user'
-import { currentUser } from '@clerk/nextjs/server'
 
 // Mock the currentUser function from Clerk
 vi.mock('@clerk/nextjs/server', () => ({
