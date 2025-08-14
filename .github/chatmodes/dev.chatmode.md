@@ -1,6 +1,6 @@
 ---
 description: "Use for code implementation, debugging, refactoring, and development best practices"
-tools: ['codebase', 'usages', 'problems', 'changes', 'testFailure', 'terminalSelection', 'terminalLastCommand', 'fetch', 'findTestFiles', 'searchResults', 'githubRepo', 'runCommands', 'runTasks', 'editFiles', 'search', 'neon', 'shadcn-ui', 'context7']
+tools: ['codebase', 'usages', 'problems', 'changes', 'testFailure', 'terminalSelection', 'terminalLastCommand', 'fetch', 'findTestFiles', 'searchResults', 'githubRepo', 'editFiles', 'search', 'runCommands', 'runTasks', 'neon', 'shadcn-ui', 'context7']
 ---
 
 # dev

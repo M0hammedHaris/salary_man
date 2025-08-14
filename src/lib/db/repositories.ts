@@ -1,4 +1,4 @@
-import { eq, and, desc, asc } from 'drizzle-orm';
+import { eq, and, desc, asc, sql } from 'drizzle-orm';
 import { db } from './index';
 import { users, accounts, categories, transactions, recurringPayments } from './schema';
 import type { 
@@ -74,42 +74,131 @@ export class UserRepository {
 // Account Repository
 export class AccountRepository {
   async findByUserId(userId: string): Promise<Account[]> {
-    return await db
-      .select()
-      .from(accounts)
-      .where(and(eq(accounts.userId, userId), eq(accounts.isActive, true)))
-      .orderBy(asc(accounts.name));
+    try {
+      return await db
+        .select()
+        .from(accounts)
+        .where(and(eq(accounts.userId, userId), eq(accounts.isActive, true)))
+        .orderBy(asc(accounts.name));
+    } catch (error) {
+      console.error('Error finding accounts by user id:', error);
+      throw new Error('Failed to find user accounts');
+    }
   }
 
   async findById(id: string, userId: string): Promise<Account | null> {
-    const result = await db
-      .select()
-      .from(accounts)
-      .where(and(eq(accounts.id, id), eq(accounts.userId, userId)))
-      .limit(1);
-    return result[0] || null;
+    try {
+      const result = await db
+        .select()
+        .from(accounts)
+        .where(and(eq(accounts.id, id), eq(accounts.userId, userId)))
+        .limit(1);
+      return result[0] || null;
+    } catch (error) {
+      console.error('Error finding account by id:', error);
+      throw new Error('Failed to find account');
+    }
   }
 
   async create(data: NewAccount): Promise<Account> {
-    const result = await db.insert(accounts).values(data).returning();
-    return result[0];
+    try {
+      const result = await db.insert(accounts).values(data).returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error creating account:', error);
+      throw new Error('Failed to create account');
+    }
   }
 
   async update(id: string, userId: string, data: Partial<NewAccount>): Promise<Account | null> {
-    const result = await db
-      .update(accounts)
-      .set({ ...data, updatedAt: new Date() })
-      .where(and(eq(accounts.id, id), eq(accounts.userId, userId)))
-      .returning();
-    return result[0] || null;
+    try {
+      const result = await db
+        .update(accounts)
+        .set({ ...data, updatedAt: new Date() })
+        .where(and(eq(accounts.id, id), eq(accounts.userId, userId)))
+        .returning();
+      return result[0] || null;
+    } catch (error) {
+      console.error('Error updating account:', error);
+      throw new Error('Failed to update account');
+    }
   }
 
   async delete(id: string, userId: string): Promise<boolean> {
-    const result = await db
-      .update(accounts)
-      .set({ isActive: false, updatedAt: new Date() })
-      .where(and(eq(accounts.id, id), eq(accounts.userId, userId)));
-    return (result.rowCount ?? 0) > 0;
+    try {
+      // Soft delete - set isActive to false
+      const result = await db
+        .update(accounts)
+        .set({ isActive: false, updatedAt: new Date() })
+        .where(and(eq(accounts.id, id), eq(accounts.userId, userId)));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      throw new Error('Failed to delete account');
+    }
+  }
+
+  async hasTransactions(accountId: string, userId: string): Promise<boolean> {
+    try {
+      const result = await db
+        .select({ count: transactions.id })
+        .from(transactions)
+        .where(and(eq(transactions.accountId, accountId), eq(transactions.userId, userId)))
+        .limit(1);
+      return result.length > 0;
+    } catch (error) {
+      console.error('Error checking account transactions:', error);
+      throw new Error('Failed to check account transactions');
+    }
+  }
+
+  async calculateBalance(accountId: string, userId: string): Promise<string> {
+    try {
+      // Get initial balance from account
+      const account = await this.findById(accountId, userId);
+      if (!account) {
+        throw new Error('Account not found');
+      }
+
+      // Calculate actual balance based on transactions
+      const transactionSums = await db
+        .select({
+          totalDebits: sql<string>`COALESCE(SUM(CASE WHEN amount < 0 THEN amount ELSE 0 END), 0)`,
+          totalCredits: sql<string>`COALESCE(SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END), 0)`
+        })
+        .from(transactions)
+        .where(and(eq(transactions.accountId, accountId), eq(transactions.userId, userId)));
+
+      const sums = transactionSums[0];
+      const totalDebits = parseFloat(sums?.totalDebits || '0');
+      const totalCredits = parseFloat(sums?.totalCredits || '0');
+      const initialBalance = parseFloat(account.balance);
+
+      // Calculate final balance: initial + credits - debits
+      const finalBalance = initialBalance + totalCredits + totalDebits; // totalDebits is already negative
+
+      return finalBalance.toFixed(2);
+    } catch (error) {
+      console.error('Error calculating account balance:', error);
+      throw new Error('Failed to calculate account balance');
+    }
+  }
+
+  async updateAccountBalance(accountId: string, userId: string): Promise<Account | null> {
+    try {
+      const calculatedBalance = await this.calculateBalance(accountId, userId);
+      
+      const result = await db
+        .update(accounts)
+        .set({ balance: calculatedBalance, updatedAt: new Date() })
+        .where(and(eq(accounts.id, accountId), eq(accounts.userId, userId)))
+        .returning();
+        
+      return result[0] || null;
+    } catch (error) {
+      console.error('Error updating account balance:', error);
+      throw new Error('Failed to update account balance');
+    }
   }
 }
 
