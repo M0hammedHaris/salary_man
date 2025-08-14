@@ -113,13 +113,14 @@ export function AccountCreateForm({ onSuccess, onCancel, isModal = false }: Acco
             name="name"
             render={({ field }) => (
               <FormItem className="sm:col-span-2">
-                <FormLabel>Account Name</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="My Checking Account" 
-                    {...field}
-                  />
-                </FormControl>
+                  <FormLabel htmlFor="account-name">Account Name</FormLabel>
+                  <FormControl>
+                    <Input
+                      id="account-name"
+                      placeholder="My Checking Account"
+                      {...field}
+                    />
+                  </FormControl>
                 <FormDescription>
                   Enter a descriptive name for your account
                 </FormDescription>
@@ -134,24 +135,24 @@ export function AccountCreateForm({ onSuccess, onCancel, isModal = false }: Acco
             name="type"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Account Type</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select account type" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {Object.values(AccountType).map((type) => (
-                      <SelectItem key={type} value={type}>
-                        <span className="flex items-center gap-2">
-                          <span>{accountTypeIcons[type]}</span>
-                          {accountTypeLabels[type]}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <FormLabel htmlFor="account-type">Account Type</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger id="account-type" className="w-full">
+                        <SelectValue placeholder="Select account type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {Object.values(AccountType).map((type) => (
+                        <SelectItem key={type} value={type}>
+                          <span className="flex items-center gap-2">
+                            <span>{accountTypeIcons[type]}</span>
+                            {accountTypeLabels[type]}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 <FormMessage />
               </FormItem>
             )}
@@ -163,21 +164,22 @@ export function AccountCreateForm({ onSuccess, onCancel, isModal = false }: Acco
             name="balance"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Initial Balance</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-                      $
-                    </span>
-                    <Input
-                      type="text"
-                      placeholder="0.00"
-                      className="pl-8"
-                      {...field}
-                      onChange={(e) => handleBalanceChange(e.target.value, field.onChange)}
-                    />
-                  </div>
-                </FormControl>
+                  <FormLabel htmlFor="account-balance">Initial Balance</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                        $
+                      </span>
+                      <Input
+                        id="account-balance"
+                        type="text"
+                        placeholder="0.00"
+                        className="pl-8"
+                        {...field}
+                        onChange={(e) => handleBalanceChange(e.target.value, field.onChange)}
+                      />
+                    </div>
+                  </FormControl>
                 <FormDescription>
                   Enter the current balance
                 </FormDescription>
@@ -193,21 +195,22 @@ export function AccountCreateForm({ onSuccess, onCancel, isModal = false }: Acco
               name="creditLimit"
               render={({ field }) => (
                 <FormItem className="sm:col-span-2">
-                  <FormLabel>Credit Limit (Optional)</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-                        $
-                      </span>
-                      <Input
-                        type="text"
-                        placeholder="5000.00"
-                        className="pl-8"
-                        value={field.value || ''}
-                        onChange={(e) => handleBalanceChange(e.target.value, field.onChange)}
-                      />
-                    </div>
-                  </FormControl>
+                    <FormLabel htmlFor="account-credit-limit">Credit Limit (Optional)</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                          $
+                        </span>
+                        <Input
+                          id="account-credit-limit"
+                          type="text"
+                          placeholder="5000.00"
+                          className="pl-8"
+                          value={field.value || ''}
+                          onChange={(e) => handleBalanceChange(e.target.value, field.onChange)}
+                        />
+                      </div>
+                    </FormControl>
                   <FormDescription>
                     Enter the credit limit for this card
                   </FormDescription>
@@ -223,14 +226,15 @@ export function AccountCreateForm({ onSuccess, onCancel, isModal = false }: Acco
             name="description"
             render={({ field }) => (
               <FormItem className="sm:col-span-2">
-                <FormLabel>Description (Optional)</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Additional notes about this account..."
-                    className="min-h-20"
-                    {...field}
-                  />
-                </FormControl>
+                  <FormLabel htmlFor="account-description">Description (Optional)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      id="account-description"
+                      placeholder="Additional notes about this account..."
+                      className="min-h-20"
+                      {...field}
+                    />
+                  </FormControl>
                 <FormMessage />
               </FormItem>
             )}
