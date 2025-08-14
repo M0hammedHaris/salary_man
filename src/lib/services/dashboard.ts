@@ -175,7 +175,7 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
     const [user, accounts, transactions, categories] = await Promise.all([
       repositories.users.findById(userId),
       repositories.accounts.findByUserId(userId),
-      repositories.transactions.findByUserId(userId, 5), // Get 5 most recent
+      repositories.transactions.findByUserId(userId, { limit: 5 }), // Get 5 most recent
       repositories.categories.findByUserId(userId),
     ]);
 

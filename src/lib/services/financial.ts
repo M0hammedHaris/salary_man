@@ -79,7 +79,7 @@ export class FinancialService {
    * Transaction operations with decimal precision
    */
   async getTransactionsByUserId(userId: string, limit?: number, offset?: number): Promise<Transaction[]> {
-    const dbTransactions = await repositories.transactions.findByUserId(userId, limit, offset);
+    const dbTransactions = await repositories.transactions.findByUserId(userId, { limit, offset });
     return dbTransactions.map(this.transformTransactionFromDb);
   }
 

@@ -7,7 +7,7 @@ import { ZodError } from 'zod';
 // GET /api/transactions/[id] - Get specific transaction
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -16,7 +16,9 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const transaction = await repositories.transactions.findById(params.id, userId);
+    const { id } = await params;
+
+    const transaction = await repositories.transactions.findById(id, userId);
     
     if (!transaction) {
       return NextResponse.json(
@@ -53,7 +55,7 @@ export async function GET(
 // PUT /api/transactions/[id] - Update transaction
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -62,13 +64,15 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { id } = await params;
+
     const body = await request.json();
     
     // Validate request body
     const validatedData = updateTransactionSchema.parse(body);
 
     // Check if transaction exists and belongs to user
-    const existingTransaction = await repositories.transactions.findById(params.id, userId);
+    const existingTransaction = await repositories.transactions.findById(id, userId);
     if (!existingTransaction) {
       return NextResponse.json(
         { error: 'Transaction not found' },
@@ -117,7 +121,7 @@ export async function PUT(
 
     // Update transaction and balance atomically
     const updatedTransaction = await repositories.transactions.updateWithBalanceUpdate(
-      params.id,
+      id,
       userId,
       updateData
     );
@@ -169,7 +173,7 @@ export async function PUT(
 // DELETE /api/transactions/[id] - Delete transaction
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -178,8 +182,10 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { id } = await params;
+
     // Check if transaction exists and belongs to user
-    const existingTransaction = await repositories.transactions.findById(params.id, userId);
+    const existingTransaction = await repositories.transactions.findById(id, userId);
     if (!existingTransaction) {
       return NextResponse.json(
         { error: 'Transaction not found' },
@@ -188,7 +194,7 @@ export async function DELETE(
     }
 
     // Delete transaction and update account balance atomically
-    const deleted = await repositories.transactions.deleteWithBalanceUpdate(params.id, userId);
+    const deleted = await repositories.transactions.deleteWithBalanceUpdate(id, userId);
     
     if (!deleted) {
       return NextResponse.json(

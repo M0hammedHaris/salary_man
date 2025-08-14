@@ -200,6 +200,68 @@ export class AccountRepository {
       throw new Error('Failed to update account balance');
     }
   }
+
+  async verifyBalanceAccuracy(accountId: string, userId: string): Promise<{
+    isAccurate: boolean;
+    storedBalance: string;
+    calculatedBalance: string;
+    difference: string;
+  }> {
+    try {
+      // Get stored balance
+      const account = await this.findById(accountId, userId);
+      if (!account) {
+        throw new Error('Account not found');
+      }
+
+      // Calculate actual balance
+      const calculatedBalance = await this.calculateBalance(accountId, userId);
+      const storedBalance = account.balance;
+      
+      // Calculate difference
+      const storedNum = parseFloat(storedBalance);
+      const calculatedNum = parseFloat(calculatedBalance);
+      const difference = Math.abs(storedNum - calculatedNum).toFixed(2);
+      
+      // Consider accurate if difference is less than 1 cent
+      const isAccurate = parseFloat(difference) < 0.01;
+
+      return {
+        isAccurate,
+        storedBalance,
+        calculatedBalance,
+        difference
+      };
+    } catch (error) {
+      console.error('Error verifying balance accuracy:', error);
+      throw new Error('Failed to verify balance accuracy');
+    }
+  }
+
+  async fixBalanceDiscrepancy(accountId: string, userId: string): Promise<Account | null> {
+    try {
+      const verification = await this.verifyBalanceAccuracy(accountId, userId);
+      
+      if (!verification.isAccurate) {
+        console.warn(`Balance discrepancy detected for account ${accountId}. Stored: ${verification.storedBalance}, Calculated: ${verification.calculatedBalance}, Difference: ${verification.difference}`);
+        
+        // Update to calculated balance
+        const result = await db
+          .update(accounts)
+          .set({ balance: verification.calculatedBalance, updatedAt: new Date() })
+          .where(and(eq(accounts.id, accountId), eq(accounts.userId, userId)))
+          .returning();
+
+        return result[0] || null;
+      }
+      
+      // Balance is already accurate
+      return await this.findById(accountId, userId);
+    } catch (error) {
+      console.error('Error fixing balance discrepancy:', error);
+      throw new Error('Failed to fix balance discrepancy');
+    }
+  }
 }
 
 // Category Repository
@@ -340,22 +402,73 @@ export class TransactionRepository {
     try {
       // Start a transaction to ensure atomicity
       return await db.transaction(async (tx) => {
-        // Create the transaction
+        // Verify account exists and belongs to user before creating transaction
+        const accountResult = await tx
+          .select()
+          .from(accounts)
+          .where(and(eq(accounts.id, data.accountId), eq(accounts.userId, data.userId)))
+          .limit(1);
+        
+        if (!accountResult[0]) {
+          throw new Error('Account not found or access denied');
+        }
+
+        // Create the transaction first
         const result = await tx.insert(transactions).values(data).returning();
         const newTransaction = result[0];
 
-        // Update account balance - we need to use the same transaction context
-        const accountRepo = new AccountRepository();
-        const updatedAccount = await accountRepo.updateAccountBalance(data.accountId, data.userId);
+        if (!newTransaction) {
+          throw new Error('Failed to create transaction');
+        }
+
+        // Calculate new account balance based on all transactions
+        const transactionSums = await tx
+          .select({
+            totalDebits: sql<string>`COALESCE(SUM(CASE WHEN amount < 0 THEN amount ELSE 0 END), 0)`,
+            totalCredits: sql<string>`COALESCE(SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END), 0)`
+          })
+          .from(transactions)
+          .where(and(eq(transactions.accountId, data.accountId), eq(transactions.userId, data.userId)));
+
+        const sums = transactionSums[0];
+        const totalDebits = parseFloat(sums?.totalDebits || '0');
+        const totalCredits = parseFloat(sums?.totalCredits || '0');
+        const initialBalance = parseFloat(accountResult[0].balance);
+
+        // Calculate final balance: initial + credits + debits (debits are already negative)
+        const finalBalance = initialBalance + totalCredits + totalDebits;
+        const calculatedBalance = finalBalance.toFixed(2);
+
+        // Update account balance within same transaction
+        const balanceUpdateResult = await tx
+          .update(accounts)
+          .set({ balance: calculatedBalance, updatedAt: new Date() })
+          .where(and(eq(accounts.id, data.accountId), eq(accounts.userId, data.userId)))
+          .returning();
         
-        if (!updatedAccount) {
-          throw new Error('Failed to update account balance');
+        if (!balanceUpdateResult[0]) {
+          throw new Error('Failed to update account balance - balance update returned no results');
+        }
+
+        // Verify balance calculation accuracy by re-checking
+        const verificationResult = await tx
+          .select({ balance: accounts.balance })
+          .from(accounts)
+          .where(and(eq(accounts.id, data.accountId), eq(accounts.userId, data.userId)))
+          .limit(1);
+
+        if (!verificationResult[0] || verificationResult[0].balance !== calculatedBalance) {
+          throw new Error('Balance verification failed - calculated balance does not match stored balance');
         }
 
         return newTransaction;
       });
     } catch (error) {
       console.error('Error creating transaction with balance update:', error);
+      // Re-throw with more specific error information
+      if (error instanceof Error) {
+        throw new Error(`Transaction creation failed: ${error.message}`);
+      }
       throw new Error('Failed to create transaction and update balance');
     }
   }
@@ -379,10 +492,19 @@ export class TransactionRepository {
       // Start a transaction to ensure atomicity
       return await db.transaction(async (tx) => {
         // Get original transaction for account comparison
-        const originalTransaction = await this.findById(id, userId);
+        const originalResult = await tx
+          .select()
+          .from(transactions)
+          .where(and(eq(transactions.id, id), eq(transactions.userId, userId)))
+          .limit(1);
+
+        const originalTransaction = originalResult[0];
         if (!originalTransaction) {
           throw new Error('Transaction not found');
         }
+
+        // Store original account ID for balance recalculation
+        const originalAccountId = originalTransaction.accountId;
 
         // Update the transaction
         const result = await tx
@@ -396,22 +518,74 @@ export class TransactionRepository {
           throw new Error('Failed to update transaction');
         }
 
-        // Update balance for original account if account changed
-        const accountRepo = new AccountRepository();
-        if (data.accountId && data.accountId !== originalTransaction.accountId) {
-          await accountRepo.updateAccountBalance(originalTransaction.accountId, userId);
+        // Collect accounts that need balance updates
+        const accountsToUpdate = new Set([originalAccountId]);
+        if (updatedTransaction.accountId !== originalAccountId) {
+          accountsToUpdate.add(updatedTransaction.accountId);
         }
 
-        // Update balance for new/current account
-        await accountRepo.updateAccountBalance(
-          updatedTransaction.accountId, 
-          userId
-        );
+        // Update balances for all affected accounts
+        for (const accountId of accountsToUpdate) {
+          // Get account initial balance
+          const accountResult = await tx
+            .select()
+            .from(accounts)
+            .where(and(eq(accounts.id, accountId), eq(accounts.userId, userId)))
+            .limit(1);
+
+          if (!accountResult[0]) {
+            throw new Error(`Account ${accountId} not found during balance update`);
+          }
+
+          // Calculate new balance based on all transactions for this account
+          const transactionSums = await tx
+            .select({
+              totalDebits: sql<string>`COALESCE(SUM(CASE WHEN amount < 0 THEN amount ELSE 0 END), 0)`,
+              totalCredits: sql<string>`COALESCE(SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END), 0)`
+            })
+            .from(transactions)
+            .where(and(eq(transactions.accountId, accountId), eq(transactions.userId, userId)));
+
+          const sums = transactionSums[0];
+          const totalDebits = parseFloat(sums?.totalDebits || '0');
+          const totalCredits = parseFloat(sums?.totalCredits || '0');
+          const initialBalance = parseFloat(accountResult[0].balance);
+
+          // Calculate final balance: initial + credits + debits (debits are already negative)
+          const finalBalance = initialBalance + totalCredits + totalDebits;
+          const calculatedBalance = finalBalance.toFixed(2);
+
+          // Update account balance
+          const balanceUpdateResult = await tx
+            .update(accounts)
+            .set({ balance: calculatedBalance, updatedAt: new Date() })
+            .where(and(eq(accounts.id, accountId), eq(accounts.userId, userId)))
+            .returning();
+
+          if (!balanceUpdateResult[0]) {
+            throw new Error(`Failed to update balance for account ${accountId}`);
+          }
+
+          // Verify balance calculation
+          const verificationResult = await tx
+            .select({ balance: accounts.balance })
+            .from(accounts)
+            .where(and(eq(accounts.id, accountId), eq(accounts.userId, userId)))
+            .limit(1);
+
+          if (!verificationResult[0] || verificationResult[0].balance !== calculatedBalance) {
+            throw new Error(`Balance verification failed for account ${accountId}`);
+          }
+        }
 
         return updatedTransaction;
       });
     } catch (error) {
       console.error('Error updating transaction with balance update:', error);
+      // Re-throw with more specific error information
+      if (error instanceof Error) {
+        throw new Error(`Transaction update failed: ${error.message}`);
+      }
       throw new Error('Failed to update transaction and balance');
     }
   }
@@ -433,28 +607,89 @@ export class TransactionRepository {
       // Start a transaction to ensure atomicity
       return await db.transaction(async (tx) => {
         // Get transaction details before deletion
-        const transaction = await this.findById(id, userId);
+        const transactionResult = await tx
+          .select()
+          .from(transactions)
+          .where(and(eq(transactions.id, id), eq(transactions.userId, userId)))
+          .limit(1);
+
+        const transaction = transactionResult[0];
         if (!transaction) {
-          return false;
+          return false; // Transaction doesn't exist, return false but don't error
         }
 
+        const accountId = transaction.accountId;
+
         // Delete the transaction
-        const result = await tx
+        const deleteResult = await tx
           .delete(transactions)
           .where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
 
-        const deleted = (result.rowCount ?? 0) > 0;
+        const deleted = (deleteResult.rowCount ?? 0) > 0;
 
-        if (deleted) {
-          // Update account balance after deletion
-          const accountRepo = new AccountRepository();
-          await accountRepo.updateAccountBalance(transaction.accountId, userId);
+        if (!deleted) {
+          throw new Error('Failed to delete transaction');
+        }
+
+        // Get account for balance calculation
+        const accountResult = await tx
+          .select()
+          .from(accounts)
+          .where(and(eq(accounts.id, accountId), eq(accounts.userId, userId)))
+          .limit(1);
+
+        if (!accountResult[0]) {
+          throw new Error('Account not found during balance update after deletion');
+        }
+
+        // Recalculate account balance after deletion
+        const transactionSums = await tx
+          .select({
+            totalDebits: sql<string>`COALESCE(SUM(CASE WHEN amount < 0 THEN amount ELSE 0 END), 0)`,
+            totalCredits: sql<string>`COALESCE(SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END), 0)`
+          })
+          .from(transactions)
+          .where(and(eq(transactions.accountId, accountId), eq(transactions.userId, userId)));
+
+        const sums = transactionSums[0];
+        const totalDebits = parseFloat(sums?.totalDebits || '0');
+        const totalCredits = parseFloat(sums?.totalCredits || '0');
+        const initialBalance = parseFloat(accountResult[0].balance);
+
+        // Calculate final balance: initial + credits + debits (debits are already negative)
+        const finalBalance = initialBalance + totalCredits + totalDebits;
+        const calculatedBalance = finalBalance.toFixed(2);
+
+        // Update account balance
+        const balanceUpdateResult = await tx
+          .update(accounts)
+          .set({ balance: calculatedBalance, updatedAt: new Date() })
+          .where(and(eq(accounts.id, accountId), eq(accounts.userId, userId)))
+          .returning();
+
+        if (!balanceUpdateResult[0]) {
+          throw new Error('Failed to update account balance after deletion');
+        }
+
+        // Verify balance calculation
+        const verificationResult = await tx
+          .select({ balance: accounts.balance })
+          .from(accounts)
+          .where(and(eq(accounts.id, accountId), eq(accounts.userId, userId)))
+          .limit(1);
+
+        if (!verificationResult[0] || verificationResult[0].balance !== calculatedBalance) {
+          throw new Error('Balance verification failed after deletion');
         }
 
         return deleted;
       });
     } catch (error) {
       console.error('Error deleting transaction with balance update:', error);
+      // Re-throw with more specific error information
+      if (error instanceof Error) {
+        throw new Error(`Transaction deletion failed: ${error.message}`);
+      }
       throw new Error('Failed to delete transaction and update balance');
     }
   }
