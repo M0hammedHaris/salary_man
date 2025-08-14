@@ -253,52 +253,210 @@ export class CategoryRepository {
 
 // Transaction Repository
 export class TransactionRepository {
-  async findByUserId(userId: string, limit: number = 50, offset: number = 0): Promise<Transaction[]> {
-    return await db
-      .select()
-      .from(transactions)
-      .where(eq(transactions.userId, userId))
-      .orderBy(desc(transactions.transactionDate))
-      .limit(limit)
-      .offset(offset);
+  async findByUserId(
+    userId: string, 
+    filters: {
+      accountId?: string;
+      categoryId?: string;
+      startDate?: Date;
+      endDate?: Date;
+      limit?: number;
+      offset?: number;
+    } = {}
+  ): Promise<Transaction[]> {
+    try {
+      const { accountId, categoryId, startDate, endDate, limit = 50, offset = 0 } = filters;
+      
+      // Build conditions array
+      const conditions = [eq(transactions.userId, userId)];
+      
+      if (accountId) {
+        conditions.push(eq(transactions.accountId, accountId));
+      }
+      
+      if (categoryId) {
+        conditions.push(eq(transactions.categoryId, categoryId));
+      }
+      
+      if (startDate) {
+        conditions.push(sql`${transactions.transactionDate} >= ${startDate}`);
+      }
+      
+      if (endDate) {
+        conditions.push(sql`${transactions.transactionDate} <= ${endDate}`);
+      }
+      
+      return await db
+        .select()
+        .from(transactions)
+        .where(and(...conditions))
+        .orderBy(desc(transactions.transactionDate))
+        .limit(limit)
+        .offset(offset);
+    } catch (error) {
+      console.error('Error finding transactions by user id:', error);
+      throw new Error('Failed to find user transactions');
+    }
   }
 
   async findById(id: string, userId: string): Promise<Transaction | null> {
-    const result = await db
-      .select()
-      .from(transactions)
-      .where(and(eq(transactions.id, id), eq(transactions.userId, userId)))
-      .limit(1);
-    return result[0] || null;
+    try {
+      const result = await db
+        .select()
+        .from(transactions)
+        .where(and(eq(transactions.id, id), eq(transactions.userId, userId)))
+        .limit(1);
+      return result[0] || null;
+    } catch (error) {
+      console.error('Error finding transaction by id:', error);
+      throw new Error('Failed to find transaction');
+    }
   }
 
   async findByAccountId(accountId: string, userId: string): Promise<Transaction[]> {
-    return await db
-      .select()
-      .from(transactions)
-      .where(and(eq(transactions.accountId, accountId), eq(transactions.userId, userId)))
-      .orderBy(desc(transactions.transactionDate));
+    try {
+      return await db
+        .select()
+        .from(transactions)
+        .where(and(eq(transactions.accountId, accountId), eq(transactions.userId, userId)))
+        .orderBy(desc(transactions.transactionDate));
+    } catch (error) {
+      console.error('Error finding transactions by account id:', error);
+      throw new Error('Failed to find account transactions');
+    }
   }
 
   async create(data: NewTransaction): Promise<Transaction> {
-    const result = await db.insert(transactions).values(data).returning();
-    return result[0];
+    try {
+      const result = await db.insert(transactions).values(data).returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error creating transaction:', error);
+      throw new Error('Failed to create transaction');
+    }
+  }
+
+  async createWithBalanceUpdate(data: NewTransaction): Promise<Transaction> {
+    try {
+      // Start a transaction to ensure atomicity
+      return await db.transaction(async (tx) => {
+        // Create the transaction
+        const result = await tx.insert(transactions).values(data).returning();
+        const newTransaction = result[0];
+
+        // Update account balance - we need to use the same transaction context
+        const accountRepo = new AccountRepository();
+        const updatedAccount = await accountRepo.updateAccountBalance(data.accountId, data.userId);
+        
+        if (!updatedAccount) {
+          throw new Error('Failed to update account balance');
+        }
+
+        return newTransaction;
+      });
+    } catch (error) {
+      console.error('Error creating transaction with balance update:', error);
+      throw new Error('Failed to create transaction and update balance');
+    }
   }
 
   async update(id: string, userId: string, data: Partial<NewTransaction>): Promise<Transaction | null> {
-    const result = await db
-      .update(transactions)
-      .set({ ...data, updatedAt: new Date() })
-      .where(and(eq(transactions.id, id), eq(transactions.userId, userId)))
-      .returning();
-    return result[0] || null;
+    try {
+      const result = await db
+        .update(transactions)
+        .set({ ...data, updatedAt: new Date() })
+        .where(and(eq(transactions.id, id), eq(transactions.userId, userId)))
+        .returning();
+      return result[0] || null;
+    } catch (error) {
+      console.error('Error updating transaction:', error);
+      throw new Error('Failed to update transaction');
+    }
+  }
+
+  async updateWithBalanceUpdate(id: string, userId: string, data: Partial<NewTransaction>): Promise<Transaction | null> {
+    try {
+      // Start a transaction to ensure atomicity
+      return await db.transaction(async (tx) => {
+        // Get original transaction for account comparison
+        const originalTransaction = await this.findById(id, userId);
+        if (!originalTransaction) {
+          throw new Error('Transaction not found');
+        }
+
+        // Update the transaction
+        const result = await tx
+          .update(transactions)
+          .set({ ...data, updatedAt: new Date() })
+          .where(and(eq(transactions.id, id), eq(transactions.userId, userId)))
+          .returning();
+
+        const updatedTransaction = result[0];
+        if (!updatedTransaction) {
+          throw new Error('Failed to update transaction');
+        }
+
+        // Update balance for original account if account changed
+        const accountRepo = new AccountRepository();
+        if (data.accountId && data.accountId !== originalTransaction.accountId) {
+          await accountRepo.updateAccountBalance(originalTransaction.accountId, userId);
+        }
+
+        // Update balance for new/current account
+        await accountRepo.updateAccountBalance(
+          updatedTransaction.accountId, 
+          userId
+        );
+
+        return updatedTransaction;
+      });
+    } catch (error) {
+      console.error('Error updating transaction with balance update:', error);
+      throw new Error('Failed to update transaction and balance');
+    }
   }
 
   async delete(id: string, userId: string): Promise<boolean> {
-    const result = await db
-      .delete(transactions)
-      .where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
-    return (result.rowCount ?? 0) > 0;
+    try {
+      const result = await db
+        .delete(transactions)
+        .where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      throw new Error('Failed to delete transaction');
+    }
+  }
+
+  async deleteWithBalanceUpdate(id: string, userId: string): Promise<boolean> {
+    try {
+      // Start a transaction to ensure atomicity
+      return await db.transaction(async (tx) => {
+        // Get transaction details before deletion
+        const transaction = await this.findById(id, userId);
+        if (!transaction) {
+          return false;
+        }
+
+        // Delete the transaction
+        const result = await tx
+          .delete(transactions)
+          .where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
+
+        const deleted = (result.rowCount ?? 0) > 0;
+
+        if (deleted) {
+          // Update account balance after deletion
+          const accountRepo = new AccountRepository();
+          await accountRepo.updateAccountBalance(transaction.accountId, userId);
+        }
+
+        return deleted;
+      });
+    } catch (error) {
+      console.error('Error deleting transaction with balance update:', error);
+      throw new Error('Failed to delete transaction and update balance');
+    }
   }
 }
 
