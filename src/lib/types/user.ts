@@ -9,7 +9,7 @@ export interface User {
 }
 
 export interface UserPreferences {
-  currency: string; // ISO currency code (default: 'USD')
+  currency: string; // ISO currency code (default: 'INR')
   dateFormat: string; // Date display preference
   alertThresholds: {
     creditCard: number; // Credit utilization alert percentage
@@ -24,7 +24,7 @@ export interface UserPreferences {
 
 // Default user preferences
 export const defaultUserPreferences: UserPreferences = {
-  currency: 'USD',
+  currency: 'INR',
   dateFormat: 'MM/dd/yyyy',
   alertThresholds: {
     creditCard: 80, // 80% utilization alert

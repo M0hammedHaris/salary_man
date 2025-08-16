@@ -89,9 +89,9 @@ export const isExpenseTransaction = (amount: string): boolean => {
   return parseFloat(amount) < 0;
 };
 
-export const formatTransactionAmount = (amount: string, currency: string = 'USD'): string => {
+export const formatTransactionAmount = (amount: string, currency: string = 'INR'): string => {
   const numAmount = parseFloat(amount);
-  const formatter = new Intl.NumberFormat('en-US', {
+  const formatter = new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: currency,
   });
