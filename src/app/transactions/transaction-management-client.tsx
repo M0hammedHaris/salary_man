@@ -102,7 +102,6 @@ export function TransactionManagementClient() {
               <TransactionCreateForm 
                 onSuccess={handleCreateSuccess} 
                 onCancel={() => setIsCreateDialogOpen(false)}
-                isModal={true}
               />
             </DialogContent>
           </Dialog>

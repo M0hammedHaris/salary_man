@@ -50,7 +50,6 @@ import { cn } from "@/lib/utils";
 interface TransactionCreateFormProps {
   onSuccess?: () => void;
   onCancel?: () => void;
-  isModal?: boolean;
 }
 
 interface TransactionTemplate {
@@ -71,7 +70,6 @@ interface SplitEntry {
 export function TransactionCreateForm({
   onSuccess,
   onCancel,
-  isModal = false,
 }: TransactionCreateFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [templates, setTemplates] = useState<TransactionTemplate[]>([]);
@@ -980,10 +978,6 @@ export function TransactionCreateForm({
       </form>
     </Form>
   );
-
-  if (isModal) {
-    return content;
-  }
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
