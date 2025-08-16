@@ -215,8 +215,8 @@ describe('TransactionCreateForm - Templates', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorageMock.getItem.mockReturnValue('[]');
-    
-    (global.fetch as any)
+
+    (global.fetch as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce(mockSuccessfulResponse({ accounts: mockAccounts }))
       .mockResolvedValueOnce(mockSuccessfulResponse({ categories: mockCategories }));
   });
@@ -344,8 +344,8 @@ describe('TransactionCreateForm - Bulk Entry', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorageMock.getItem.mockReturnValue('[]');
-    
-    (global.fetch as any)
+
+    (global.fetch as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce(mockSuccessfulResponse({ accounts: mockAccounts }))
       .mockResolvedValueOnce(mockSuccessfulResponse({ categories: mockCategories }));
   });
@@ -390,7 +390,7 @@ describe('TransactionCreateForm - Bulk Entry', () => {
     const onSuccess = vi.fn();
     
     // Mock successful transaction creation
-    (global.fetch as any)
+    (global.fetch as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce(mockSuccessfulResponse({ accounts: mockAccounts }))
       .mockResolvedValueOnce(mockSuccessfulResponse({ categories: mockCategories }))
       .mockResolvedValue(mockSuccessfulResponse({ id: 'transaction-id' }));

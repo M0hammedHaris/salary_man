@@ -479,8 +479,11 @@ export function TransactionCreateForm({ onSuccess, onCancel, isModal = false }: 
             onClick={() => {
               form.setValue('description', 'Salary payment');
               form.setValue('amount', '');
+              // Look for exact "Salary" match first, then fallback to contains logic
               const salaryCategory = formData.categories.find(cat => 
-                cat.name.toLowerCase().includes('salary') || cat.name.toLowerCase().includes('income')
+                cat.name.toLowerCase() === 'salary'
+              ) || formData.categories.find(cat => 
+                cat.name.toLowerCase().includes('salary')
               );
               if (salaryCategory) form.setValue('categoryId', salaryCategory.id);
             }}
@@ -495,7 +498,10 @@ export function TransactionCreateForm({ onSuccess, onCancel, isModal = false }: 
             onClick={() => {
               form.setValue('description', 'Grocery shopping');
               form.setValue('amount', '-');
+              // Look for exact "Groceries" match first, then fallback to contains logic
               const groceryCategory = formData.categories.find(cat => 
+                cat.name.toLowerCase() === 'groceries'
+              ) || formData.categories.find(cat => 
                 cat.name.toLowerCase().includes('grocery') || cat.name.toLowerCase().includes('food')
               );
               if (groceryCategory) form.setValue('categoryId', groceryCategory.id);
@@ -534,8 +540,8 @@ export function TransactionCreateForm({ onSuccess, onCancel, isModal = false }: 
         </div>
       </div>
 
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid gap-4 sm:grid-cols-2">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
+        <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
           {/* Account Selection */}
           <FormField
             control={form.control}
@@ -549,7 +555,7 @@ export function TransactionCreateForm({ onSuccess, onCancel, isModal = false }: 
                       <SelectValue placeholder="Select account" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent>
+                  <SelectContent className="z-[60]">
                     {formData.accounts.map((account) => (
                       <SelectItem key={account.id} value={account.id}>
                         <div className="flex items-center justify-between w-full">
@@ -622,7 +628,7 @@ export function TransactionCreateForm({ onSuccess, onCancel, isModal = false }: 
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent>
+                  <SelectContent className="z-[60]">
                     {formData.categories.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
                         <div className="flex items-center gap-2">
@@ -680,7 +686,7 @@ export function TransactionCreateForm({ onSuccess, onCancel, isModal = false }: 
                       </Button>
                     </FormControl>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
+                  <PopoverContent className="w-auto p-0 z-[60]" align="start">
                     <Calendar
                       mode="single"
                       selected={field.value ? new Date(field.value) : undefined}
