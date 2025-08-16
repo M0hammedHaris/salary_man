@@ -1,10 +1,13 @@
 import { UserProfile } from '@clerk/nextjs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { BreadcrumbNavigation } from '@/components/layout/breadcrumb-navigation';
 
 export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="mx-auto max-w-4xl space-y-6">
+        <BreadcrumbNavigation />
+        
         <Card className="border-0 shadow-lg">
           <CardHeader>
             <CardTitle className="text-2xl font-bold">Profile Settings</CardTitle>

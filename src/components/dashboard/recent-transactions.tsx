@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -194,9 +195,11 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
 
             {/* View All Transactions Link */}
             <div className="pt-2">
-              <Button variant="ghost" className="w-full text-sm" size="sm">
-                <span>View All Transactions</span>
-                <ArrowRight className="h-4 w-4 ml-1" />
+              <Button variant="ghost" className="w-full text-sm" size="sm" asChild>
+                <Link href="/transactions">
+                  <span>View All Transactions</span>
+                  <ArrowRight className="h-4 w-4 ml-1" />
+                </Link>
               </Button>
             </div>
           </div>

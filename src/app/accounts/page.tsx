@@ -9,12 +9,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { BreadcrumbNavigation } from '@/components/layout/breadcrumb-navigation';
 import { AccountCreateForm } from '@/components/accounts/account-create-form';
 import { AccountEditForm } from '@/components/accounts/account-edit-form';
 import { AccountList } from '@/components/accounts/account-list';
 import { type AccountResponse } from '@/lib/types/account';
 import { Plus, ArrowLeft, Wallet } from 'lucide-react';
-import Link from 'next/link';
 
 type ViewMode = 'list' | 'create' | 'edit';
 
@@ -150,13 +150,7 @@ export default function AccountsPage() {
               </p>
               
               {/* Breadcrumb for navigation */}
-              <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
-                <Link href="/dashboard" className="hover:text-foreground transition-colors">
-                  Dashboard
-                </Link>
-                <span>/</span>
-                <span className="text-foreground">Accounts</span>
-              </nav>
+              <BreadcrumbNavigation />
             </div>
           </div>
         )}

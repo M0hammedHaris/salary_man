@@ -9,7 +9,6 @@ import {
   TrendingDown, 
   Receipt,
   RefreshCw,
-  Camera,
   DollarSign,
   Wallet
 } from 'lucide-react';
@@ -29,21 +28,21 @@ export function QuickActionFloatingButton({ className = "" }: QuickActionFloatin
       icon: <TrendingUp className="h-4 w-4" />,
       label: 'Add Income',
       color: 'text-green-600 hover:text-green-700',
-      action: () => console.log('Add Income'),
+      action: () => router.push('/transactions?action=create&type=income'),
     },
     {
       id: 'add-expense',
       icon: <TrendingDown className="h-4 w-4" />,
       label: 'Add Expense',
       color: 'text-red-600 hover:text-red-700',
-      action: () => console.log('Add Expense'),
+      action: () => router.push('/transactions?action=create&type=expense'),
     },
     {
       id: 'transfer',
       icon: <RefreshCw className="h-4 w-4" />,
       label: 'Transfer Money',
       color: 'text-blue-600 hover:text-blue-700',
-      action: () => console.log('Transfer Money'),
+      action: () => router.push('/transactions?action=create&type=transfer'),
     },
     {
       id: 'manage-accounts',
@@ -53,11 +52,11 @@ export function QuickActionFloatingButton({ className = "" }: QuickActionFloatin
       action: () => router.push('/accounts'),
     },
     {
-      id: 'scan-receipt',
-      icon: <Camera className="h-4 w-4" />,
-      label: 'Scan Receipt',
+      id: 'view-transactions',
+      icon: <Receipt className="h-4 w-4" />,
+      label: 'View Transactions',
       color: 'text-purple-600 hover:text-purple-700',
-      action: () => console.log('Scan Receipt'),
+      action: () => router.push('/transactions'),
     },
   ];
 
@@ -105,7 +104,7 @@ export function QuickActionFloatingButton({ className = "" }: QuickActionFloatin
                 className="w-12 h-12 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 animate-in slide-in-from-bottom-1"
                 style={{ animationDelay: `${frequentActions.length * 50}ms` }}
                 onClick={() => {
-                  console.log('Show All Actions');
+                  router.push('/transactions');
                   setIsExpanded(false);
                 }}
               >
