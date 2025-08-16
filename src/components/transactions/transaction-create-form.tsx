@@ -1,34 +1,20 @@
 "use client";
 
-import Image from "next/image";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format } from "date-fns";
 import {
-  CalendarIcon,
-  Loader2,
   Plus,
-  Upload,
-  X,
   Zap,
   Split,
   Copy,
   BookOpen,
+  X,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
 import {
   Select,
   SelectContent,
@@ -37,10 +23,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  createTransactionSchema,
+  type CreateTransactionRequest,
+} from "@/lib/types/transaction";
+import {
+  AccountSelectionField,
+  AmountInputField,
+  CategorySelectionField,
+  TransactionDateField,
+  DescriptionField,
+  ReceiptUploadField,
+  useFormData,
+  createReceiptHandlers,
+  suggestCategory,
+  type ReceiptHandlers
+} from "./shared";
 import {
   Card,
   CardContent,
@@ -48,26 +45,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  createTransactionSchema,
-  type CreateTransactionRequest,
-  getTransactionTypeIcon,
-  getTransactionTypeLabel,
-} from "@/lib/types/transaction";
-import { type Account } from "@/lib/types/account";
-import { type Category } from "@/lib/types/category";
 import { cn } from "@/lib/utils";
 
 interface TransactionCreateFormProps {
   onSuccess?: () => void;
   onCancel?: () => void;
   isModal?: boolean;
-}
-
-interface FormData {
-  accounts: Account[];
-  categories: Category[];
-  templates: TransactionTemplate[];
 }
 
 interface TransactionTemplate {
@@ -91,20 +74,15 @@ export function TransactionCreateForm({
   isModal = false,
 }: TransactionCreateFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState<FormData>({
-    accounts: [],
-    categories: [],
-    templates: [],
-  });
-  const [isLoading, setIsLoading] = useState(true);
+  const [templates, setTemplates] = useState<TransactionTemplate[]>([]);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const [showSplitMode, setShowSplitMode] = useState(false);
   const [splitEntries, setSplitEntries] = useState<SplitEntry[]>([]);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showBulkMode, setShowBulkMode] = useState(false);
-  const [bulkEntries, setBulkEntries] = useState<CreateTransactionRequest[]>(
-    []
-  );
+  const [bulkEntries, setBulkEntries] = useState<CreateTransactionRequest[]>([]);
+
+  const { formData, isLoading } = useFormData();
 
   const form = useForm<CreateTransactionRequest>({
     resolver: zodResolver(createTransactionSchema),
@@ -121,95 +99,9 @@ export function TransactionCreateForm({
   // Watch description field for smart suggestions
   const watchedDescription = form.watch("description");
 
-  // Smart category suggestion based on description
-  const suggestCategory = useCallback(
-    (description: string): string | null => {
-      if (!description || description.length < 3) return null;
-
-      const descLower = description.toLowerCase();
-      const { categories } = formData;
-
-      // Keywords mapping for common transactions
-      const categoryKeywords: Record<string, string[]> = {
-        food: [
-          "restaurant",
-          "food",
-          "dinner",
-          "lunch",
-          "breakfast",
-          "cafe",
-          "pizza",
-          "burger",
-          "grocery",
-          "groceries",
-          "supermarket",
-        ],
-        transportation: [
-          "uber",
-          "taxi",
-          "gas",
-          "fuel",
-          "bus",
-          "train",
-          "metro",
-          "parking",
-          "toll",
-        ],
-        shopping: [
-          "amazon",
-          "flipkart",
-          "shop",
-          "mall",
-          "store",
-          "purchase",
-          "buy",
-        ],
-        utilities: [
-          "electricity",
-          "water",
-          "internet",
-          "phone",
-          "mobile",
-          "wifi",
-          "bill",
-        ],
-        entertainment: [
-          "movie",
-          "cinema",
-          "netflix",
-          "spotify",
-          "game",
-          "concert",
-          "show",
-        ],
-        medical: [
-          "doctor",
-          "hospital",
-          "pharmacy",
-          "medicine",
-          "medical",
-          "health",
-        ],
-        salary: ["salary", "wage", "income", "payment", "payroll"],
-      };
-
-      // Find matching category
-      for (const [categoryName, keywords] of Object.entries(categoryKeywords)) {
-        if (keywords.some((keyword) => descLower.includes(keyword))) {
-          const matchingCategory = categories.find(
-            (cat) =>
-              cat.name.toLowerCase().includes(categoryName) ||
-              categoryName.includes(cat.name.toLowerCase())
-          );
-          if (matchingCategory) {
-            return matchingCategory.id;
-          }
-        }
-      }
-
-      return null;
-    },
-    [formData]
+  const { handleReceiptUpload, removeReceipt }: ReceiptHandlers = createReceiptHandlers(
+    setReceiptPreview,
+    (url) => form.setValue('receiptUrl', url)
   );
 
   // Auto-suggest category when description changes
@@ -217,7 +109,7 @@ export function TransactionCreateForm({
     if (watchedDescription && watchedDescription.length >= 3) {
       const currentCategoryId = form.getValues("categoryId");
       if (!currentCategoryId) {
-        const suggestedCategoryId = suggestCategory(watchedDescription);
+        const suggestedCategoryId = suggestCategory(watchedDescription, formData.categories);
         if (suggestedCategoryId) {
           // Auto-select suggested category after a short delay
           setTimeout(() => {
@@ -226,93 +118,14 @@ export function TransactionCreateForm({
         }
       }
     }
-  }, [watchedDescription, form, suggestCategory]);
+  }, [watchedDescription, form, formData.categories]);
 
-  // Load accounts and categories on mount
+  // Load templates from localStorage on mount
   useEffect(() => {
-    const loadFormData = async () => {
-      try {
-        const [accountsResponse, categoriesResponse] = await Promise.all([
-          fetch("/api/accounts"),
-          fetch("/api/categories"),
-        ]);
-
-        if (!accountsResponse.ok || !categoriesResponse.ok) {
-          throw new Error("Failed to load form data");
-        }
-
-        const accountsData = await accountsResponse.json();
-        const categoriesData = await categoriesResponse.json();
-
-        // Load templates from localStorage (in production, this would be an API call)
-        const savedTemplates = localStorage.getItem("transactionTemplates");
-        const templates = savedTemplates ? JSON.parse(savedTemplates) : [];
-
-        setFormData({
-          accounts: accountsData.accounts || [],
-          categories: categoriesData.categories || [],
-          templates: templates,
-        });
-      } catch (error) {
-        console.error("Error loading form data:", error);
-        form.setError("root", {
-          message:
-            "Failed to load accounts and categories. Please refresh the page.",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadFormData();
-  }, [form]);
-
-  const formatCurrency = (value: string): string => {
-    // Allow negative values for expenses
-    const sign = value.startsWith("-") ? "-" : "";
-    const numericValue = value.replace(/[^0-9.]/g, "");
-
-    // Ensure only one decimal point
-    const parts = numericValue.split(".");
-    if (parts.length > 2) {
-      return sign + parts[0] + "." + parts[1];
-    }
-
-    // Limit to 2 decimal places
-    if (parts[1] && parts[1].length > 2) {
-      return sign + parts[0] + "." + parts[1].slice(0, 2);
-    }
-
-    return sign + numericValue;
-  };
-
-  const handleAmountChange = (
-    value: string,
-    onChange: (value: string) => void
-  ) => {
-    const formattedValue = formatCurrency(value);
-    onChange(formattedValue);
-  };
-
-  const handleReceiptUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // For now, we'll just create a preview. In production, you'd upload to Vercel Blob
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setReceiptPreview(result);
-        // In production, upload to Vercel Blob and set the URL
-        form.setValue("receiptUrl", result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const removeReceipt = () => {
-    setReceiptPreview(null);
-    form.setValue("receiptUrl", undefined);
-  };
+    const savedTemplates = localStorage.getItem("transactionTemplates");
+    const loadedTemplates = savedTemplates ? JSON.parse(savedTemplates) : [];
+    setTemplates(loadedTemplates);
+  }, []);
 
   // Split transaction functions
   const addSplitEntry = () => {
@@ -380,15 +193,13 @@ export function TransactionCreateForm({
       accountId: formValues.accountId,
     };
 
-    setFormData((prev) => ({
-      ...prev,
-      templates: [...prev.templates, newTemplate],
-    }));
+    const updatedTemplates = [...templates, newTemplate];
+    setTemplates(updatedTemplates);
 
     // In production, you'd save this to the backend
     localStorage.setItem(
       "transactionTemplates",
-      JSON.stringify([...formData.templates, newTemplate])
+      JSON.stringify(updatedTemplates)
     );
   };
 
@@ -402,13 +213,8 @@ export function TransactionCreateForm({
   };
 
   const deleteTemplate = (templateId: string) => {
-    const updatedTemplates = formData.templates.filter(
-      (t) => t.id !== templateId
-    );
-    setFormData((prev) => ({
-      ...prev,
-      templates: updatedTemplates,
-    }));
+    const updatedTemplates = templates.filter((t) => t.id !== templateId);
+    setTemplates(updatedTemplates);
 
     // In production, you'd delete this from the backend
     localStorage.setItem(
@@ -589,10 +395,6 @@ export function TransactionCreateForm({
   };
 
   const watchedAmount = form.watch("amount");
-  const transactionType =
-    watchedAmount && parseFloat(watchedAmount) !== 0
-      ? getTransactionTypeLabel(watchedAmount)
-      : "";
 
   if (isLoading) {
     return (
@@ -692,263 +494,48 @@ export function TransactionCreateForm({
         className="space-y-4 sm:space-y-6"
       >
         <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
-          {/* Account Selection */}
-          <FormField
+          <AccountSelectionField
             control={form.control}
             name="accountId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Account</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select account" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent className="z-[60]">
-                    {formData.accounts.map((account) => (
-                      <SelectItem key={account.id} value={account.id}>
-                        <div className="flex items-center justify-between w-full">
-                          <span>{account.name}</span>
-                          <span className="text-muted-foreground text-sm ml-2">
-                            {formatCurrency(account.balance.toString())}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormDescription>
-                  Choose the account for this transaction
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
+            accounts={formData.accounts}
           />
 
-          {/* Amount */}
-          <FormField
+          <AmountInputField
             control={form.control}
             name="amount"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel htmlFor="amount-input">Amount</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-                      ₹
-                    </span>
-                    <Input
-                      id="amount-input"
-                      type="text"
-                      placeholder="0.00 (use - for expenses)"
-                      className="pl-8"
-                      {...field}
-                      onChange={(e) =>
-                        handleAmountChange(e.target.value, field.onChange)
-                      }
-                    />
-                    {transactionType && (
-                      <span
-                        className={cn(
-                          "absolute right-3 top-1/2 -translate-y-1/2 text-sm flex items-center gap-1",
-                          parseFloat(watchedAmount) > 0
-                            ? "text-green-600"
-                            : "text-red-600"
-                        )}
-                      >
-                        {getTransactionTypeIcon(watchedAmount)}
-                        {transactionType}
-                      </span>
-                    )}
-                  </div>
-                </FormControl>
-                <FormDescription>
-                  Enter positive for income, negative for expenses
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
+            watchedAmount={watchedAmount}
           />
 
-          {/* Category Selection with Smart Suggestions */}
-          <FormField
+          <CategorySelectionField
             control={form.control}
             name="categoryId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Category</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent className="z-[60]">
-                    {formData.categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: category.color }}
-                          />
-                          <span>{category.name}</span>
-                          <span className="text-muted-foreground text-sm">
-                            ({category.type})
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {/* Smart suggestion indicator */}
-                {watchedDescription &&
-                  suggestCategory(watchedDescription) &&
-                  !field.value && (
-                    <div className="text-xs text-blue-600 flex items-center gap-1 mt-1">
-                      <Zap className="h-3 w-3" />
-                      Smart suggestion available
-                    </div>
-                  )}
-                <FormDescription>
-                  Categories will be auto-suggested based on description.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
+            categories={formData.categories}
+            showSmartSuggestion={true}
+            hasSuggestion={Boolean(
+              watchedDescription &&
+              suggestCategory(watchedDescription, formData.categories) &&
+              !form.getValues("categoryId")
             )}
+            description="Categories will be auto-suggested based on description."
           />
 
-          {/* Transaction Date */}
-          <FormField
+          <TransactionDateField
             control={form.control}
             name="transactionDate"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Transaction Date</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(new Date(field.value), "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 z-[60]" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value ? new Date(field.value) : undefined}
-                      onSelect={(date: Date | undefined) => field.onChange(date?.toISOString())}
-                      disabled={(date: Date) =>
-                        date > new Date() || date < new Date("1900-01-01")
-                      }
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormDescription>
-                  When did this transaction occur?
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
           />
 
-          {/* Description with Smart Suggestions */}
-          <FormField
+          <DescriptionField
             control={form.control}
             name="description"
-            render={({ field }) => (
-              <FormItem className="sm:col-span-2">
-                <FormLabel>Description</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="What was this transaction for?"
-                    className="min-h-20"
-                    {...field}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Add details about this transaction. Categories will be
-                  auto-suggested based on description.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
+            description="Add details about this transaction. Categories will be auto-suggested based on description."
           />
 
-          {/* Receipt Upload */}
-          <FormField
+          <ReceiptUploadField
             control={form.control}
             name="receiptUrl"
-            render={() => (
-              <FormItem className="sm:col-span-2">
-                <FormLabel>Receipt (Optional)</FormLabel>
-                <FormControl>
-                  <div className="space-y-4">
-                    {!receiptPreview ? (
-                      <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
-                        <div className="flex flex-col items-center gap-2 text-center">
-                          <Upload className="h-8 w-8 text-muted-foreground" />
-                          <div className="text-sm text-muted-foreground">
-                            <label
-                              htmlFor="receipt-upload"
-                              className="font-medium text-primary cursor-pointer hover:underline"
-                            >
-                              Click to upload receipt
-                            </label>
-                            <p>PNG, JPG, PDF up to 10MB</p>
-                          </div>
-                          <input
-                            id="receipt-upload"
-                            type="file"
-                            accept="image/*,.pdf"
-                            onChange={handleReceiptUpload}
-                            className="hidden"
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="border rounded-lg p-4 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">
-                            Receipt uploaded
-                          </span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={removeReceipt}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        <Image
-                          src={receiptPreview}
-                          alt="Receipt preview"
-                          width={300}
-                          height={200}
-                          className="w-full max-w-xs mx-auto rounded-lg object-contain"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </FormControl>
-                <FormDescription>
-                  Upload a receipt for this transaction
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
+            receiptPreview={receiptPreview}
+            onReceiptUpload={handleReceiptUpload}
+            onRemoveReceipt={removeReceipt}
           />
         </div>
 
@@ -1131,7 +718,7 @@ export function TransactionCreateForm({
 
             {/* Template List */}
             <div className="grid gap-3 sm:grid-cols-2">
-              {formData.templates.map((template) => (
+              {templates.map((template) => (
                 <div
                   key={template.id}
                   className="p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
@@ -1167,7 +754,7 @@ export function TransactionCreateForm({
                 </div>
               ))}
 
-              {formData.templates.length === 0 && (
+              {templates.length === 0 && (
                 <div className="col-span-2 text-center p-8 text-muted-foreground">
                   <BookOpen className="h-8 w-8 mx-auto mb-2" />
                   <p>No templates saved yet</p>
