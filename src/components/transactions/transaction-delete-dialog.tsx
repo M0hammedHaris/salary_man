@@ -109,7 +109,7 @@ export function TransactionDeleteDialog({
                   <div className="flex items-center gap-1">
                     {getTransactionTypeIcon(transaction.amount)}
                     <span className="font-medium">
-                      ${Math.abs(parseFloat(transaction.amount)).toFixed(2)}
+                      ₹{Math.abs(parseFloat(transaction.amount)).toFixed(2)}
                     </span>
                   </div>
                   <Badge variant={isIncome ? "default" : "destructive"}>

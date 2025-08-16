@@ -48,7 +48,7 @@ The application centers on a dashboard-first approach with comprehensive financi
 **Detailed Instructions:**
 1. Create a TypeScript React component named `CurrencyDisplay.tsx`
 2. Accept props: `amount` (number), `variant` ('standard' | 'compact' | 'large' | 'trend'), `showSign` (boolean), `className` (optional string)
-3. Implement proper USD currency formatting with commas for thousands and 2 decimal precision
+3. Implement proper INR currency formatting with commas for thousands and 2 decimal precision
 4. For 'trend' variant, include directional arrow icons (↑↓) using Lucide React
 5. Apply semantic color coding: green for positive values, red for negative, neutral gray for zero
 6. Include proper ARIA labels for screen reader accessibility

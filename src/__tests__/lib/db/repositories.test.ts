@@ -4,7 +4,7 @@ import { describe, it, expect } from 'vitest';
 describe('Database Schema Validation', () => {
   it('should validate user preferences structure', () => {
     const userPreferences = {
-      currency: 'USD',
+      currency: 'INR',
       dateFormat: 'MM/dd/yyyy',
       alertThresholds: {
         creditCard: 80,
@@ -17,7 +17,7 @@ describe('Database Schema Validation', () => {
       }
     };
 
-    expect(userPreferences.currency).toBe('USD');
+    expect(userPreferences.currency).toBe('INR');
     expect(userPreferences.alertThresholds.creditCard).toBe(80);
     expect(userPreferences.notifications.email).toBe(true);
   });

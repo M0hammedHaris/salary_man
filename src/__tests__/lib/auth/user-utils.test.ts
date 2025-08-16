@@ -71,7 +71,7 @@ describe('User Utilities', () => {
   describe('defaultUserPreferences', () => {
     it('should have correct default values', () => {
       expect(defaultUserPreferences).toEqual({
-        currency: 'USD',
+        currency: 'INR',
         dateFormat: 'MM/dd/yyyy',
         alertThresholds: {
           creditCard: 80,

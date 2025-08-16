@@ -347,7 +347,7 @@ graph TD
 - Loading state with skeleton placeholder
 - Error state with fallback display
 
-**Usage Guidelines:** Always include proper ARIA labels for screen readers. Use consistent decimal precision (2 places for USD). Implement proper number formatting with locale-aware thousand separators.
+**Usage Guidelines:** Always include proper ARIA labels for screen readers. Use consistent decimal precision (2 places for INR). Implement proper number formatting with locale-aware thousand separators.
 
 #### Financial Status Indicator
 

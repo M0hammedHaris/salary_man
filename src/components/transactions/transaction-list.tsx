@@ -147,9 +147,9 @@ export function TransactionList({
 
   const formatAmount = (amount: string): string => {
     const numAmount = parseFloat(amount);
-    const formatter = new Intl.NumberFormat('en-US', {
+    const formatter = new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'INR',
     });
     return formatter.format(Math.abs(numAmount));
   };

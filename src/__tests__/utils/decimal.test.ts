@@ -21,7 +21,7 @@ describe('Currency Utilities', () => {
     });
 
     it('should accept custom currency codes', () => {
-      expect(formatCurrency(1000, 'USD')).toBe('$1,000.00');
+      expect(formatCurrency(1000, 'INR')).toBe('₹1,000.00');
       expect(formatCurrency(1000, 'EUR')).toBe('€1,000.00');
     });
 

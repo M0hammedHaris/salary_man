@@ -33,7 +33,7 @@ describe('Dashboard Service', () => {
     firstName: 'Test',
     lastName: 'User',
     preferences: {
-      currency: 'USD',
+      currency: 'INR',
       dateFormat: 'MM/dd/yyyy',
       alertThresholds: {
         creditCard: 80,
