@@ -60,8 +60,8 @@ export function validateFinancialAmount(value: Decimal): boolean {
 /**
  * Format Decimal or number for display (with currency symbol)
  */
-export function formatCurrency(value: Decimal | number, currency: string = 'USD'): string {
-  const formatter = new Intl.NumberFormat('en-US', {
+export function formatCurrency(value: Decimal | number, currency: string = 'INR'): string {
+  const formatter = new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: currency,
     minimumFractionDigits: 2,
@@ -77,15 +77,25 @@ export function formatCurrency(value: Decimal | number, currency: string = 'USD'
  */
 export function parseUserAmount(input: string): Decimal | null {
   try {
-    // Remove currency symbols and whitespace
-    const cleaned = input.replace(/[$,\s]/g, '');
+    // Handle empty string - return zero as default
+    if (!input || input.trim() === '') {
+      return createDecimal('0');
+    }
+    
+    // Remove currency symbols (including rupee), commas, and whitespace
+    const cleaned = input.replace(/[$₹,\s]/g, '');
     
     // Validate format
     if (!/^-?\d*\.?\d{0,2}$/.test(cleaned)) {
       return null;
     }
     
-    const decimal = new Decimal(cleaned || '0');
+    // Handle empty string after cleaning
+    if (cleaned === '' || cleaned === '-') {
+      return null;
+    }
+    
+    const decimal = new Decimal(cleaned);
     
     // Validate financial constraints
     if (!validateFinancialAmount(decimal)) {

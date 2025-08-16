@@ -82,10 +82,10 @@ describe('Decimal Utilities', () => {
   });
 
   describe('Currency Formatting', () => {
-    it('should format currency with default USD', () => {
+    it('should format currency with default INR', () => {
       const decimal = createDecimal('1234.56');
       const formatted = formatCurrency(decimal);
-      expect(formatted).toBe('$1,234.56');
+      expect(formatted).toBe('₹1,234.56');
     });
 
     it('should format currency with specified currency', () => {
@@ -196,13 +196,13 @@ describe('Decimal Utilities', () => {
     it('should handle zero values', () => {
       const zero = createDecimal('0');
       expect(validateFinancialAmount(zero)).toBe(true);
-      expect(formatCurrency(zero)).toBe('$0.00');
+      expect(formatCurrency(zero)).toBe('₹0.00');
     });
 
     it('should handle negative values', () => {
       const negative = createDecimal('-123.45');
       expect(validateFinancialAmount(negative)).toBe(true);
-      expect(formatCurrency(negative)).toBe('-$123.45');
+      expect(formatCurrency(negative)).toBe('-₹123.45');
     });
 
     it('should handle empty array in addAmounts', () => {

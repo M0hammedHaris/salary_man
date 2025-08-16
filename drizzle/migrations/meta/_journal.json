@@ -8,6 +8,13 @@
       "when": 1754855385148,
       "tag": "0000_keen_malice",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1755352322078,
+      "tag": "0001_update_currency_to_inr",
+      "breakpoints": true
     }
   ]
 }

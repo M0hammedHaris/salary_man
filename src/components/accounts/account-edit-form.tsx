@@ -31,6 +31,7 @@ import {
   accountTypeLabels,
   accountTypeIcons
 } from '@/lib/types/account';
+import { formatCurrency } from '@/lib/utils/decimal';
 import { Loader2, Edit, X } from 'lucide-react';
 
 interface AccountEditFormProps {
@@ -123,10 +124,7 @@ export function AccountEditForm({ account, onSuccess, onCancel, isModal = false 
             <div>
               <p className="text-sm text-muted-foreground">Current Balance</p>
               <p className="text-xl font-semibold">
-                {new Intl.NumberFormat('en-US', {
-                  style: 'currency',
-                  currency: 'USD',
-                }).format(parseFloat(account.balance))}
+                ₹{parseFloat(account.balance).toFixed(2)}
               </p>
             </div>
             <div className="text-xs text-muted-foreground text-right">
@@ -198,7 +196,7 @@ export function AccountEditForm({ account, onSuccess, onCancel, isModal = false 
                   <FormControl>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-                        $
+                        ₹
                       </span>
                       <Input
                         type="text"

@@ -1,0 +1,1 @@
+ALTER TABLE "users" ALTER COLUMN "preferences" SET DEFAULT '{"currency":"INR","dateFormat":"MM/dd/yyyy","alertThresholds":{"creditCard":80,"lowBalance":100},"notifications":{"email":true,"push":true,"sms":false}}'::json;

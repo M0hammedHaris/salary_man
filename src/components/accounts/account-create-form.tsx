@@ -30,6 +30,7 @@ import {
   accountTypeLabels,
   accountTypeIcons
 } from '@/lib/types/account';
+import { formatCurrency } from '@/lib/utils/decimal';
 import { Loader2, Plus } from 'lucide-react';
 
 interface AccountCreateFormProps {
@@ -168,7 +169,7 @@ export function AccountCreateForm({ onSuccess, onCancel, isModal = false }: Acco
                   <FormControl>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-                        $
+                        ₹
                       </span>
                       <Input
                         id="account-balance"
@@ -199,7 +200,7 @@ export function AccountCreateForm({ onSuccess, onCancel, isModal = false }: Acco
                     <FormControl>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-                          $
+                          ₹
                         </span>
                         <Input
                           id="account-credit-limit"

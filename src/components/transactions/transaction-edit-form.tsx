@@ -223,7 +223,7 @@ export function TransactionEditForm({
                         <div className="flex items-center justify-between w-full">
                           <span>{account.name}</span>
                           <span className="text-muted-foreground text-sm ml-2">
-                            ${account.balance}
+                            ₹{account.balance}
                           </span>
                         </div>
                       </SelectItem>
@@ -248,7 +248,7 @@ export function TransactionEditForm({
                 <FormControl>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-                      $
+                      ₹
                     </span>
                     <Input
                       type="text"
