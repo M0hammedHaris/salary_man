@@ -31,7 +31,7 @@ export default function RootLayout({
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
           <NavigationHeader />
-          <main className="min-h-screen">
+          <main className="min-h-screen pt-14">
             {children}
           </main>
         </body>

@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import { DashboardUserButton } from '@/components/dashboard-user-button';
+import { BreadcrumbNavigation } from '@/components/layout/breadcrumb-navigation';
 import { getDashboardData } from '@/lib/services/dashboard';
 import { FinancialHealthScore } from '@/components/dashboard/financial-health-score';
 import { AccountBalanceSummary } from '@/components/dashboard/account-balance-summary';
@@ -18,20 +18,9 @@ async function DashboardContent({ userId }: { userId: string }) {
 
     return (
       <div className="min-h-screen bg-background">
-        <header className="border-b bg-card sticky top-0 z-40">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="flex h-16 items-center justify-between">
-              <div className="flex items-center">
-                <h1 className="text-xl font-semibold text-foreground">Dashboard</h1>
-              </div>
-              <div className="flex items-center space-x-4">
-                <DashboardUserButton />
-              </div>
-            </div>
-          </div>
-        </header>
-
         <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          <BreadcrumbNavigation className="mb-6" />
+          
           {/* Mobile: Single column, Desktop: 3-column grid layout */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
@@ -100,19 +89,8 @@ export default async function DashboardPage() {
     <TooltipProvider>
       <Suspense fallback={
         <div className="min-h-screen bg-background">
-          <header className="border-b bg-card sticky top-0 z-40">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-              <div className="flex h-16 items-center justify-between">
-                <div className="flex items-center">
-                  <h1 className="text-xl font-semibold text-foreground">Dashboard</h1>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <DashboardUserButton />
-                </div>
-              </div>
-            </div>
-          </header>
           <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+            <BreadcrumbNavigation className="mb-6" />
             <DashboardSkeleton />
           </main>
         </div>
