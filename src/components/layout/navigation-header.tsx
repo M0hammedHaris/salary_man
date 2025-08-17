@@ -1,27 +1,33 @@
-"use client"
+"use client";
 
-import React from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { UserButton } from '@clerk/nextjs';
-import { 
+import React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { UserButton } from "@clerk/nextjs";
+import {
   NavigationMenu,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
   navigationMenuTriggerStyle,
-} from '@/components/ui/navigation-menu';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { cn } from '@/lib/utils';
-import { 
-  LayoutDashboard, 
-  CreditCard, 
-  Receipt, 
-  User, 
+} from "@/components/ui/navigation-menu";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+import {
+  LayoutDashboard,
+  CreditCard,
+  Receipt,
+  User,
   Menu,
-  DollarSign
-} from 'lucide-react';
+  DollarSign,
+} from "lucide-react";
 
 interface NavigationItem {
   label: string;
@@ -31,38 +37,38 @@ interface NavigationItem {
 }
 
 const navigationItems: NavigationItem[] = [
-  { 
-    label: 'Dashboard', 
-    href: '/dashboard', 
+  {
+    label: "Dashboard",
+    href: "/dashboard",
     icon: LayoutDashboard,
-    description: 'Overview of your finances'
+    description: "Overview of your finances",
   },
-  { 
-    label: 'Accounts', 
-    href: '/accounts', 
+  {
+    label: "Accounts",
+    href: "/accounts",
     icon: CreditCard,
-    description: 'Manage bank accounts and cards'
+    description: "Manage bank accounts and cards",
   },
-  { 
-    label: 'Transactions', 
-    href: '/transactions', 
+  {
+    label: "Transactions",
+    href: "/transactions",
     icon: Receipt,
-    description: 'View and manage transactions'
+    description: "View and manage transactions",
   },
-  { 
-    label: 'Profile', 
-    href: '/profile', 
+  {
+    label: "Profile",
+    href: "/profile",
     icon: User,
-    description: 'Account settings and preferences'
-  }
+    description: "Account settings and preferences",
+  },
 ];
 
 export function NavigationHeader() {
   const pathname = usePathname();
 
   const isActive = (href: string) => {
-    if (href === '/dashboard') {
-      return pathname === '/dashboard' || pathname === '/';
+    if (href === "/dashboard") {
+      return pathname === "/dashboard" || pathname === "/";
     }
     return pathname.startsWith(href);
   };
@@ -85,18 +91,17 @@ export function NavigationHeader() {
           <NavigationMenuList>
             {navigationItems.map((item) => (
               <NavigationMenuItem key={item.href}>
-                <Link href={item.href} legacyBehavior passHref>
-                  <NavigationMenuLink 
-                    className={cn(
-                      navigationMenuTriggerStyle(),
-                      isActive(item.href) && "bg-accent text-accent-foreground"
-                    )}
-                    aria-current={isActive(item.href) ? 'page' : undefined}
-                  >
-                    <item.icon className="mr-2 h-4 w-4" />
-                    {item.label}
-                  </NavigationMenuLink>
-                </Link>
+                <NavigationMenuLink
+                  className={cn(
+                    navigationMenuTriggerStyle(),
+                    isActive(item.href) && "bg-accent text-accent-foreground"
+                  )}
+                  aria-current={isActive(item.href) ? "page" : undefined}
+                  href={item.href}
+                >
+                  <item.icon className="mr-2 h-4 w-4" />
+                  {item.label}
+                </NavigationMenuLink>
               </NavigationMenuItem>
             ))}
           </NavigationMenuList>
@@ -105,8 +110,8 @@ export function NavigationHeader() {
         {/* Mobile Navigation */}
         <Sheet>
           <SheetTrigger asChild>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               className="mr-2 px-0 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden"
               aria-label="Open navigation menu"
             >
@@ -135,7 +140,7 @@ export function NavigationHeader() {
                       "flex items-center space-x-2 rounded-md px-2 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
                       isActive(item.href) && "bg-accent text-accent-foreground"
                     )}
-                    aria-current={isActive(item.href) ? 'page' : undefined}
+                    aria-current={isActive(item.href) ? "page" : undefined}
                   >
                     <item.icon className="h-4 w-4" />
                     <span>{item.label}</span>
@@ -149,17 +154,17 @@ export function NavigationHeader() {
         {/* Spacer */}
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
           <div className="w-full flex-1 md:w-auto md:flex-none" />
-          
+
           {/* User Profile */}
           <div className="flex items-center space-x-2">
-            <UserButton 
+            <UserButton
               afterSignOutUrl="/sign-in"
               appearance={{
                 elements: {
                   avatarBox: "h-8 w-8",
                   userButtonPopoverCard: "bg-background border border-border",
                   userButtonPopoverActionButton: "hover:bg-accent",
-                }
+                },
               }}
             />
           </div>
