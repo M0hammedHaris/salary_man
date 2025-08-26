@@ -50,6 +50,7 @@ import { cn } from "@/lib/utils";
 interface TransactionCreateFormProps {
   onSuccess?: () => void;
   onCancel?: () => void;
+  isModal?: boolean;
 }
 
 interface TransactionTemplate {
@@ -70,6 +71,7 @@ interface SplitEntry {
 export function TransactionCreateForm({
   onSuccess,
   onCancel,
+  isModal = false,
 }: TransactionCreateFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [templates, setTemplates] = useState<TransactionTemplate[]>([]);
@@ -405,12 +407,12 @@ export function TransactionCreateForm({
   const content = (
     <Form {...form}>
       {/* Quick Actions Section */}
-      <div className="mb-6 p-4 bg-muted/30 rounded-lg border">
-        <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
+      <div className="mb-8 p-6 bg-muted/30 rounded-lg border">
+        <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
           <Zap className="h-4 w-4" />
           Quick Actions
         </h3>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-3">
           <Button
             type="button"
             variant="outline"
@@ -489,9 +491,9 @@ export function TransactionCreateForm({
 
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-4 sm:space-y-6"
+        className="space-y-6 sm:space-y-8"
       >
-        <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 xl:grid-cols-3">
           <AccountSelectionField
             control={form.control}
             name="accountId"
@@ -522,24 +524,28 @@ export function TransactionCreateForm({
             name="transactionDate"
           />
 
-          <DescriptionField
-            control={form.control}
-            name="description"
-            description="Add details about this transaction. Categories will be auto-suggested based on description."
-          />
+          <div className="sm:col-span-2 xl:col-span-1">
+            <DescriptionField
+              control={form.control}
+              name="description"
+              description="Add details about this transaction. Categories will be auto-suggested based on description."
+            />
+          </div>
 
-          <ReceiptUploadField
-            control={form.control}
-            name="receiptUrl"
-            receiptPreview={receiptPreview}
-            onReceiptUpload={handleReceiptUpload}
-            onRemoveReceipt={removeReceipt}
-          />
+          <div className="sm:col-span-2 xl:col-span-1">
+            <ReceiptUploadField
+              control={form.control}
+              name="receiptUrl"
+              receiptPreview={receiptPreview}
+              onReceiptUpload={handleReceiptUpload}
+              onRemoveReceipt={removeReceipt}
+            />
+          </div>
         </div>
 
         {/* Split Transaction Mode */}
         {showSplitMode && (
-          <div className="space-y-4 border-t pt-6">
+          <div className="space-y-6 border-t pt-8">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-medium">Split Transaction</h3>
               <Button
@@ -561,7 +567,7 @@ export function TransactionCreateForm({
             </p>
 
             {/* Split Entries */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               {splitEntries.map((entry, index) => (
                 <div
                   key={index}
@@ -684,7 +690,7 @@ export function TransactionCreateForm({
 
         {/* Transaction Templates */}
         {showTemplates && (
-          <div className="space-y-4 border-t pt-6">
+          <div className="space-y-6 border-t pt-8">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-medium">Transaction Templates</h3>
               <div className="flex gap-2">
@@ -768,7 +774,7 @@ export function TransactionCreateForm({
 
         {/* Bulk Transaction Entry */}
         {showBulkMode && (
-          <div className="space-y-4 border-t pt-6">
+          <div className="space-y-6 border-t pt-8">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-medium">Bulk Transaction Entry</h3>
               <div className="flex gap-2">
@@ -801,7 +807,7 @@ export function TransactionCreateForm({
             </p>
 
             {/* Bulk Entries */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               {bulkEntries.map((entry, index) => (
                 <div
                   key={index}
@@ -979,8 +985,14 @@ export function TransactionCreateForm({
     </Form>
   );
 
+  // If used in a modal, return content without Card wrapper
+  if (isModal) {
+    return content;
+  }
+
+  // Default standalone Card layout
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Plus className="h-5 w-5" />

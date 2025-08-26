@@ -92,17 +92,21 @@ export function TransactionManagementClient() {
                 Add Transaction
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-[95vw] sm:max-w-4xl lg:max-w-5xl max-h-[90vh] overflow-visible">
               <DialogHeader>
                 <DialogTitle>Create New Transaction</DialogTitle>
                 <DialogDescription>
                   Add a new income or expense transaction to track your finances.
                 </DialogDescription>
               </DialogHeader>
-              <TransactionCreateForm 
-                onSuccess={handleCreateSuccess} 
-                onCancel={() => setIsCreateDialogOpen(false)}
-              />
+              {/* internal scroll wrapper keeps dialog scrollable without creating clipping stacking context */}
+              <div className="max-h-[80vh] overflow-y-auto pr-2">
+                <TransactionCreateForm 
+                  onSuccess={handleCreateSuccess} 
+                  onCancel={() => setIsCreateDialogOpen(false)}
+                  isModal={true}
+                />
+              </div>
             </DialogContent>
           </Dialog>
 

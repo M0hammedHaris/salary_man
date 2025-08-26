@@ -101,8 +101,8 @@ export function TransactionEditForm({
 
   const content = (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid gap-4 sm:grid-cols-2">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 sm:space-y-8">
+        <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 xl:grid-cols-3">
           <AccountSelectionField
             control={form.control}
             name="accountId"
@@ -126,18 +126,22 @@ export function TransactionEditForm({
             name="transactionDate"
           />
 
-          <DescriptionField
-            control={form.control}
-            name="description"
-          />
+          <div className="sm:col-span-2 xl:col-span-1">
+            <DescriptionField
+              control={form.control}
+              name="description"
+            />
+          </div>
 
-          <ReceiptUploadField
-            control={form.control}
-            name="receiptUrl"
-            receiptPreview={receiptPreview}
-            onReceiptUpload={handleReceiptUpload}
-            onRemoveReceipt={removeReceipt}
-          />
+          <div className="sm:col-span-2 xl:col-span-1">
+            <ReceiptUploadField
+              control={form.control}
+              name="receiptUrl"
+              receiptPreview={receiptPreview}
+              onReceiptUpload={handleReceiptUpload}
+              onRemoveReceipt={removeReceipt}
+            />
+          </div>
         </div>
 
         {form.formState.errors.root && (
