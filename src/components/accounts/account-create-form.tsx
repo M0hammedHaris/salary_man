@@ -30,7 +30,6 @@ import {
   accountTypeLabels,
   accountTypeIcons
 } from '@/lib/types/account';
-import { formatCurrency } from '@/lib/utils/decimal';
 import { Loader2, Plus } from 'lucide-react';
 
 interface AccountCreateFormProps {

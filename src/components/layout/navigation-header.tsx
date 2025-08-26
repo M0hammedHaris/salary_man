@@ -27,6 +27,7 @@ import {
   User,
   Menu,
   DollarSign,
+  Bell,
 } from "lucide-react";
 
 interface NavigationItem {
@@ -54,6 +55,12 @@ const navigationItems: NavigationItem[] = [
     href: "/transactions",
     icon: Receipt,
     description: "View and manage transactions",
+  },
+  {
+    label: "Alerts",
+    href: "/dashboard/alerts",
+    icon: Bell,
+    description: "Credit card usage alerts",
   },
   {
     label: "Profile",

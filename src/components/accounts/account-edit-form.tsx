@@ -31,7 +31,6 @@ import {
   accountTypeLabels,
   accountTypeIcons
 } from '@/lib/types/account';
-import { formatCurrency } from '@/lib/utils/decimal';
 import { Loader2, Edit, X } from 'lucide-react';
 
 interface AccountEditFormProps {
