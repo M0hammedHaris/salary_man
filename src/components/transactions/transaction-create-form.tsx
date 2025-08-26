@@ -407,147 +407,163 @@ export function TransactionCreateForm({
   const content = (
     <Form {...form}>
       {/* Quick Actions Section */}
-      <div className="mb-8 p-6 bg-muted/30 rounded-lg border">
-        <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
-          <Zap className="h-4 w-4" />
-          Quick Actions
-        </h3>
-        <div className="flex flex-wrap gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              form.setValue("description", "Salary payment");
-              form.setValue("amount", "");
-              // Look for exact "Salary" match first, then fallback to contains logic
-              const salaryCategory =
-                formData.categories.find(
-                  (cat) => cat.name.toLowerCase() === "salary"
-                ) ||
-                formData.categories.find((cat) =>
-                  cat.name.toLowerCase().includes("salary")
-                );
-              if (salaryCategory)
-                form.setValue("categoryId", salaryCategory.id);
-            }}
-          >
-            <Copy className="h-3 w-3 mr-1" />
-            Salary
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              form.setValue("description", "Grocery shopping");
-              form.setValue("amount", "-");
-              // Look for exact "Groceries" match first, then fallback to contains logic
-              const groceryCategory =
-                formData.categories.find(
-                  (cat) => cat.name.toLowerCase() === "groceries"
-                ) ||
-                formData.categories.find(
-                  (cat) =>
-                    cat.name.toLowerCase().includes("grocery") ||
-                    cat.name.toLowerCase().includes("food")
-                );
-              if (groceryCategory)
-                form.setValue("categoryId", groceryCategory.id);
-            }}
-          >
-            <Copy className="h-3 w-3 mr-1" />
-            Groceries
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setShowSplitMode(!showSplitMode)}
-          >
-            <Split className="h-3 w-3 mr-1" />
-            Split Transaction
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setShowTemplates(!showTemplates)}
-          >
-            <BookOpen className="h-3 w-3 mr-1" />
-            Templates
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setShowBulkMode(!showBulkMode)}
-          >
-            <Plus className="h-3 w-3 mr-1" />
-            Bulk Entry
-          </Button>
-        </div>
-      </div>
-
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-6 sm:space-y-8"
-      >
-        <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 xl:grid-cols-3">
-          <AccountSelectionField
-            control={form.control}
-            name="accountId"
-            accounts={formData.accounts}
-          />
-
-          <AmountInputField
-            control={form.control}
-            name="amount"
-            watchedAmount={watchedAmount}
-          />
-
-          <CategorySelectionField
-            control={form.control}
-            name="categoryId"
-            categories={formData.categories}
-            showSmartSuggestion={true}
-            hasSuggestion={Boolean(
-              watchedDescription &&
-              suggestCategory(watchedDescription, formData.categories) &&
-              !form.getValues("categoryId")
-            )}
-            description="Categories will be auto-suggested based on description."
-          />
-
-          <TransactionDateField
-            control={form.control}
-            name="transactionDate"
-          />
-
-          <div className="sm:col-span-2 xl:col-span-1">
-            <DescriptionField
-              control={form.control}
-              name="description"
-              description="Add details about this transaction. Categories will be auto-suggested based on description."
-            />
-          </div>
-
-          <div className="sm:col-span-2 xl:col-span-1">
-            <ReceiptUploadField
-              control={form.control}
-              name="receiptUrl"
-              receiptPreview={receiptPreview}
-              onReceiptUpload={handleReceiptUpload}
-              onRemoveReceipt={removeReceipt}
-            />
+      <div className={cn(
+        "bg-muted/30 rounded-lg border",
+        isModal ? "mb-4 p-4" : "mb-8 p-6"
+      )}>
+          <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
+            <Zap className="h-4 w-4" />
+            Quick Actions
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                form.setValue("description", "Salary payment");
+                form.setValue("amount", "");
+                // Look for exact "Salary" match first, then fallback to contains logic
+                const salaryCategory =
+                  formData.categories.find(
+                    (cat) => cat.name.toLowerCase() === "salary"
+                  ) ||
+                  formData.categories.find((cat) =>
+                    cat.name.toLowerCase().includes("salary")
+                  );
+                if (salaryCategory)
+                  form.setValue("categoryId", salaryCategory.id);
+              }}
+            >
+              <Copy className="h-3 w-3 mr-1" />
+              Salary
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                form.setValue("description", "Grocery shopping");
+                form.setValue("amount", "-");
+                // Look for exact "Groceries" match first, then fallback to contains logic
+                const groceryCategory =
+                  formData.categories.find(
+                    (cat) => cat.name.toLowerCase() === "groceries"
+                  ) ||
+                  formData.categories.find(
+                    (cat) =>
+                      cat.name.toLowerCase().includes("grocery") ||
+                      cat.name.toLowerCase().includes("food")
+                  );
+                if (groceryCategory)
+                  form.setValue("categoryId", groceryCategory.id);
+              }}
+            >
+              <Copy className="h-3 w-3 mr-1" />
+              Groceries
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowSplitMode(!showSplitMode)}
+            >
+              <Split className="h-3 w-3 mr-1" />
+              Split Transaction
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowTemplates(!showTemplates)}
+            >
+              <BookOpen className="h-3 w-3 mr-1" />
+              Templates
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowBulkMode(!showBulkMode)}
+            >
+              <Plus className="h-3 w-3 mr-1" />
+              Bulk Entry
+            </Button>
           </div>
         </div>
 
-        {/* Split Transaction Mode */}
-        {showSplitMode && (
-          <div className="space-y-6 border-t pt-8">
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className={cn(
+            isModal ? "space-y-4" : "space-y-6 sm:space-y-8"
+          )}
+        >
+          <div className={cn(
+            "grid gap-4",
+            isModal 
+              ? "sm:grid-cols-2" 
+              : "sm:gap-6 sm:grid-cols-2 xl:grid-cols-3"
+          )}>
+            <AccountSelectionField
+              control={form.control}
+              name="accountId"
+              accounts={formData.accounts}
+            />
+
+            <AmountInputField
+              control={form.control}
+              name="amount"
+              watchedAmount={watchedAmount}
+            />
+
+            <CategorySelectionField
+              control={form.control}
+              name="categoryId"
+              categories={formData.categories}
+              showSmartSuggestion={true}
+              hasSuggestion={Boolean(
+                watchedDescription &&
+                suggestCategory(watchedDescription, formData.categories) &&
+                !form.getValues("categoryId")
+              )}
+              description="Categories will be auto-suggested based on description."
+            />
+
+            <TransactionDateField
+              control={form.control}
+              name="transactionDate"
+            />
+
+            <div className={cn(isModal ? "col-span-2" : "sm:col-span-2 xl:col-span-1")}>
+              <DescriptionField
+                control={form.control}
+                name="description"
+                description="Add details about this transaction. Categories will be auto-suggested based on description."
+              />
+            </div>
+
+            <div className={cn(isModal ? "col-span-2" : "sm:col-span-2 xl:col-span-1")}>
+              <ReceiptUploadField
+                control={form.control}
+                name="receiptUrl"
+                receiptPreview={receiptPreview}
+                onReceiptUpload={handleReceiptUpload}
+                onRemoveReceipt={removeReceipt}
+              />
+            </div>
+          </div>
+
+          {/* Split Transaction Mode */}
+          {showSplitMode && (
+            <div className={cn(
+              "border-t",
+              isModal ? "space-y-4 pt-4" : "space-y-6 pt-8"
+            )}>
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium">Split Transaction</h3>
+              <h3 className={cn(
+                "font-medium",
+                isModal ? "text-base" : "text-lg"
+              )}>Split Transaction</h3>
               <Button
                 type="button"
                 variant="outline"
@@ -567,11 +583,16 @@ export function TransactionCreateForm({
             </p>
 
             {/* Split Entries */}
-            <div className="space-y-4">
+            <div className={cn(isModal ? "space-y-3" : "space-y-4")}>
               {splitEntries.map((entry, index) => (
                 <div
                   key={index}
-                  className="grid grid-cols-12 gap-2 items-end p-3 border rounded-lg"
+                  className={cn(
+                    "grid gap-2 items-end border rounded-lg",
+                    isModal 
+                      ? "grid-cols-1 sm:grid-cols-12 p-2" 
+                      : "grid-cols-12 p-3"
+                  )}
                 >
                   <div className="col-span-5">
                     <label className="text-sm font-medium">Category</label>
@@ -690,9 +711,15 @@ export function TransactionCreateForm({
 
         {/* Transaction Templates */}
         {showTemplates && (
-          <div className="space-y-6 border-t pt-8">
+          <div className={cn(
+            "border-t",
+            isModal ? "space-y-4 pt-4" : "space-y-6 pt-8"
+          )}>
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium">Transaction Templates</h3>
+              <h3 className={cn(
+                "font-medium",
+                isModal ? "text-base" : "text-lg"
+              )}>Transaction Templates</h3>
               <div className="flex gap-2">
                 <Button
                   type="button"
@@ -721,7 +748,10 @@ export function TransactionCreateForm({
             </p>
 
             {/* Template List */}
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className={cn(
+              "grid gap-3",
+              isModal ? "grid-cols-1" : "sm:grid-cols-2"
+            )}>
               {templates.map((template) => (
                 <div
                   key={template.id}
@@ -774,9 +804,15 @@ export function TransactionCreateForm({
 
         {/* Bulk Transaction Entry */}
         {showBulkMode && (
-          <div className="space-y-6 border-t pt-8">
+          <div className={cn(
+            "border-t",
+            isModal ? "space-y-4 pt-4" : "space-y-6 pt-8"
+          )}>
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium">Bulk Transaction Entry</h3>
+              <h3 className={cn(
+                "font-medium",
+                isModal ? "text-base" : "text-lg"
+              )}>Bulk Transaction Entry</h3>
               <div className="flex gap-2">
                 <Button
                   type="button"
@@ -807,11 +843,16 @@ export function TransactionCreateForm({
             </p>
 
             {/* Bulk Entries */}
-            <div className="space-y-4">
+            <div className={cn(isModal ? "space-y-3" : "space-y-4")}>
               {bulkEntries.map((entry, index) => (
                 <div
                   key={index}
-                  className="grid grid-cols-12 gap-2 items-end p-3 border rounded-lg"
+                  className={cn(
+                    "grid gap-2 items-end border rounded-lg",
+                    isModal 
+                      ? "grid-cols-1 sm:grid-cols-12 p-2" 
+                      : "grid-cols-12 p-3"
+                  )}
                 >
                   <div className="col-span-3">
                     <label className="text-sm font-medium">Account</label>
@@ -946,13 +987,19 @@ export function TransactionCreateForm({
 
         {/* Error Message */}
         {form.formState.errors.root && (
-          <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+          <div className={cn(
+            "text-sm text-destructive bg-destructive/10 rounded-md",
+            isModal ? "p-2" : "p-3"
+          )}>
             {form.formState.errors.root.message}
           </div>
         )}
 
         {/* Form Actions */}
-        <div className="flex gap-3 justify-end">
+        <div className={cn(
+          "flex gap-3 justify-end",
+          isModal && "pt-2"
+        )}>
           {onCancel && (
             <Button
               type="button"
@@ -982,7 +1029,7 @@ export function TransactionCreateForm({
           </Button>
         </div>
       </form>
-    </Form>
+      </Form>
   );
 
   // If used in a modal, return content without Card wrapper
