@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { repositories } from '@/lib/db/repositories';
 import { updateTransactionSchema } from '@/lib/types/transaction';
+import { AlertService } from '@/lib/services/alert-service';
 import { ZodError } from 'zod';
 
 // GET /api/transactions/[id] - Get specific transaction
@@ -133,6 +134,14 @@ export async function PUT(
       );
     }
 
+    // Check for credit card alerts after transaction update
+    try {
+      await AlertService.processAccountAlerts(userId, updatedTransaction.accountId);
+    } catch (alertError) {
+      console.error('Alert processing error after transaction update:', alertError);
+      // Don't fail the transaction update if alert processing fails
+    }
+
     // Transform response
     const responseTransaction = {
       id: updatedTransaction.id,
@@ -201,6 +210,14 @@ export async function DELETE(
         { error: 'Failed to delete transaction' },
         { status: 500 }
       );
+    }
+
+    // Check for credit card alerts after transaction deletion
+    try {
+      await AlertService.processAccountAlerts(userId, existingTransaction.accountId);
+    } catch (alertError) {
+      console.error('Alert processing error after transaction deletion:', alertError);
+      // Don't fail the transaction deletion if alert processing fails
     }
 
     return NextResponse.json({ message: 'Transaction deleted successfully' });

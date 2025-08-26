@@ -5,6 +5,7 @@ import {
   createTransactionSchema, 
   getTransactionsQuerySchema
 } from '@/lib/types/transaction';
+import { AlertService } from '@/lib/services/alert-service';
 import { ZodError } from 'zod';
 
 // GET /api/transactions - Retrieve user transactions with filtering
@@ -123,6 +124,20 @@ export async function POST(request: NextRequest) {
 
     // Create transaction and update account balance atomically
     const newTransaction = await repositories.transactions.createWithBalanceUpdate(transactionData);
+    
+    // Trigger alert checking for credit card accounts
+    if (account.type === 'credit_card') {
+      try {
+        // Get updated account balance and check for alerts
+        const updatedAccount = await repositories.accounts.findById(validatedData.accountId, userId);
+        if (updatedAccount) {
+          await AlertService.processAccountAlerts(userId, updatedAccount.id);
+        }
+      } catch (alertError) {
+        // Log alert error but don't fail the transaction
+        console.error('Error processing alerts for transaction:', alertError);
+      }
+    }
     
     // Transform response
     const responseTransaction = {

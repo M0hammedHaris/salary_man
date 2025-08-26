@@ -6,7 +6,8 @@ import {
   numeric, 
   pgEnum, 
   json, 
-  uuid
+  uuid,
+  index
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -32,6 +33,20 @@ export const paymentFrequencyEnum = pgEnum('payment_frequency', [
   'monthly', 
   'quarterly', 
   'yearly'
+]);
+
+export const alertTypeEnum = pgEnum('alert_type', [
+  'credit_utilization',
+  'low_balance',
+  'spending_limit',
+  'unusual_activity'
+]);
+
+export const alertStatusEnum = pgEnum('alert_status', [
+  'triggered',
+  'acknowledged',
+  'dismissed',
+  'snoozed'
 ]);
 
 // User Preferences Type
@@ -130,12 +145,51 @@ export const recurringPayments = pgTable('recurring_payments', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+// Alert Settings table - stores customizable thresholds per account
+export const alertSettings = pgTable('alert_settings', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  accountId: uuid('account_id').references(() => accounts.id, { onDelete: 'cascade' }).notNull(),
+  alertType: alertTypeEnum('alert_type').notNull(),
+  thresholdPercentage: numeric('threshold_percentage', { precision: 5, scale: 2 }),
+  thresholdAmount: numeric('threshold_amount', { precision: 12, scale: 2 }),
+  isEnabled: boolean('is_enabled').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  userAccountIdx: index('alert_settings_user_account_idx').on(table.userId, table.accountId),
+  typeEnabledIdx: index('alert_settings_type_enabled_idx').on(table.alertType, table.isEnabled),
+}));
+
+// Alerts table - tracks alert history and acknowledgments
+export const alerts = pgTable('alerts', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  accountId: uuid('account_id').references(() => accounts.id, { onDelete: 'cascade' }).notNull(),
+  alertType: alertTypeEnum('alert_type').notNull(),
+  message: text('message').notNull(),
+  currentValue: numeric('current_value', { precision: 12, scale: 2 }).notNull(),
+  thresholdValue: numeric('threshold_value', { precision: 12, scale: 2 }).notNull(),
+  status: alertStatusEnum('status').notNull().default('triggered'),
+  triggeredAt: timestamp('triggered_at', { withTimezone: true }).defaultNow().notNull(),
+  acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true }),
+  snoozeUntil: timestamp('snooze_until', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  userTriggeredIdx: index('alerts_user_triggered_idx').on(table.userId, table.triggeredAt),
+  accountStatusIdx: index('alerts_account_status_idx').on(table.accountId, table.status),
+  statusTriggeredIdx: index('alerts_status_triggered_idx').on(table.status, table.triggeredAt),
+}));
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
   categories: many(categories),
   transactions: many(transactions),
   recurringPayments: many(recurringPayments),
+  alerts: many(alerts),
+  alertSettings: many(alertSettings),
 }));
 
 export const accountsRelations = relations(accounts, ({ one, many }) => ({
@@ -145,6 +199,8 @@ export const accountsRelations = relations(accounts, ({ one, many }) => ({
   }),
   transactions: many(transactions),
   recurringPayments: many(recurringPayments),
+  alerts: many(alerts),
+  alertSettings: many(alertSettings),
 }));
 
 export const categoriesRelations = relations(categories, ({ one, many }) => ({
@@ -194,6 +250,28 @@ export const recurringPaymentsRelations = relations(recurringPayments, ({ one })
   }),
 }));
 
+export const alertsRelations = relations(alerts, ({ one }) => ({
+  user: one(users, {
+    fields: [alerts.userId],
+    references: [users.id],
+  }),
+  account: one(accounts, {
+    fields: [alerts.accountId],
+    references: [accounts.id],
+  }),
+}));
+
+export const alertSettingsRelations = relations(alertSettings, ({ one }) => ({
+  user: one(users, {
+    fields: [alertSettings.userId],
+    references: [users.id],
+  }),
+  account: one(accounts, {
+    fields: [alertSettings.accountId],
+    references: [accounts.id],
+  }),
+}));
+
 // TypeScript types derived from schema
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -205,8 +283,14 @@ export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
 export type RecurringPayment = typeof recurringPayments.$inferSelect;
 export type NewRecurringPayment = typeof recurringPayments.$inferInsert;
+export type Alert = typeof alerts.$inferSelect;
+export type NewAlert = typeof alerts.$inferInsert;
+export type AlertSettings = typeof alertSettings.$inferSelect;
+export type NewAlertSettings = typeof alertSettings.$inferInsert;
 
 // Enum types
 export type AccountType = typeof accounts.type.enumValues[number];
 export type CategoryType = typeof categories.type.enumValues[number];
 export type PaymentFrequency = typeof recurringPayments.frequency.enumValues[number];
+export type AlertType = typeof alerts.alertType.enumValues[number];
+export type AlertStatus = typeof alerts.status.enumValues[number];
