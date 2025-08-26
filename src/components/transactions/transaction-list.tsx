@@ -36,6 +36,7 @@ import { type Transaction } from '@/lib/types/transaction';
 import { type Account } from '@/lib/types/account';
 import { type Category } from '@/lib/types/category';
 import { cn } from '@/lib/utils';
+import { useModalManager } from '@/lib/hooks/use-modal-manager';
 
 interface TransactionListProps {
   accountId?: string;
@@ -65,6 +66,9 @@ export function TransactionList({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  
+  // Use modal manager to handle pointer events cleanup
+  const { restorePointerEvents } = useModalManager(!!editingTransaction);
   
   // Create lookup maps for enriched data
   const [accounts, setAccounts] = useState<Record<string, Account>>({});
@@ -138,7 +142,16 @@ export function TransactionList({
 
   const handleEditSuccess = () => {
     setEditingTransaction(null);
-    loadTransactions();
+    restorePointerEvents();
+    // Small delay to ensure modal cleanup before reloading
+    setTimeout(() => {
+      loadTransactions();
+    }, 100);
+  };
+
+  const handleEditCancel = () => {
+    setEditingTransaction(null);
+    restorePointerEvents();
   };
 
   const handleDeleteSuccess = () => {
@@ -360,8 +373,18 @@ export function TransactionList({
       </Card>
 
       {/* Edit Transaction Dialog */}
-      <Dialog open={!!editingTransaction} onOpenChange={(open) => !open && setEditingTransaction(null)}>
-        <DialogContent className="sm:max-w-2xl">
+      <Dialog 
+        key={editingTransaction?.id || 'edit-dialog'}
+        open={!!editingTransaction} 
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditingTransaction(null);
+            restorePointerEvents();
+          }
+        }}
+        modal={true}
+      >
+        <DialogContent className="sm:max-w-3xl lg:max-w-4xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>Edit Transaction</DialogTitle>
             <DialogDescription>
@@ -370,9 +393,10 @@ export function TransactionList({
           </DialogHeader>
           {editingTransaction && (
             <TransactionEditForm
+              key={editingTransaction.id}
               transaction={editingTransaction}
               onSuccess={handleEditSuccess}
-              onCancel={() => setEditingTransaction(null)}
+              onCancel={handleEditCancel}
               isModal={true}
             />
           )}

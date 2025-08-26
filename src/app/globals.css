@@ -167,4 +167,14 @@
     @apply bg-background text-foreground;
     letter-spacing: var(--tracking-normal);
   }
+  
+  /* Defensive CSS to prevent modal overlay issues */
+  body:not([data-overlay-open]) {
+    pointer-events: auto !important;
+  }
+  
+  /* Ensure modal overlays work correctly */
+  [data-radix-modal-content] {
+    pointer-events: auto;
+  }
 }

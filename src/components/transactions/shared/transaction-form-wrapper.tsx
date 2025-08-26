@@ -24,7 +24,7 @@ export function TransactionFormWrapper({
   icon,
 }: TransactionFormWrapperProps) {
   if (isModal) {
-    return <>{children}</>;
+    return <div className="space-y-4">{children}</div>;
   }
 
   return (
