@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,21 +20,16 @@ import { formatDistanceToNow } from 'date-fns';
 interface AlertItem {
   id: string;
   accountId: string;
-  accountName: string;
-  type: 'threshold' | 'limit_exceeded' | 'payment_reminder';
-  severity: 'info' | 'warning' | 'error';
-  title: string;
+  alertType: 'credit_utilization' | 'low_balance' | 'spending_limit' | 'unusual_activity';
   message: string;
-  utilizationPercentage: number;
-  currentBalance: number;
-  creditLimit: number;
-  thresholdValue: number;
-  isRead: boolean;
-  isAcknowledged: boolean;
-  isSnoozed: boolean;
-  snoozeUntil?: Date;
-  createdAt: Date;
-  acknowledgedAt?: Date;
+  currentValue: string;
+  thresholdValue: string;
+  status: 'triggered' | 'acknowledged' | 'dismissed' | 'snoozed';
+  triggeredAt: string;
+  acknowledgedAt?: string;
+  snoozeUntil?: string;
+  updatedAt: string;
+  createdAt: string;
 }
 
 interface AlertCenterProps {
@@ -44,88 +39,73 @@ interface AlertCenterProps {
   maxHeight?: string;
 }
 
-const MOCK_ALERTS: AlertItem[] = [
-  {
-    id: '1',
-    accountId: 'acc-1',
-    accountName: 'HDFC Credit Card',
-    type: 'threshold',
-    severity: 'warning',
-    title: 'Credit Utilization Alert',
-    message: 'Your credit card utilization has reached 75% of your credit limit.',
-    utilizationPercentage: 75.5,
-    currentBalance: -75500,
-    creditLimit: 100000,
-    thresholdValue: 70,
-    isRead: false,
-    isAcknowledged: false,
-    isSnoozed: false,
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-  },
-  {
-    id: '2',
-    accountId: 'acc-2',
-    accountName: 'SBI Credit Card',
-    type: 'threshold',
-    severity: 'error',
-    title: 'High Credit Utilization',
-    message: 'Your credit card utilization has exceeded 90% of your credit limit.',
-    utilizationPercentage: 92.3,
-    currentBalance: -138450,
-    creditLimit: 150000,
-    thresholdValue: 90,
-    isRead: true,
-    isAcknowledged: false,
-    isSnoozed: false,
-    createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 hours ago
-  },
-  {
-    id: '3',
-    accountId: 'acc-1',
-    accountName: 'HDFC Credit Card',
-    type: 'threshold',
-    severity: 'info',
-    title: 'Utilization Decreased',
-    message: 'Great! Your credit utilization is now below 50%.',
-    utilizationPercentage: 45.2,
-    currentBalance: -45200,
-    creditLimit: 100000,
-    thresholdValue: 50,
-    isRead: true,
-    isAcknowledged: true,
-    isSnoozed: false,
-    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
-    acknowledgedAt: new Date(Date.now() - 23 * 60 * 60 * 1000),
-  }
-];
-
 export function AlertCenter({ 
   className, 
   showFilter = true, 
   showSettings = true,
   maxHeight = "600px" 
 }: AlertCenterProps) {
-  const [alerts, setAlerts] = useState<AlertItem[]>(MOCK_ALERTS);
+  const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [filter, setFilter] = useState<'all' | 'unread' | 'acknowledged'>('all');
   const [loading, setLoading] = useState(false);
+  const [accounts, setAccounts] = useState<Record<string, { name: string; type: string }>>({});
+
+  // Fetch alerts and account information
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        // Fetch alerts
+        const alertsResponse = await fetch('/api/alerts');
+        if (alertsResponse.ok) {
+          const alertsData = await alertsResponse.json();
+          setAlerts(alertsData.data || []);
+        }
+
+        // Fetch accounts for mapping alert account IDs to names
+        const accountsResponse = await fetch('/api/accounts');
+        if (accountsResponse.ok) {
+          const accountsData = await accountsResponse.json();
+          const accountMap = accountsData.data?.reduce((acc: Record<string, { name: string; type: string }>, account: { id: string; name: string; type: string }) => {
+            acc[account.id] = { name: account.name, type: account.type };
+            return acc;
+          }, {});
+          setAccounts(accountMap || {});
+        }
+      } catch (error) {
+        console.error('Failed to fetch alerts:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const filteredAlerts = alerts.filter(alert => {
-    if (filter === 'unread') return !alert.isRead;
-    if (filter === 'acknowledged') return alert.isAcknowledged;
+    if (filter === 'unread') return alert.status === 'triggered';
+    if (filter === 'acknowledged') return alert.status === 'acknowledged';
     return true;
   });
 
-  const unreadCount = alerts.filter(alert => !alert.isRead).length;
+  const unreadCount = alerts.filter(alert => alert.status === 'triggered').length;
 
   const handleAcknowledge = async (alertId: string) => {
     setLoading(true);
     try {
-      // TODO: Call API to acknowledge alert
-      setAlerts(prev => prev.map(alert => 
-        alert.id === alertId 
-          ? { ...alert, isAcknowledged: true, acknowledgedAt: new Date() }
-          : alert
-      ));
+      const response = await fetch('/api/alerts/acknowledge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ alertId })
+      });
+
+      if (response.ok) {
+        setAlerts(prev => prev.map(alert => 
+          alert.id === alertId 
+            ? { ...alert, status: 'acknowledged' as const, acknowledgedAt: new Date().toISOString() }
+            : alert
+        ));
+      }
     } catch (error) {
       console.error('Failed to acknowledge alert:', error);
     } finally {
@@ -136,13 +116,20 @@ export function AlertCenter({
   const handleSnooze = async (alertId: string, hours: number = 24) => {
     setLoading(true);
     try {
-      // TODO: Call API to snooze alert
-      const snoozeUntil = new Date(Date.now() + hours * 60 * 60 * 1000);
-      setAlerts(prev => prev.map(alert => 
-        alert.id === alertId 
-          ? { ...alert, isSnoozed: true, snoozeUntil }
-          : alert
-      ));
+      const response = await fetch('/api/alerts/snooze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ alertId, snoozeMinutes: hours * 60 })
+      });
+
+      if (response.ok) {
+        const snoozeUntil = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
+        setAlerts(prev => prev.map(alert => 
+          alert.id === alertId 
+            ? { ...alert, status: 'snoozed' as const, snoozeUntil }
+            : alert
+        ));
+      }
     } catch (error) {
       console.error('Failed to snooze alert:', error);
     } finally {
@@ -153,8 +140,15 @@ export function AlertCenter({
   const handleDismiss = async (alertId: string) => {
     setLoading(true);
     try {
-      // TODO: Call API to dismiss alert
-      setAlerts(prev => prev.filter(alert => alert.id !== alertId));
+      const response = await fetch('/api/alerts/dismiss', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ alertId })
+      });
+
+      if (response.ok) {
+        setAlerts(prev => prev.filter(alert => alert.id !== alertId));
+      }
     } catch (error) {
       console.error('Failed to dismiss alert:', error);
     } finally {
@@ -162,37 +156,51 @@ export function AlertCenter({
     }
   };
 
-  const handleMarkAsRead = async (alertId: string) => {
-    setAlerts(prev => prev.map(alert => 
-      alert.id === alertId 
-        ? { ...alert, isRead: true }
-        : alert
-    ));
+  const getSeverityFromMessage = (message: string, currentValue: string) => {
+    const current = parseFloat(currentValue);
+    
+    if (current >= 90) return 'critical';
+    if (current >= 70) return 'danger';
+    if (current >= 50) return 'warning';
+    return 'safe';
   };
 
-  const getSeverityIcon = (severity: AlertItem['severity']) => {
+  const getSeverityIcon = (severity: string) => {
     switch (severity) {
-      case 'error':
+      case 'critical':
+      case 'danger':
         return <AlertTriangle className="h-4 w-4 text-red-500" />;
       case 'warning':
         return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
-      case 'info':
-        return <CheckCircle className="h-4 w-4 text-blue-500" />;
       default:
-        return <Bell className="h-4 w-4 text-gray-500" />;
+        return <CheckCircle className="h-4 w-4 text-blue-500" />;
     }
   };
 
-  const getSeverityColor = (severity: AlertItem['severity']) => {
+  const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'error':
+      case 'critical':
+      case 'danger':
         return 'border-red-200 bg-red-50';
       case 'warning':
         return 'border-yellow-200 bg-yellow-50';
-      case 'info':
-        return 'border-blue-200 bg-blue-50';
       default:
-        return 'border-gray-200 bg-gray-50';
+        return 'border-blue-200 bg-blue-50';
+    }
+  };
+
+  const getTitleFromAlertType = (alertType: string) => {
+    switch (alertType) {
+      case 'credit_utilization':
+        return 'Credit Utilization Alert';
+      case 'low_balance':
+        return 'Low Balance Alert';
+      case 'spending_limit':
+        return 'Spending Limit Alert';
+      case 'unusual_activity':
+        return 'Unusual Activity Alert';
+      default:
+        return 'Financial Alert';
     }
   };
 
@@ -259,7 +267,12 @@ export function AlertCenter({
           className="space-y-2 max-h-full overflow-y-auto px-6 pb-6"
           style={{ maxHeight }}
         >
-          {filteredAlerts.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-8 text-gray-500">
+              <Bell className="h-12 w-12 mx-auto mb-4 text-gray-300 animate-pulse" />
+              <p className="text-sm">Loading alerts...</p>
+            </div>
+          ) : filteredAlerts.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <Bell className="h-12 w-12 mx-auto mb-4 text-gray-300" />
               <p className="text-sm">
@@ -269,111 +282,114 @@ export function AlertCenter({
               </p>
             </div>
           ) : (
-            filteredAlerts.map((alert) => (
-              <div
-                key={alert.id}
-                className={cn(
-                  'relative border rounded-lg p-4 transition-all duration-200',
-                  getSeverityColor(alert.severity),
-                  !alert.isRead && 'ring-2 ring-blue-200',
-                  alert.isSnoozed && 'opacity-60'
-                )}
-                onClick={() => !alert.isRead && handleMarkAsRead(alert.id)}
-              >
-                {/* Alert Header */}
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-3 flex-1">
-                    {getSeverityIcon(alert.severity)}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className={cn(
-                          'text-sm font-medium truncate',
-                          !alert.isRead && 'font-semibold'
-                        )}>
-                          {alert.title}
-                        </h4>
-                        {!alert.isRead && (
-                          <div className="h-2 w-2 bg-blue-500 rounded-full flex-shrink-0" />
-                        )}
-                        {alert.isSnoozed && (
-                          <Clock className="h-3 w-3 text-gray-400 flex-shrink-0" />
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-gray-600">
-                        <CreditCard className="h-3 w-3" />
-                        <span>{alert.accountName}</span>
-                        <span>•</span>
-                        <span>{formatDistanceToNow(alert.createdAt, { addSuffix: true })}</span>
+            filteredAlerts.map((alert) => {
+              const severity = getSeverityFromMessage(alert.message, alert.currentValue);
+              const accountInfo = accounts[alert.accountId];
+              
+              return (
+                <div
+                  key={alert.id}
+                  className={cn(
+                    'relative border rounded-lg p-4 transition-all duration-200',
+                    getSeverityColor(severity),
+                    alert.status === 'triggered' && 'ring-2 ring-blue-200',
+                    alert.status === 'snoozed' && 'opacity-60'
+                  )}
+                >
+                  {/* Alert Header */}
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-3 flex-1">
+                      {getSeverityIcon(severity)}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className={cn(
+                            'text-sm font-medium truncate',
+                            alert.status === 'triggered' && 'font-semibold'
+                          )}>
+                            {getTitleFromAlertType(alert.alertType)}
+                          </h4>
+                          {alert.status === 'triggered' && (
+                            <div className="h-2 w-2 bg-blue-500 rounded-full flex-shrink-0" />
+                          )}
+                          {alert.status === 'snoozed' && (
+                            <Clock className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-gray-600">
+                          <CreditCard className="h-3 w-3" />
+                          <span>{accountInfo?.name || 'Unknown Account'}</span>
+                          <span>•</span>
+                          <span>{formatDistanceToNow(new Date(alert.triggeredAt), { addSuffix: true })}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDismiss(alert.id);
-                    }}
-                    className="h-6 w-6 p-0 hover:bg-red-100"
-                    disabled={loading}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-
-                {/* Alert Message */}
-                <p className="text-sm text-gray-700 mb-3">{alert.message}</p>
-
-                {/* Utilization Info */}
-                <div className="flex items-center justify-between text-xs bg-white/50 rounded p-2 mb-3">
-                  <span>Utilization: <strong>{alert.utilizationPercentage.toFixed(1)}%</strong></span>
-                  <span>Balance: <strong>₹{Math.abs(alert.currentBalance).toLocaleString('en-IN')}</strong></span>
-                  <span>Limit: <strong>₹{alert.creditLimit.toLocaleString('en-IN')}</strong></span>
-                </div>
-
-                {/* Action Buttons */}
-                {!alert.isAcknowledged && !alert.isSnoozed && (
-                  <div className="flex items-center gap-2">
+                    
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleAcknowledge(alert.id);
+                        handleDismiss(alert.id);
                       }}
+                      className="h-6 w-6 p-0 hover:bg-red-100"
                       disabled={loading}
-                      className="h-7 text-xs"
                     >
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                      Acknowledge
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSnooze(alert.id);
-                      }}
-                      disabled={loading}
-                      className="h-7 text-xs"
-                    >
-                      <Clock className="h-3 w-3 mr-1" />
-                      Snooze 24h
+                      <X className="h-3 w-3" />
                     </Button>
                   </div>
-                )}
 
-                {alert.isAcknowledged && (
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
-                    <Archive className="h-3 w-3" />
-                    <span>
-                      Acknowledged {alert.acknowledgedAt && formatDistanceToNow(alert.acknowledgedAt, { addSuffix: true })}
-                    </span>
+                  {/* Alert Message */}
+                  <p className="text-sm text-gray-700 mb-3">{alert.message}</p>
+
+                  {/* Utilization Info */}
+                  <div className="flex items-center justify-between text-xs bg-white/50 rounded p-2 mb-3">
+                    <span>Current Value: <strong>{alert.currentValue}</strong></span>
+                    <span>Threshold: <strong>{alert.thresholdValue}</strong></span>
                   </div>
-                )}
-              </div>
-            ))
+
+                  {/* Action Buttons */}
+                  {alert.status === 'triggered' && (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAcknowledge(alert.id);
+                        }}
+                        disabled={loading}
+                        className="h-7 text-xs"
+                      >
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Acknowledge
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSnooze(alert.id);
+                        }}
+                        disabled={loading}
+                        className="h-7 text-xs"
+                      >
+                        <Clock className="h-3 w-3 mr-1" />
+                        Snooze 24h
+                      </Button>
+                    </div>
+                  )}
+
+                  {alert.status === 'acknowledged' && alert.acknowledgedAt && (
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <Archive className="h-3 w-3" />
+                      <span>
+                        Acknowledged {formatDistanceToNow(new Date(alert.acknowledgedAt), { addSuffix: true })}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              );
+            })
           )}
         </div>
       </CardContent>
