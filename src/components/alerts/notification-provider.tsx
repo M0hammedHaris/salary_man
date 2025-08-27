@@ -26,6 +26,13 @@ interface NotificationData {
   utilizationPercentage?: number;
   priority?: 'low' | 'medium' | 'high';
   channels?: ('email' | 'push' | 'inApp')[];
+  // Bill reminder specific fields
+  billId?: string;
+  billName?: string;
+  dueDate?: string;
+  amount?: string;
+  daysUntilDue?: number;
+  notificationType?: 'credit_alert' | 'bill_reminder' | 'insufficient_funds' | 'payment_confirmation';
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -193,7 +200,11 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
 
   const sendEmailNotification = async (notification: NotificationData) => {
     try {
-      await fetch('/api/notifications/email', {
+      const endpoint = notification.notificationType === 'bill_reminder' 
+        ? '/api/notifications/bill-reminder-email'
+        : '/api/notifications/email';
+        
+      await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -202,6 +213,13 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
           type: notification.type,
           accountName: notification.accountName,
           utilizationPercentage: notification.utilizationPercentage,
+          // Bill reminder specific fields
+          billId: notification.billId,
+          billName: notification.billName,
+          dueDate: notification.dueDate,
+          amount: notification.amount,
+          daysUntilDue: notification.daysUntilDue,
+          notificationType: notification.notificationType,
         }),
       });
     } catch (error) {
@@ -211,7 +229,11 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
 
   const sendPushNotification = async (notification: NotificationData) => {
     try {
-      await fetch('/api/notifications/push', {
+      const endpoint = notification.notificationType === 'bill_reminder'
+        ? '/api/notifications/bill-reminder-push'
+        : '/api/notifications/push';
+        
+      await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -220,11 +242,19 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
           type: notification.type,
           icon: '/icons/notification-icon.png',
           badge: '/icons/badge-icon.png',
-          tag: `credit-alert-${notification.accountName}`,
+          tag: notification.notificationType === 'bill_reminder' 
+            ? `bill-reminder-${notification.billId}`
+            : `credit-alert-${notification.accountName}`,
           data: {
-            url: '/dashboard/alerts',
+            url: notification.notificationType === 'bill_reminder' 
+              ? '/bills' 
+              : '/dashboard/alerts',
             accountName: notification.accountName,
             utilizationPercentage: notification.utilizationPercentage,
+            billId: notification.billId,
+            billName: notification.billName,
+            dueDate: notification.dueDate,
+            notificationType: notification.notificationType,
           },
         }),
       });

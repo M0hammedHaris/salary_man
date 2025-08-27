@@ -11,9 +11,11 @@ import {
   type Alert, 
   type Account,
   type BillStatus,
-  type AlertType 
+  type AlertType,
+  type Transaction
 } from '../db/schema';
 import { adjustToBusinessDay, type BusinessDayConfig } from '../utils/business-day-utils';
+import { BillNotificationService } from './bill-notification-service';
 
 // Validation schemas
 export const billReminderCreateSchema = z.object({
@@ -74,6 +76,7 @@ export interface InsufficientFundsWarning {
   dueDate: Date;
   accountBalance: Decimal;
   shortfall: Decimal;
+  accountId: string; // Add accountId for easier access
 }
 
 export interface BillProcessingResult {
@@ -260,6 +263,7 @@ export class BillService {
             dueDate: new Date(bill.nextDueDate),
             accountBalance: availableCredit,
             shortfall: billAmount.minus(availableCredit),
+            accountId: account.id,
           });
         }
       } else {
@@ -272,6 +276,7 @@ export class BillService {
             dueDate: new Date(bill.nextDueDate),
             accountBalance,
             shortfall: billAmount.minus(accountBalance),
+            accountId: account.id,
           });
         }
       }
@@ -334,12 +339,58 @@ export class BillService {
             const alert = await this.createBillReminderAlert(userId, reminder);
             result.createdAlerts.push(alert);
             result.triggeredReminders++;
+
+            // Send multi-channel notification for the bill reminder
+            try {
+              const notificationChannels = await BillNotificationService.getBillNotificationPreferences(
+                userId, 
+                reminder.bill.id
+              );
+              await BillNotificationService.sendBillReminderNotification(reminder, notificationChannels);
+            } catch (notificationError) {
+              console.error('Failed to send bill reminder notification:', notificationError);
+              // Don't fail the entire process if notification fails
+            }
           }
         }
 
         // Check for insufficient funds warnings
         const fundsWarnings = await this.checkInsufficientFunds(userId);
         result.insufficientFundsWarnings.push(...fundsWarnings);
+
+        // Send insufficient funds notifications
+        for (const warning of fundsWarnings) {
+          try {
+            const billAccount = await db
+              .select()
+              .from(accounts)
+              .where(eq(accounts.id, warning.accountId))
+              .limit(1);
+
+            const bill = await db
+              .select()
+              .from(recurringPayments)
+              .where(eq(recurringPayments.id, warning.billId))
+              .limit(1);
+
+            if (billAccount.length > 0 && bill.length > 0) {
+              const notificationChannels = await BillNotificationService.getBillNotificationPreferences(
+                userId,
+                warning.billId
+              );
+              await BillNotificationService.sendInsufficientFundsNotification(
+                userId,
+                bill[0],
+                billAccount[0],
+                warning.shortfall.toString(),
+                notificationChannels
+              );
+            }
+          } catch (notificationError) {
+            console.error('Failed to send insufficient funds notification:', notificationError);
+            // Don't fail the entire process if notification fails
+          }
+        }
 
         // Update overdue bill status
         await this.updateOverdueBillStatus(userId);
@@ -401,19 +452,24 @@ export class BillService {
   }
 
   /**
-   * Mark bill as paid
+   * Mark bill as paid and send confirmation notification
    */
   static async markBillAsPaid(
     billId: string,
     userId: string,
-    paymentDate?: Date
+    paymentDate?: Date,
+    sendNotification: boolean = true
   ): Promise<RecurringPayment | null> {
     const paymentTimestamp = paymentDate || new Date();
     
-    // Get the bill to calculate next due date
-    const billResult = await db
-      .select()
+    // Get the bill and account information for notifications
+    const billWithAccount = await db
+      .select({
+        bill: recurringPayments,
+        account: accounts,
+      })
       .from(recurringPayments)
+      .innerJoin(accounts, eq(recurringPayments.accountId, accounts.id))
       .where(
         and(
           eq(recurringPayments.id, billId),
@@ -422,11 +478,11 @@ export class BillService {
       )
       .limit(1);
 
-    if (billResult.length === 0) {
+    if (billWithAccount.length === 0) {
       return null;
     }
 
-    const bill = billResult[0];
+    const { bill, account } = billWithAccount[0];
     const nextDueDate = this.calculateNextDueDate(new Date(bill.nextDueDate), bill.frequency);
 
     // Update bill status and calculate next due date
@@ -442,7 +498,179 @@ export class BillService {
       .where(eq(recurringPayments.id, billId))
       .returning();
 
-    return updatedBill.length > 0 ? updatedBill[0] : null;
+    const resultBill = updatedBill.length > 0 ? updatedBill[0] : null;
+
+    // Send payment confirmation notification
+    if (sendNotification && resultBill) {
+      try {
+        const notificationChannels = await BillNotificationService.getBillNotificationPreferences(
+          userId,
+          billId
+        );
+        await BillNotificationService.sendPaymentConfirmationNotification(
+          userId,
+          resultBill,
+          account,
+          bill.amount,
+          notificationChannels
+        );
+      } catch (notificationError) {
+        console.error('Failed to send payment confirmation notification:', notificationError);
+        // Don't fail the payment confirmation if notification fails
+      }
+    }
+
+    return resultBill;
+  }
+
+  /**
+   * Automatically detect bill payments from recent transactions
+   * This method checks for transactions that match pending bill amounts and dates
+   */
+  static async detectBillPayments(userId: string, lookbackDays: number = 3): Promise<RecurringPayment[]> {
+    const lookbackDate = addDays(new Date(), -lookbackDays);
+    const detectedPayments: RecurringPayment[] = [];
+
+    // Get all pending bills for the user
+    const pendingBills = await db
+      .select()
+      .from(recurringPayments)
+      .where(
+        and(
+          eq(recurringPayments.userId, userId),
+          eq(recurringPayments.isActive, true),
+          eq(recurringPayments.status, 'pending')
+        )
+      );
+
+    // Get recent transactions that could be bill payments
+    const { transactions } = await import('../db/schema');
+    const recentTransactions = await db
+      .select()
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.userId, userId),
+          gte(transactions.transactionDate, lookbackDate)
+        )
+      );
+
+    // Match transactions to bills based on amount and account
+    for (const bill of pendingBills) {
+      const billAmount = new Decimal(bill.amount);
+      
+      for (const transaction of recentTransactions) {
+        const transactionAmount = new Decimal(transaction.amount).abs(); // Use absolute value
+        
+        // Check if transaction matches bill criteria:
+        // 1. Same account
+        // 2. Same or very close amount (within 1%)
+        // 3. Transaction is negative (payment/expense)
+        if (
+          transaction.accountId === bill.accountId &&
+          transactionAmount.equals(billAmount) &&
+          new Decimal(transaction.amount).isNegative() &&
+          !transaction.recurringPaymentId // Not already linked to a bill
+        ) {
+          // Mark the bill as paid and link the transaction
+          const paidBill = await this.markBillAsPaid(
+            bill.id,
+            userId,
+            new Date(transaction.transactionDate),
+            true // Send notification
+          );
+
+          if (paidBill) {
+            // Link the transaction to the recurring payment
+            await db
+              .update(transactions)
+              .set({
+                recurringPaymentId: bill.id,
+                updatedAt: new Date(),
+              })
+              .where(eq(transactions.id, transaction.id));
+
+            detectedPayments.push(paidBill);
+          }
+          
+          break; // One transaction per bill
+        }
+      }
+    }
+
+    return detectedPayments;
+  }
+
+  /**
+   * Get payment history for a specific bill
+   */
+  static async getBillPaymentHistory(
+    billId: string,
+    userId: string,
+    limit: number = 12
+  ): Promise<Array<{ bill: RecurringPayment; transaction?: Transaction }>> {
+    // Get the bill payments (status = 'paid')
+    const paidBills = await db
+      .select()
+      .from(recurringPayments)
+      .where(
+        and(
+          eq(recurringPayments.id, billId),
+          eq(recurringPayments.userId, userId),
+          eq(recurringPayments.status, 'paid')
+        )
+      )
+      .orderBy(desc(recurringPayments.paymentDate))
+      .limit(limit);
+
+    // Get linked transactions for these payments
+    const { transactions } = await import('../db/schema');
+    const paymentHistory = [];
+
+    for (const bill of paidBills) {
+      const linkedTransaction = await db
+        .select()
+        .from(transactions)
+        .where(eq(transactions.recurringPaymentId, bill.id))
+        .limit(1);
+
+      paymentHistory.push({
+        bill,
+        transaction: linkedTransaction.length > 0 ? linkedTransaction[0] : undefined,
+      });
+    }
+
+    return paymentHistory;
+  }
+
+  /**
+   * Create a transaction when marking a bill as paid (for manual payments)
+   */
+  static async createPaymentTransaction(
+    billId: string,
+    userId: string,
+    amount: string,
+    accountId: string,
+    categoryId: string,
+    description?: string
+  ): Promise<Transaction> {
+    const { transactions } = await import('../db/schema');
+    
+    const transaction = await db
+      .insert(transactions)
+      .values({
+        userId,
+        accountId,
+        amount: `-${amount}`, // Negative for payment/expense
+        description: description || `Payment for bill`,
+        categoryId,
+        transactionDate: new Date(),
+        isRecurring: true,
+        recurringPaymentId: billId,
+      })
+      .returning();
+
+    return transaction[0];
   }
 
   /**
