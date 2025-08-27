@@ -35,11 +35,22 @@ export const paymentFrequencyEnum = pgEnum('payment_frequency', [
   'yearly'
 ]);
 
+export const billStatusEnum = pgEnum('bill_status', [
+  'pending',
+  'paid',
+  'overdue',
+  'cancelled'
+]);
+
 export const alertTypeEnum = pgEnum('alert_type', [
   'credit_utilization',
   'low_balance',
   'spending_limit',
-  'unusual_activity'
+  'unusual_activity',
+  'bill_reminder_1_day',
+  'bill_reminder_3_day',
+  'bill_reminder_7_day',
+  'bill_reminder_14_day'
 ]);
 
 export const alertStatusEnum = pgEnum('alert_status', [
@@ -141,6 +152,9 @@ export const recurringPayments = pgTable('recurring_payments', {
   categoryId: uuid('category_id').references(() => categories.id, { onDelete: 'restrict' }).notNull(),
   isActive: boolean('is_active').notNull().default(true),
   lastProcessed: timestamp('last_processed', { withTimezone: true }),
+  status: billStatusEnum('status').notNull().default('pending'),
+  paymentDate: timestamp('payment_date', { withTimezone: true }),
+  reminderDays: text('reminder_days').notNull().default('1,3,7'), // CSV of reminder advance days
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
@@ -292,5 +306,6 @@ export type NewAlertSettings = typeof alertSettings.$inferInsert;
 export type AccountType = typeof accounts.type.enumValues[number];
 export type CategoryType = typeof categories.type.enumValues[number];
 export type PaymentFrequency = typeof recurringPayments.frequency.enumValues[number];
+export type BillStatus = typeof recurringPayments.status.enumValues[number];
 export type AlertType = typeof alerts.alertType.enumValues[number];
 export type AlertStatus = typeof alerts.status.enumValues[number];
