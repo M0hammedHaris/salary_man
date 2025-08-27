@@ -14,18 +14,18 @@ interface Bill {
   id: string;
   name: string;
   amount: string;
-  dueDate: string;
+  nextDueDate: string;
   reminderDays: string;
-  category: {
-    id: string;
-    name: string;
-    icon?: string;
-  };
   account: {
     id: string;
     name: string;
     type: string;
   };
+  category?: {
+    id: string;
+    name: string;
+    color?: string;
+  } | null;
 }
 
 interface UpcomingBillsProps {
@@ -38,10 +38,11 @@ export function UpcomingBills({ onPayBill, onSetupReminder, className }: Upcomin
   const [timeFilter, setTimeFilter] = useState<'today' | 'week' | 'month'>('week');
 
   // Fetch upcoming bills
-  const { data: bills, isLoading, error } = useQuery({
+  const { data: billsResponse, isLoading, error } = useQuery({
     queryKey: ['bills', 'upcoming', timeFilter],
     queryFn: async () => {
-      const response = await fetch(`/api/bills?upcoming=${timeFilter}`);
+      // The API doesn't support 'upcoming' parameter, so we fetch all bills and filter client-side
+      const response = await fetch('/api/bills');
       if (!response.ok) {
         throw new Error('Failed to fetch upcoming bills');
       }
@@ -49,6 +50,9 @@ export function UpcomingBills({ onPayBill, onSetupReminder, className }: Upcomin
     },
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   });
+
+  // Extract bills array from the response
+  const bills = billsResponse?.bills || [];
 
   const filterBillsByTime = (bills: Bill[]) => {
     const now = new Date();
@@ -58,13 +62,13 @@ export function UpcomingBills({ onPayBill, onSetupReminder, className }: Upcomin
                    addDays(today, 30);
 
     return bills.filter(bill => {
-      const dueDate = new Date(bill.dueDate);
+      const dueDate = new Date(bill.nextDueDate); // Updated to use nextDueDate
       return isWithinInterval(dueDate, { start: now, end: endDate });
     });
   };
 
-  const getBillUrgency = (dueDate: string) => {
-    const due = new Date(dueDate);
+  const getBillUrgency = (nextDueDate: string) => {
+    const due = new Date(nextDueDate); // Updated parameter name
     
     if (isToday(due)) return 'today';
     if (isTomorrow(due)) return 'tomorrow';
@@ -86,8 +90,8 @@ export function UpcomingBills({ onPayBill, onSetupReminder, className }: Upcomin
     }
   };
 
-  const getUrgencyText = (urgency: string, dueDate: string) => {
-    const due = new Date(dueDate);
+  const getUrgencyText = (urgency: string, nextDueDate: string) => {
+    const due = new Date(nextDueDate); // Updated parameter name
     
     switch (urgency) {
       case 'today': return 'Due Today';
@@ -186,20 +190,16 @@ export function UpcomingBills({ onPayBill, onSetupReminder, className }: Upcomin
         ) : (
           <div className="space-y-3">
             {upcomingBills.map((bill) => {
-              const urgency = getBillUrgency(bill.dueDate);
+              const urgency = getBillUrgency(bill.nextDueDate); // Updated to use nextDueDate
               const urgencyColor = getUrgencyColor(urgency);
-              const urgencyText = getUrgencyText(urgency, bill.dueDate);
+              const urgencyText = getUrgencyText(urgency, bill.nextDueDate); // Updated to use nextDueDate
               
               return (
                 <div key={bill.id} className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
                   {/* Bill Icon/Category */}
                   <div className="flex-shrink-0">
                     <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      {bill.category.icon ? (
-                        <span className="text-lg">{bill.category.icon}</span>
-                      ) : (
-                        <Clock className="h-5 w-5 text-primary" />
-                      )}
+                      <Clock className="h-5 w-5 text-primary" />
                     </div>
                   </div>
                   
@@ -213,7 +213,7 @@ export function UpcomingBills({ onPayBill, onSetupReminder, className }: Upcomin
                     </div>
                     <div className="flex items-center space-x-2 mt-1">
                       <span className="text-sm text-muted-foreground">
-                        {bill.category.name}
+                        {bill.category?.name || 'Bill Payment'}
                       </span>
                       <span className="text-xs text-muted-foreground">•</span>
                       <span className="text-sm text-muted-foreground">

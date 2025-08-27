@@ -386,6 +386,7 @@ export type NewNotificationHistory = typeof notificationHistory.$inferInsert;
 export type AccountType = typeof accounts.type.enumValues[number];
 export type CategoryType = typeof categories.type.enumValues[number];
 export type PaymentFrequency = typeof recurringPayments.frequency.enumValues[number];
+// Temporarily commented out until migration is applied:
 export type BillStatus = typeof recurringPayments.status.enumValues[number];
 export type AlertType = typeof alerts.alertType.enumValues[number];
 export type AlertStatus = typeof alerts.status.enumValues[number];

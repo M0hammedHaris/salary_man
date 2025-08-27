@@ -27,10 +27,10 @@ export class PWANotificationManager {
   private registration: ServiceWorkerRegistration | null = null;
   private pushSubscription: PushSubscription | null = null;
   private offlineQueue: PWANotificationOptions[] = [];
+  private isInitialized = false;
 
   private constructor() {
-    this.initializeServiceWorker();
-    this.setupOnlineListener();
+    // Don't initialize immediately - wait for client-side initialization
   }
 
   static getInstance(): PWANotificationManager {
@@ -41,40 +41,56 @@ export class PWANotificationManager {
   }
 
   /**
+   * Initialize the PWA manager (only on client-side)
+   */
+  async initialize(): Promise<void> {
+    // Only initialize on client-side
+    if (typeof window === 'undefined' || this.isInitialized) {
+      return;
+    }
+
+    this.isInitialized = true;
+    await this.initializeServiceWorker();
+    this.setupOnlineListener();
+  }
+
+  /**
    * Initialize service worker and set up PWA functionality
    */
   private async initializeServiceWorker(): Promise<void> {
-    if ('serviceWorker' in navigator) {
-      try {
-        console.log('PWA: Registering service worker...');
-        this.registration = await navigator.serviceWorker.register('/sw.js', {
-          scope: '/'
-        });
+    // Ensure we're on client-side
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+      console.warn('PWA: Service workers not supported or not on client-side');
+      return;
+    }
 
-        console.log('PWA: Service worker registered successfully');
+    try {
+      console.log('PWA: Registering service worker...');
+      this.registration = await navigator.serviceWorker.register('/sw.js', {
+        scope: '/'
+      });
 
-        // Handle service worker updates
-        this.registration.addEventListener('updatefound', () => {
-          console.log('PWA: Service worker update found');
-          const newWorker = this.registration?.installing;
-          if (newWorker) {
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                console.log('PWA: New service worker available');
-                this.notifyUpdateAvailable();
-              }
-            });
-          }
-        });
+      console.log('PWA: Service worker registered successfully');
 
-        // Set up push subscription if supported
-        await this.setupPushSubscription();
+      // Handle service worker updates
+      this.registration.addEventListener('updatefound', () => {
+        console.log('PWA: Service worker update found');
+        const newWorker = this.registration?.installing;
+        if (newWorker) {
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              console.log('PWA: New service worker available');
+              this.notifyUpdateAvailable();
+            }
+          });
+        }
+      });
 
-      } catch (error) {
-        console.error('PWA: Service worker registration failed:', error);
-      }
-    } else {
-      console.warn('PWA: Service workers not supported');
+      // Set up push subscription if supported
+      await this.setupPushSubscription();
+
+    } catch (error) {
+      console.error('PWA: Service worker registration failed:', error);
     }
   }
 
@@ -82,8 +98,8 @@ export class PWANotificationManager {
    * Set up push notification subscription
    */
   private async setupPushSubscription(): Promise<void> {
-    if (!this.registration || !('PushManager' in window)) {
-      console.warn('PWA: Push notifications not supported');
+    if (typeof window === 'undefined' || !this.registration || !('PushManager' in window)) {
+      console.warn('PWA: Push notifications not supported or not on client-side');
       return;
     }
 
@@ -91,7 +107,7 @@ export class PWANotificationManager {
       // Check if we already have a subscription
       this.pushSubscription = await this.registration.pushManager.getSubscription();
 
-      if (!this.pushSubscription && Notification.permission === 'granted') {
+      if (!this.pushSubscription && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
         // Create new subscription
         const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
         if (vapidPublicKey) {
@@ -131,8 +147,8 @@ export class PWANotificationManager {
    * Request notification permission and set up push notifications
    */
   async requestNotificationPermission(): Promise<boolean> {
-    if (!('Notification' in window)) {
-      console.warn('PWA: Notifications not supported');
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      console.warn('PWA: Notifications not supported or not on client-side');
       return false;
     }
 
@@ -165,6 +181,16 @@ export class PWANotificationManager {
    * Send notification through PWA system
    */
   async sendNotification(options: PWANotificationOptions): Promise<boolean> {
+    // Ensure initialization on client-side
+    if (typeof window === 'undefined') {
+      console.warn('PWA: Cannot send notification on server-side');
+      return false;
+    }
+
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+
     // If offline, queue the notification
     if (!navigator.onLine) {
       this.queueOfflineNotification(options);
@@ -204,16 +230,18 @@ export class PWANotificationManager {
     this.offlineQueue.push(options);
     console.log('PWA: Notification queued for offline delivery');
     
-    // Store in localStorage as backup
-    try {
-      const existingQueue = JSON.parse(localStorage.getItem('pwa-notification-queue') || '[]');
-      existingQueue.push({
-        ...options,
-        timestamp: Date.now()
-      });
-      localStorage.setItem('pwa-notification-queue', JSON.stringify(existingQueue));
-    } catch (error) {
-      console.error('PWA: Failed to store offline notification:', error);
+    // Store in localStorage as backup (only on client-side)
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      try {
+        const existingQueue = JSON.parse(localStorage.getItem('pwa-notification-queue') || '[]');
+        existingQueue.push({
+          ...options,
+          timestamp: Date.now()
+        });
+        localStorage.setItem('pwa-notification-queue', JSON.stringify(existingQueue));
+      } catch (error) {
+        console.error('PWA: Failed to store offline notification:', error);
+      }
     }
   }
 
@@ -221,6 +249,10 @@ export class PWANotificationManager {
    * Set up online event listener to sync offline notifications
    */
   private setupOnlineListener(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     window.addEventListener('online', () => {
       console.log('PWA: Device came online, syncing notifications');
       this.syncOfflineNotifications();
@@ -231,17 +263,23 @@ export class PWANotificationManager {
    * Sync queued offline notifications when online
    */
   private async syncOfflineNotifications(): Promise<void> {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     // Sync memory queue
     const memoryQueue = [...this.offlineQueue];
     this.offlineQueue = [];
 
     // Sync localStorage queue
     let localStorageQueue: (PWANotificationOptions & { timestamp: number })[] = [];
-    try {
-      localStorageQueue = JSON.parse(localStorage.getItem('pwa-notification-queue') || '[]');
-      localStorage.removeItem('pwa-notification-queue');
-    } catch (error) {
-      console.error('PWA: Failed to load offline notification queue:', error);
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorageQueue = JSON.parse(localStorage.getItem('pwa-notification-queue') || '[]');
+        localStorage.removeItem('pwa-notification-queue');
+      } catch (error) {
+        console.error('PWA: Failed to load offline notification queue:', error);
+      }
     }
 
     // Combine and sort by timestamp
@@ -311,11 +349,21 @@ export class PWANotificationManager {
    * Get current PWA and notification status
    */
   getStatus(): ServiceWorkerStatus {
+    if (typeof window === 'undefined') {
+      return {
+        isSupported: false,
+        isRegistered: false,
+        isPushSupported: false,
+        isNotificationPermissionGranted: false,
+        registration: undefined
+      };
+    }
+
     return {
       isSupported: 'serviceWorker' in navigator,
       isRegistered: this.registration !== null,
       isPushSupported: 'PushManager' in window && this.registration?.pushManager !== undefined,
-      isNotificationPermissionGranted: Notification.permission === 'granted',
+      isNotificationPermissionGranted: typeof Notification !== 'undefined' && Notification.permission === 'granted',
       registration: this.registration || undefined
     };
   }
@@ -324,18 +372,24 @@ export class PWANotificationManager {
    * Update service worker when new version is available
    */
   async updateServiceWorker(): Promise<void> {
-    if (this.registration?.waiting) {
-      this.registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-      
-      // Reload page to activate new service worker
-      window.location.reload();
+    if (typeof window === 'undefined' || !this.registration?.waiting) {
+      return;
     }
+
+    this.registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+    
+    // Reload page to activate new service worker
+    window.location.reload();
   }
 
   /**
    * Notify user about available service worker update
    */
   private notifyUpdateAvailable(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     // You can implement a UI notification here
     console.log('PWA: Service worker update available');
     
@@ -379,16 +433,20 @@ export class PWANotificationManager {
    */
   getQueueSize(): number {
     let localStorageQueueSize = 0;
-    try {
-      const localQueue = JSON.parse(localStorage.getItem('pwa-notification-queue') || '[]');
-      localStorageQueueSize = localQueue.length;
-    } catch {
-      // Ignore parsing errors
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      try {
+        const localQueue = JSON.parse(localStorage.getItem('pwa-notification-queue') || '[]');
+        localStorageQueueSize = localQueue.length;
+      } catch {
+        // Ignore parsing errors
+      }
     }
     
     return this.offlineQueue.length + localStorageQueueSize;
   }
 }
 
-// Export singleton instance
-export const pwaNotificationManager = PWANotificationManager.getInstance();
+// Export a function to get the singleton instance instead of immediately creating it
+export function getPWANotificationManager(): PWANotificationManager {
+  return PWANotificationManager.getInstance();
+}

@@ -53,7 +53,7 @@ export function RecurringPaymentInsights({ userId, className }: RecurringPayment
     async function fetchRecurringPaymentInsights() {
       try {
         setLoading(true);
-        const response = await fetch('/api/recurring-payments/analysis');
+        const response = await fetch('/api/dashboard/recurring-insights');
         if (!response.ok) {
           throw new Error('Failed to fetch recurring payment insights');
         }

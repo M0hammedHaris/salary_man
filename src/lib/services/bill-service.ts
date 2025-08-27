@@ -7,9 +7,11 @@ import {
   recurringPayments, 
   alerts, 
   accounts,
+  categories,
   type RecurringPayment, 
   type Alert, 
   type Account,
+  type Category,
   type BillStatus,
   type AlertType,
   type Transaction
@@ -735,7 +737,7 @@ export class BillService {
       limit?: number;
       offset?: number;
     } = {}
-  ): Promise<Array<RecurringPayment & { account: Account }>> {
+  ): Promise<Array<RecurringPayment & { account: Account; category?: Category | null }>> {
     const { status, accountId, limit = 50, offset = 0 } = options;
 
     const whereConditions = [eq(recurringPayments.userId, userId)];
@@ -752,15 +754,17 @@ export class BillService {
       .select({
         bill: recurringPayments,
         account: accounts,
+        category: categories,
       })
       .from(recurringPayments)
       .innerJoin(accounts, eq(recurringPayments.accountId, accounts.id))
+      .leftJoin(categories, eq(recurringPayments.categoryId, categories.id))
       .where(and(...whereConditions))
       .orderBy(desc(recurringPayments.nextDueDate))
       .limit(limit)
       .offset(offset);
 
-    return results.map(({ bill, account }) => ({ ...bill, account }));
+    return results.map(({ bill, account, category }) => ({ ...bill, account, category }));
   }
 
   /**
