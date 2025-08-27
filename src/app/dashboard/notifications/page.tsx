@@ -3,7 +3,7 @@ import { NotificationCenter } from '@/components/notifications/notification-cent
 
 export const metadata: Metadata = {
   title: 'Notification Center - SalaryMan',
-  description: 'Manage all your financial notifications and alerts in one place',
+  description: 'Manage all your financial notifications and alerts in one place'
 };
 
 export default function NotificationCenterPage() {

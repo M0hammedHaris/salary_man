@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from '@clerk/nextjs'
 import { ConditionalNavigationHeader } from '@/components/layout/conditional-navigation-header';
@@ -24,8 +24,6 @@ export const metadata: Metadata = {
   title: "SalaryMan - Personal Finance Manager",
   description: "Secure personal finance management with comprehensive tracking and insights",
   manifest: "/manifest.json",
-  themeColor: "#2563eb",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -40,6 +38,14 @@ export const metadata: Metadata = {
       { url: "/icons/icon-152x152.png", sizes: "152x152", type: "image/png" }
     ]
   }
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#2563eb",
 };
 
 export default function RootLayout({

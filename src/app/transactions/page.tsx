@@ -7,7 +7,7 @@ import { TransactionPageSkeleton } from './transaction-page-skeleton';
 export const metadata: Metadata = {
   title: 'Transaction Management - Salary Man',
   description: 'Manage your financial transactions, track income and expenses, and analyze your spending patterns.',
-  keywords: ['transactions', 'income', 'expenses', 'financial tracking', 'money management'],
+  keywords: ['transactions', 'income', 'expenses', 'financial tracking', 'money management']
 };
 
 export default function TransactionsPage() {
