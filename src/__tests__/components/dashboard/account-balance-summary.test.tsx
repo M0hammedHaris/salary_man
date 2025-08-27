@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { AccountBalanceSummary } from '@/components/dashboard/account-balance-summary';
-import { Decimal } from 'decimal.js';
 
 // Mock data matching the component props interface
 const mockAccounts = [
@@ -9,21 +8,21 @@ const mockAccounts = [
     id: 'account-1',
     name: 'Main Checking',
     type: 'checking',
-    balance: new Decimal('2500.00'),
+    balance: 2500.00,
     status: 'positive' as const
   },
   {
     id: 'account-2',
     name: 'High Yield Savings',
     type: 'savings',
-    balance: new Decimal('15000.00'),
+    balance: 15000.00,
     status: 'positive' as const
   },
   {
     id: 'account-3',
     name: 'Chase Credit Card',
     type: 'credit_card',
-    balance: new Decimal('-850.00'),
+    balance: -850.00,
     status: 'alert' as const
   }
 ];
@@ -32,10 +31,10 @@ describe('AccountBalanceSummary', () => {
   it('should render account balance summary correctly', () => {
     render(
       <AccountBalanceSummary
-        totalBalance={new Decimal('16650.00')}
-        checkingBalance={new Decimal('2500.00')}
-        savingsBalance={new Decimal('15000.00')}
-        creditCardBalance={new Decimal('-850.00')}
+        totalBalance={16650.00}
+        checkingBalance={2500.00}
+        savingsBalance={15000.00}
+        creditCardBalance={-850.00}
         accounts={mockAccounts}
       />
     );
@@ -44,7 +43,7 @@ describe('AccountBalanceSummary', () => {
     expect(screen.getByText('Account Summary')).toBeInTheDocument();
     
     // Check if total balance is displayed correctly
-    expect(screen.getByText('$16,650.00')).toBeInTheDocument();
+    expect(screen.getByText('₹16,650.00')).toBeInTheDocument();
     
     // Check if all account names are displayed
     expect(screen.getByText('Main Checking')).toBeInTheDocument();
@@ -55,27 +54,27 @@ describe('AccountBalanceSummary', () => {
   it('should display individual account balances correctly', () => {
     render(
       <AccountBalanceSummary
-        totalBalance={new Decimal('16650.00')}
-        checkingBalance={new Decimal('2500.00')}
-        savingsBalance={new Decimal('15000.00')}
-        creditCardBalance={new Decimal('-850.00')}
+        totalBalance={16650.00}
+        checkingBalance={2500.00}
+        savingsBalance={15000.00}
+        creditCardBalance={-850.00}
         accounts={mockAccounts}
       />
     );
 
     // Check if individual account balances are displayed (use getAllBy to handle duplicates)
-    expect(screen.getAllByText('$2,500.00').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('$15,000.00').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('-$850.00').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('₹2,500.00').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('₹15,000.00').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('-₹850.00').length).toBeGreaterThan(0);
   });
 
   it('should display balance breakdown by account type', () => {
     render(
       <AccountBalanceSummary
-        totalBalance={new Decimal('16650.00')}
-        checkingBalance={new Decimal('2500.00')}
-        savingsBalance={new Decimal('15000.00')}
-        creditCardBalance={new Decimal('-850.00')}
+        totalBalance={16650.00}
+        checkingBalance={2500.00}
+        savingsBalance={15000.00}
+        creditCardBalance={-850.00}
         accounts={mockAccounts}
       />
     );
@@ -89,17 +88,17 @@ describe('AccountBalanceSummary', () => {
   it('should handle empty accounts array', () => {
     render(
       <AccountBalanceSummary
-        totalBalance={new Decimal('0.00')}
-        checkingBalance={new Decimal('0.00')}
-        savingsBalance={new Decimal('0.00')}
-        creditCardBalance={new Decimal('0.00')}
+        totalBalance={0.00}
+        checkingBalance={0.00}
+        savingsBalance={0.00}
+        creditCardBalance={0.00}
         accounts={[]}
       />
     );
 
     expect(screen.getByText('Account Summary')).toBeInTheDocument();
-    // Use getAllByText for multiple $0.00 occurrences
-    expect(screen.getAllByText('$0.00').length).toBeGreaterThan(0);
+    // Use getAllByText for multiple ₹0.00 occurrences
+    expect(screen.getAllByText('₹0.00').length).toBeGreaterThan(0);
     expect(screen.getByText('No accounts found. Add your first account to get started.')).toBeInTheDocument();
   });
 
@@ -109,31 +108,31 @@ describe('AccountBalanceSummary', () => {
         id: 'account-1',
         name: 'Healthy Account',
         type: 'checking',
-        balance: new Decimal('1000.00'),
+        balance: 1000.00,
         status: 'positive' as const
       },
       {
         id: 'account-2',
         name: 'Warning Account',
         type: 'savings',
-        balance: new Decimal('100.00'),
+        balance: 100.00,
         status: 'negative' as const
       },
       {
         id: 'account-3',
         name: 'Alert Account',
         type: 'credit_card',
-        balance: new Decimal('-5000.00'),
+        balance: -5000.00,
         status: 'alert' as const
       }
     ];
 
     render(
       <AccountBalanceSummary
-        totalBalance={new Decimal('-3900.00')}
-        checkingBalance={new Decimal('1000.00')}
-        savingsBalance={new Decimal('100.00')}
-        creditCardBalance={new Decimal('-5000.00')}
+        totalBalance={-3900.00}
+        checkingBalance={1000.00}
+        savingsBalance={100.00}
+        creditCardBalance={-5000.00}
         accounts={accountsWithDifferentStatuses}
       />
     );
@@ -146,10 +145,10 @@ describe('AccountBalanceSummary', () => {
   it('should display account type labels correctly', () => {
     render(
       <AccountBalanceSummary
-        totalBalance={new Decimal('16650.00')}
-        checkingBalance={new Decimal('2500.00')}
-        savingsBalance={new Decimal('15000.00')}
-        creditCardBalance={new Decimal('-850.00')}
+        totalBalance={16650.00}
+        checkingBalance={2500.00}
+        savingsBalance={15000.00}
+        creditCardBalance={-850.00}
         accounts={mockAccounts}
       />
     );
@@ -163,23 +162,23 @@ describe('AccountBalanceSummary', () => {
   it('should handle negative total balance correctly', () => {
     render(
       <AccountBalanceSummary
-        totalBalance={new Decimal('-1000.00')}
-        checkingBalance={new Decimal('500.00')}
-        savingsBalance={new Decimal('0.00')}
-        creditCardBalance={new Decimal('-1500.00')}
+        totalBalance={-1000.00}
+        checkingBalance={500.00}
+        savingsBalance={0.00}
+        creditCardBalance={-1500.00}
         accounts={[
           {
             id: 'account-1',
             name: 'Low Balance',
             type: 'checking',
-            balance: new Decimal('500.00'),
+            balance: 500.00,
             status: 'positive' as const
           },
           {
             id: 'account-2',
             name: 'High Debt',
             type: 'credit_card',
-            balance: new Decimal('-1500.00'),
+            balance: -1500.00,
             status: 'alert' as const
           }
         ]}
@@ -187,6 +186,6 @@ describe('AccountBalanceSummary', () => {
     );
 
     // Should display negative total balance
-    expect(screen.getByText('-$1,000.00')).toBeInTheDocument();
+    expect(screen.getByText('-₹1,000.00')).toBeInTheDocument();
   });
 });

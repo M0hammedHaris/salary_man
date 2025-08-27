@@ -172,10 +172,10 @@ export class AccountRepository {
       const sums = transactionSums[0];
       const totalDebits = parseFloat(sums?.totalDebits || '0');
       const totalCredits = parseFloat(sums?.totalCredits || '0');
-      const initialBalance = parseFloat(account.balance);
 
-      // Calculate final balance: initial + credits - debits
-      const finalBalance = initialBalance + totalCredits + totalDebits; // totalDebits is already negative
+      // Calculate final balance: credits + debits (debits are already negative)
+      // Account balance should be the sum of all transactions from opening balance (0)
+      const finalBalance = totalCredits + totalDebits;
 
       return finalBalance.toFixed(2);
     } catch (error) {
@@ -433,10 +433,11 @@ export class TransactionRepository {
         const sums = transactionSums[0];
         const totalDebits = parseFloat(sums?.totalDebits || '0');
         const totalCredits = parseFloat(sums?.totalCredits || '0');
-        const initialBalance = parseFloat(accountResult[0].balance);
-
-        // Calculate final balance: initial + credits + debits (debits are already negative)
-        const finalBalance = initialBalance + totalCredits + totalDebits;
+        
+        // For correct balance calculation, we should calculate from transactions only
+        // The account balance should reflect the sum of all transactions from opening balance (0)
+        // Calculate final balance: credits + debits (debits are already negative)
+        const finalBalance = totalCredits + totalDebits;
         const calculatedBalance = finalBalance.toFixed(2);
 
         // Update account balance within same transaction
@@ -549,10 +550,10 @@ export class TransactionRepository {
           const sums = transactionSums[0];
           const totalDebits = parseFloat(sums?.totalDebits || '0');
           const totalCredits = parseFloat(sums?.totalCredits || '0');
-          const initialBalance = parseFloat(accountResult[0].balance);
 
-          // Calculate final balance: initial + credits + debits (debits are already negative)
-          const finalBalance = initialBalance + totalCredits + totalDebits;
+          // Calculate final balance: credits + debits (debits are already negative)
+          // Account balance should be the sum of all transactions from opening balance (0)
+          const finalBalance = totalCredits + totalDebits;
           const calculatedBalance = finalBalance.toFixed(2);
 
           // Update account balance
@@ -654,10 +655,10 @@ export class TransactionRepository {
         const sums = transactionSums[0];
         const totalDebits = parseFloat(sums?.totalDebits || '0');
         const totalCredits = parseFloat(sums?.totalCredits || '0');
-        const initialBalance = parseFloat(accountResult[0].balance);
 
-        // Calculate final balance: initial + credits + debits (debits are already negative)
-        const finalBalance = initialBalance + totalCredits + totalDebits;
+        // Calculate final balance: credits + debits (debits are already negative)
+        // Account balance should be the sum of all transactions from opening balance (0)
+        const finalBalance = totalCredits + totalDebits;
         const calculatedBalance = finalBalance.toFixed(2);
 
         // Update account balance
