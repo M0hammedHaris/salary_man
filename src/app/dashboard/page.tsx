@@ -11,6 +11,7 @@ import { AlertNotificationPanel } from '@/components/dashboard/alert-notificatio
 import { QuickActionFloatingButton } from '@/components/dashboard/quick-action-floating-button';
 import { DashboardSkeleton } from '@/components/dashboard/dashboard-skeleton';
 import { UpcomingBills } from '@/components/bills/upcoming-bills';
+import { RecurringPaymentInsights } from '@/components/dashboard/recurring-payment-insights';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 async function DashboardContent({ userId }: { userId: string }) {
@@ -49,6 +50,9 @@ async function DashboardContent({ userId }: { userId: string }) {
 
             {/* Right Column - Secondary Metrics & Alerts */}
             <div className="space-y-6">
+              {/* Recurring Payment Insights */}
+              <RecurringPaymentInsights userId={userId} />
+
               {/* Upcoming Bills */}
               <UpcomingBills />
 
