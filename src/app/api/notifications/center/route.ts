@@ -74,12 +74,14 @@ export async function GET(request: NextRequest) {
 
     // Search functionality
     if (search) {
-      whereConditions.push(
-        or(
-          like(alerts.message, `%${search}%`),
-          like(accounts.name, `%${search}%`)
-        )
+      const searchCondition = or(
+        like(alerts.message, `%${search}%`),
+        like(accounts.name, `%${search}%`)
       );
+      
+      if (searchCondition) {
+        whereConditions.push(searchCondition);
+      }
     }
 
     // Build order by clause

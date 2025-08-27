@@ -41,11 +41,6 @@ vi.mock('../../../lib/db/schema', () => ({
   }
 }));
 
-const mockUser = {
-  id: 'user123',
-  emailAddresses: [{ emailAddress: 'test@example.com' }]
-};
-
 describe('NotificationCenterService', () => {
   beforeEach(() => {
     vi.clearAllMocks();

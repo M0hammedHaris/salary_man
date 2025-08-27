@@ -16,13 +16,6 @@ vi.mock('@/lib/db', () => ({
 // Mock fetch
 global.fetch = vi.fn();
 
-const mockUser = {
-  id: 'test-user-id',
-  email: 'test@example.com',
-  firstName: 'Test',
-  lastName: 'User',
-};
-
 const mockRecurringPayment = {
   id: 'payment-1',
   name: 'Netflix Subscription',
