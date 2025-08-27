@@ -2,7 +2,7 @@ import { z } from 'zod';
 import Decimal from 'decimal.js';
 import { eq, and, gte, desc } from 'drizzle-orm';
 import { db } from '../db';
-import { accounts, alerts, alertSettings, type Alert, type AlertSettings, type Account } from '../db/schema';
+import { accounts, alerts, alertSettings, type Alert, type AlertSettings, type Account, type AlertType } from '../db/schema';
 
 // Validation schemas
 export const alertThresholdSchema = z.object({
@@ -219,6 +219,64 @@ export class AlertService {
       .returning();
 
     return alertRecord[0];
+  }
+
+  /**
+   * Create a bill reminder alert (alternative method for bill reminders)
+   */
+  static async createBillAlert(
+    input: {
+      userId: string;
+      type: 'bill_reminder_1_day' | 'bill_reminder_3_day' | 'bill_reminder_7_day' | 'bill_reminder_14_day' | 'bill_reminder_overdue' | 'bill_reminder_due_today' | 'insufficient_funds_bill';
+      title: string;
+      message: string;
+      metadata?: Record<string, unknown>;
+      priority: 'low' | 'medium' | 'high' | 'urgent';
+    }
+  ): Promise<Alert> {
+    // For bill alerts, we need to extract accountId from metadata
+    const accountId = input.metadata?.accountId as string || '';
+    
+    const alertRecord = await db
+      .insert(alerts)
+      .values({
+        userId: input.userId,
+        accountId,
+        alertType: input.type,
+        message: input.message,
+        currentValue: '0', // Not applicable for bill reminders
+        thresholdValue: '0', // Not applicable for bill reminders
+        status: 'triggered',
+      })
+      .returning();
+
+    return alertRecord[0];
+  }
+
+  /**
+   * Get recent alert for spam prevention
+   */
+  static async getRecentAlert(
+    userId: string,
+    alertType: AlertType,
+    referenceId: string,
+    hoursBack: number
+  ): Promise<Alert | null> {
+    const cutoffTime = new Date(Date.now() - hoursBack * 60 * 60 * 1000);
+    
+    const recentAlerts = await db
+      .select()
+      .from(alerts)
+      .where(
+        and(
+          eq(alerts.userId, userId),
+          eq(alerts.alertType, alertType),
+          gte(alerts.triggeredAt, cutoffTime)
+        )
+      )
+      .limit(1);
+
+    return recentAlerts.length > 0 ? recentAlerts[0] : null;
   }
 
   /**

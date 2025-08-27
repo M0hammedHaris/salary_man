@@ -50,7 +50,10 @@ export const alertTypeEnum = pgEnum('alert_type', [
   'bill_reminder_1_day',
   'bill_reminder_3_day',
   'bill_reminder_7_day',
-  'bill_reminder_14_day'
+  'bill_reminder_14_day',
+  'bill_reminder_overdue',
+  'bill_reminder_due_today',
+  'insufficient_funds_bill'
 ]);
 
 export const alertStatusEnum = pgEnum('alert_status', [

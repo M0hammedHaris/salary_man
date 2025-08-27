@@ -10,6 +10,7 @@ import { RecentTransactions } from '@/components/dashboard/recent-transactions';
 import { AlertNotificationPanel } from '@/components/dashboard/alert-notification-panel';
 import { QuickActionFloatingButton } from '@/components/dashboard/quick-action-floating-button';
 import { DashboardSkeleton } from '@/components/dashboard/dashboard-skeleton';
+import { UpcomingBills } from '@/components/bills/upcoming-bills';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 async function DashboardContent({ userId }: { userId: string }) {
@@ -48,6 +49,9 @@ async function DashboardContent({ userId }: { userId: string }) {
 
             {/* Right Column - Secondary Metrics & Alerts */}
             <div className="space-y-6">
+              {/* Upcoming Bills */}
+              <UpcomingBills />
+
               {/* Credit Card Utilization */}
               <CreditCardUtilization creditCards={dashboardData.creditCardUtilization} />
 

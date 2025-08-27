@@ -18,7 +18,7 @@ const updateBillSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await getAuth(request);
@@ -27,7 +27,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const billId = params.id;
+    const { id: billId } = await params;
 
     // Get specific bill with account and category details
     const billResult = await db
@@ -74,7 +74,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await getAuth(request);
@@ -83,7 +83,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const billId = params.id;
+    const { id: billId } = await params;
     const body = await request.json();
     const validatedData = updateBillSchema.parse(body);
 
@@ -172,7 +172,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await getAuth(request);
@@ -181,7 +181,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const billId = params.id;
+    const { id: billId } = await params;
 
     // Verify bill belongs to user
     const existingBill = await db

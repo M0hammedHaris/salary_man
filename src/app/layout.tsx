@@ -4,6 +4,7 @@ import { ClerkProvider } from '@clerk/nextjs'
 import { ConditionalNavigationHeader } from '@/components/layout/conditional-navigation-header';
 import { ConditionalMainWrapper } from '@/components/layout/conditional-main-wrapper';
 import { NotificationProvider } from '@/components/alerts/notification-provider';
+import { Providers } from '@/components/providers';
 import { Toaster } from 'sonner';
 import "./globals.css";
 
@@ -33,19 +34,21 @@ export default function RootLayout({
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
-          <NotificationProvider>
-            <ConditionalNavigationHeader />
-            <ConditionalMainWrapper>
-              {children}
-            </ConditionalMainWrapper>
-            <Toaster 
-              position="top-right" 
-              toastOptions={{
-                duration: 5000,
-                className: 'border shadow-lg',
-              }}
-            />
-          </NotificationProvider>
+          <Providers>
+            <NotificationProvider>
+              <ConditionalNavigationHeader />
+              <ConditionalMainWrapper>
+                {children}
+              </ConditionalMainWrapper>
+              <Toaster 
+                position="top-right" 
+                toastOptions={{
+                  duration: 5000,
+                  className: 'border shadow-lg',
+                }}
+              />
+            </NotificationProvider>
+          </Providers>
         </body>
       </html>
     </ClerkProvider>
