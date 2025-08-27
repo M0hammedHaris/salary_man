@@ -116,9 +116,11 @@ export function NetWorthTracker({
     return (
       <Card className={className}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            Net Worth Tracker
+          <CardTitle>
+            <h3 className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Net Worth Tracker
+            </h3>
           </CardTitle>
           <CardDescription>No net worth data available for the selected period</CardDescription>
         </CardHeader>
@@ -147,9 +149,11 @@ export function NetWorthTracker({
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Net Worth Tracker
+            <CardTitle>
+              <h3 className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Net Worth Tracker
+              </h3>
             </CardTitle>
             <CardDescription>
               Track your overall financial growth over time
