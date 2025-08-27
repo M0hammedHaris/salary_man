@@ -191,12 +191,64 @@ export const alerts = pgTable('alerts', {
   triggeredAt: timestamp('triggered_at', { withTimezone: true }).defaultNow().notNull(),
   acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true }),
   snoozeUntil: timestamp('snooze_until', { withTimezone: true }),
+  // Notification center extensions
+  deliveryChannels: text('delivery_channels').array().default(['inApp']),
+  deliveredAt: timestamp('delivered_at', { withTimezone: true }),
+  deliveryStatus: text('delivery_status').default('pending'),
+  priority: text('priority').default('medium'),
+  archivedAt: timestamp('archived_at', { withTimezone: true }),
+  readAt: timestamp('read_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => ({
   userTriggeredIdx: index('alerts_user_triggered_idx').on(table.userId, table.triggeredAt),
   accountStatusIdx: index('alerts_account_status_idx').on(table.accountId, table.status),
   statusTriggeredIdx: index('alerts_status_triggered_idx').on(table.status, table.triggeredAt),
+  deliveryStatusIdx: index('alerts_delivery_status_idx').on(table.deliveryStatus, table.deliveredAt),
+  priorityTriggeredIdx: index('alerts_priority_triggered_idx').on(table.priority, table.triggeredAt),
+  readArchivedIdx: index('alerts_read_archived_idx').on(table.readAt, table.archivedAt),
+}));
+
+// Notification Preferences table - user notification settings per alert type
+export const notificationPreferences = pgTable('notification_preferences', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  alertType: text('alert_type').notNull(),
+  emailEnabled: boolean('email_enabled').default(true),
+  pushEnabled: boolean('push_enabled').default(true),
+  inAppEnabled: boolean('in_app_enabled').default(true),
+  smsEnabled: boolean('sms_enabled').default(false),
+  frequencyLimit: numeric('frequency_limit', { precision: 10, scale: 0 }), // Max notifications per day for this type
+  quietHoursStart: text('quiet_hours_start'), // Store as time string
+  quietHoursEnd: text('quiet_hours_end'), // Store as time string
+  timezone: text('timezone').default('UTC'),
+  emergencyOverride: boolean('emergency_override').default(false),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  userTypeIdx: index('notification_preferences_user_type_idx').on(table.userId, table.alertType),
+  uniqueUserType: index('notification_preferences_unique_user_type').on(table.userId, table.alertType),
+}));
+
+// Notification History table - tracks all notification deliveries
+export const notificationHistory = pgTable('notification_history', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  alertId: uuid('alert_id').references(() => alerts.id, { onDelete: 'cascade' }),
+  notificationType: text('notification_type').notNull(),
+  channel: text('channel').notNull(), // email, push, inApp, sms
+  title: text('title').notNull(),
+  message: text('message').notNull(),
+  status: text('status').default('sent'), // sent, delivered, failed, read
+  sentAt: timestamp('sent_at', { withTimezone: true }).defaultNow().notNull(),
+  deliveredAt: timestamp('delivered_at', { withTimezone: true }),
+  readAt: timestamp('read_at', { withTimezone: true }),
+  metadata: json('metadata').default({}),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  userSentIdx: index('notification_history_user_sent_idx').on(table.userId, table.sentAt),
+  alertIdx: index('notification_history_alert_idx').on(table.alertId),
+  channelStatusIdx: index('notification_history_channel_status_idx').on(table.channel, table.status),
 }));
 
 // Relations
@@ -207,6 +259,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   recurringPayments: many(recurringPayments),
   alerts: many(alerts),
   alertSettings: many(alertSettings),
+  notificationPreferences: many(notificationPreferences),
+  notificationHistory: many(notificationHistory),
 }));
 
 export const accountsRelations = relations(accounts, ({ one, many }) => ({
@@ -267,7 +321,7 @@ export const recurringPaymentsRelations = relations(recurringPayments, ({ one })
   }),
 }));
 
-export const alertsRelations = relations(alerts, ({ one }) => ({
+export const alertsRelations = relations(alerts, ({ one, many }) => ({
   user: one(users, {
     fields: [alerts.userId],
     references: [users.id],
@@ -276,6 +330,7 @@ export const alertsRelations = relations(alerts, ({ one }) => ({
     fields: [alerts.accountId],
     references: [accounts.id],
   }),
+  notificationHistory: many(notificationHistory),
 }));
 
 export const alertSettingsRelations = relations(alertSettings, ({ one }) => ({
@@ -286,6 +341,24 @@ export const alertSettingsRelations = relations(alertSettings, ({ one }) => ({
   account: one(accounts, {
     fields: [alertSettings.accountId],
     references: [accounts.id],
+  }),
+}));
+
+export const notificationPreferencesRelations = relations(notificationPreferences, ({ one }) => ({
+  user: one(users, {
+    fields: [notificationPreferences.userId],
+    references: [users.id],
+  }),
+}));
+
+export const notificationHistoryRelations = relations(notificationHistory, ({ one }) => ({
+  user: one(users, {
+    fields: [notificationHistory.userId],
+    references: [users.id],
+  }),
+  alert: one(alerts, {
+    fields: [notificationHistory.alertId],
+    references: [alerts.id],
   }),
 }));
 
@@ -304,6 +377,10 @@ export type Alert = typeof alerts.$inferSelect;
 export type NewAlert = typeof alerts.$inferInsert;
 export type AlertSettings = typeof alertSettings.$inferSelect;
 export type NewAlertSettings = typeof alertSettings.$inferInsert;
+export type NotificationPreferences = typeof notificationPreferences.$inferSelect;
+export type NewNotificationPreferences = typeof notificationPreferences.$inferInsert;
+export type NotificationHistory = typeof notificationHistory.$inferSelect;
+export type NewNotificationHistory = typeof notificationHistory.$inferInsert;
 
 // Enum types
 export type AccountType = typeof accounts.type.enumValues[number];

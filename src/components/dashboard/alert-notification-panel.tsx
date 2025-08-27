@@ -1,5 +1,6 @@
 "use client";
 
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -236,10 +237,12 @@ export function AlertNotificationPanel({ alerts }: AlertNotificationPanelProps) 
                   {sortedAlerts.filter(a => a.priority === 'high').length} High Priority •{' '}
                   {sortedAlerts.filter(a => a.actionRequired).length} Action Required
                 </span>
-                <Button variant="ghost" size="sm" className="text-xs h-6">
-                  <BellOff className="h-3 w-3 mr-1" />
-                  Manage Notifications
-                </Button>
+                <Link href="/dashboard/notifications">
+                  <Button variant="ghost" size="sm" className="text-xs h-6">
+                    <BellOff className="h-3 w-3 mr-1" />
+                    Manage Notifications
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>

@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
+import { NotificationStatusIndicator } from "@/components/notifications/notification-status-indicator";
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -35,6 +36,7 @@ interface NavigationItem {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   description?: string;
+  useStatusIndicator?: boolean;
 }
 
 const navigationItems: NavigationItem[] = [
@@ -55,6 +57,13 @@ const navigationItems: NavigationItem[] = [
     href: "/transactions",
     icon: Receipt,
     description: "View and manage transactions",
+  },
+  {
+    label: "Notifications",
+    href: "/dashboard/notifications",
+    icon: Bell,
+    description: "Notification center and alerts",
+    useStatusIndicator: true,
   },
   {
     label: "Alerts",
@@ -106,7 +115,11 @@ export function NavigationHeader() {
                   aria-current={isActive(item.href) ? "page" : undefined}
                   href={item.href}
                 >
-                  <item.icon className="mr-2 h-4 w-4" />
+                  {item.useStatusIndicator ? (
+                    <NotificationStatusIndicator className="mr-2" />
+                  ) : (
+                    <item.icon className="mr-2 h-4 w-4" />
+                  )}
                   {item.label}
                 </NavigationMenuLink>
               </NavigationMenuItem>
@@ -149,7 +162,11 @@ export function NavigationHeader() {
                     )}
                     aria-current={isActive(item.href) ? "page" : undefined}
                   >
-                    <item.icon className="h-4 w-4" />
+                    {item.useStatusIndicator ? (
+                      <NotificationStatusIndicator />
+                    ) : (
+                      <item.icon className="h-4 w-4" />
+                    )}
                     <span>{item.label}</span>
                   </Link>
                 ))}
