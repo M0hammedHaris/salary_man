@@ -55,6 +55,20 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
           fetch(`/api/analytics/comparisons?${overviewParams}&previousStartDate=${new Date(dateRange.startDate.getTime() - (dateRange.endDate.getTime() - dateRange.startDate.getTime())).toISOString()}&previousEndDate=${new Date(dateRange.startDate.getTime() - 1).toISOString()}`),
         ]);
 
+        // Parse responses with error handling for individual endpoints
+        const parseResponseSafely = async (response: Response, fallback: Record<string, unknown>) => {
+          if (!response.ok) {
+            console.warn(`Analytics API endpoint failed: ${response.url}`);
+            return fallback;
+          }
+          try {
+            return await response.json();
+          } catch (error) {
+            console.warn(`Failed to parse response from ${response.url}:`, error);
+            return fallback;
+          }
+        };
+
         const [
           { cashFlow }, 
           { spendingBreakdown }, 
@@ -63,12 +77,12 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
           { netWorthHistory }, 
           { comparisons }
         ] = await Promise.all([
-          cashFlowRes.json(),
-          spendingRes.json(),
-          accountTrendsRes.json(),
-          creditUtilRes.json(),
-          netWorthRes.json(),
-          comparisonsRes.json(),
+          parseResponseSafely(cashFlowRes, { cashFlow: [] }),
+          parseResponseSafely(spendingRes, { spendingBreakdown: [] }),
+          parseResponseSafely(accountTrendsRes, { accountTrends: [] }),
+          parseResponseSafely(creditUtilRes, { creditUtilization: [] }),
+          parseResponseSafely(netWorthRes, { netWorthHistory: [] }),
+          parseResponseSafely(comparisonsRes, { comparisons: [] }),
         ]);
 
         setDashboardData({
@@ -171,7 +185,7 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Net Cash Flow</CardTitle>
-                  {dashboardData.comparisons.find(c => c.metric === 'netCashFlow') && 
+                  {dashboardData.comparisons?.find(c => c.metric === 'netCashFlow') && 
                     getTrendIcon(
                       dashboardData.comparisons.find(c => c.metric === 'netCashFlow')!.trend,
                       dashboardData.comparisons.find(c => c.metric === 'netCashFlow')!.change
@@ -183,7 +197,7 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
                     {formatCurrency(dashboardData.overview.netCashFlow)}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {dashboardData.comparisons.find(c => c.metric === 'netCashFlow')?.changePercentage.toFixed(1)}% from previous period
+                    {dashboardData.comparisons?.find(c => c.metric === 'netCashFlow')?.changePercentage.toFixed(1)}% from previous period
                   </p>
                 </CardContent>
               </Card>
@@ -191,7 +205,7 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Income</CardTitle>
-                  {dashboardData.comparisons.find(c => c.metric === 'income') && 
+                  {dashboardData.comparisons?.find(c => c.metric === 'income') && 
                     getTrendIcon(
                       dashboardData.comparisons.find(c => c.metric === 'income')!.trend,
                       dashboardData.comparisons.find(c => c.metric === 'income')!.change
@@ -203,7 +217,7 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
                     {formatCurrency(dashboardData.overview.totalIncome)}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {dashboardData.comparisons.find(c => c.metric === 'income')?.changePercentage.toFixed(1)}% from previous period
+                    {dashboardData.comparisons?.find(c => c.metric === 'income')?.changePercentage.toFixed(1)}% from previous period
                   </p>
                 </CardContent>
               </Card>
@@ -211,7 +225,7 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
-                  {dashboardData.comparisons.find(c => c.metric === 'expenses') && 
+                  {dashboardData.comparisons?.find(c => c.metric === 'expenses') && 
                     getTrendIcon(
                       dashboardData.comparisons.find(c => c.metric === 'expenses')!.trend,
                       -dashboardData.comparisons.find(c => c.metric === 'expenses')!.change // Reverse for expenses
@@ -223,7 +237,7 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
                     {formatCurrency(dashboardData.overview.totalExpenses)}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {dashboardData.comparisons.find(c => c.metric === 'expenses')?.changePercentage.toFixed(1)}% from previous period
+                    {dashboardData.comparisons?.find(c => c.metric === 'expenses')?.changePercentage.toFixed(1)}% from previous period
                   </p>
                 </CardContent>
               </Card>
@@ -231,7 +245,7 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Net Worth</CardTitle>
-                  {dashboardData.comparisons.find(c => c.metric === 'netWorth') && 
+                  {dashboardData.comparisons?.find(c => c.metric === 'netWorth') && 
                     getTrendIcon(
                       dashboardData.comparisons.find(c => c.metric === 'netWorth')!.trend,
                       dashboardData.comparisons.find(c => c.metric === 'netWorth')!.change
@@ -243,7 +257,7 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
                     {formatCurrency(dashboardData.overview.netWorth)}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {dashboardData.comparisons.find(c => c.metric === 'netWorth')?.changePercentage.toFixed(1)}% from previous period
+                    {dashboardData.comparisons?.find(c => c.metric === 'netWorth')?.changePercentage.toFixed(1)}% from previous period
                   </p>
                 </CardContent>
               </Card>

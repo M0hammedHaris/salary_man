@@ -12,6 +12,7 @@ import { QuickActionFloatingButton } from '@/components/dashboard/quick-action-f
 import { DashboardSkeleton } from '@/components/dashboard/dashboard-skeleton';
 import { UpcomingBills } from '@/components/bills/upcoming-bills';
 import { RecurringPaymentInsights } from '@/components/dashboard/recurring-payment-insights';
+import { AnalyticsQuickAccess } from '@/components/dashboard/analytics-quick-access';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 async function DashboardContent({ userId }: { userId: string }) {
@@ -50,6 +51,9 @@ async function DashboardContent({ userId }: { userId: string }) {
 
             {/* Right Column - Secondary Metrics & Alerts */}
             <div className="space-y-6">
+              {/* Analytics Quick Access */}
+              <AnalyticsQuickAccess />
+
               {/* Recurring Payment Insights */}
               <RecurringPaymentInsights userId={userId} />
 
