@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CalendarIcon, Target, TrendingUp, MoreVertical, Trash2, Edit3, PauseCircle, PlayCircle, Trophy } from 'lucide-react';
+import { CalendarIcon, Target, TrendingUp, MoreVertical, Trash2, Edit3, PauseCircle, PlayCircle } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -51,22 +51,6 @@ export function GoalProgressCard({ goal, onUpdate }: GoalProgressCardProps) {
 
   // Calculate progress percentage
   const progressPercentage = (goal.currentAmount / goal.targetAmount) * 100;
-
-  // Handle milestone achievement
-  const handleMilestoneAchieved = (milestoneId: string) => {
-    const milestoneMap = {
-      '25': { id: '25', percentage: 25, title: 'First Quarter', description: 'Great start! You\'ve saved 25% of your goal.', reward: '🌟 Achievement Badge' },
-      '50': { id: '50', percentage: 50, title: 'Halfway Hero', description: 'Amazing progress! You\'re halfway to your goal.', reward: '🏆 Halfway Champion' },
-      '75': { id: '75', percentage: 75, title: 'Almost There', description: 'You\'re in the final stretch! 75% complete.', reward: '⭐ Nearly There Badge' },
-      '100': { id: '100', percentage: 100, title: 'Goal Achieved!', description: 'Congratulations! You\'ve reached your savings goal.', reward: '🎉 Goal Master Trophy' }
-    };
-    
-    const milestone = milestoneMap[milestoneId as keyof typeof milestoneMap];
-    if (milestone) {
-      setCelebrationMilestone(milestone);
-      setShowCelebration(true);
-    }
-  };
 
   // Check for milestone celebration
   const shouldShowMilestoneCelebration = () => {
@@ -271,7 +255,6 @@ export function GoalProgressCard({ goal, onUpdate }: GoalProgressCardProps) {
             <div className="lg:col-span-2">
               <GoalProgressBars 
                 goal={goal} 
-                onMilestoneAchieved={handleMilestoneAchieved}
               />
             </div>
             

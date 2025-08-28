@@ -148,8 +148,8 @@ export function RecurringPaymentInsights({ userId, className }: RecurringPayment
               data.trends.direction === 'down' ? 'text-green-500' : 
               'text-muted-foreground'
             }`}>
-              {data.trends.monthlyChangePercentage > 0 ? '+' : ''}
-              {data.trends.monthlyChangePercentage.toFixed(1)}%
+              {(data.trends.monthlyChangePercentage || 0) > 0 ? '+' : ''}
+              {(data.trends.monthlyChangePercentage || 0).toFixed(1)}%
             </span>
           </div>
         </div>
@@ -159,15 +159,15 @@ export function RecurringPaymentInsights({ userId, className }: RecurringPayment
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Budget Impact</span>
             <span className="font-medium">
-              {data.budgetImpact.utilizationPercentage.toFixed(1)}%
+              {(data.budgetImpact?.utilizationPercentage || 0).toFixed(1)}%
             </span>
           </div>
           <Progress 
-            value={data.budgetImpact.utilizationPercentage} 
+            value={data.budgetImpact?.utilizationPercentage || 0} 
             className="h-2"
           />
           <p className="text-xs text-muted-foreground">
-            {displayCurrency(data.budgetImpact.recurringAllocation)} of {displayCurrency(data.budgetImpact.totalBudget)}
+            {displayCurrency(data.budgetImpact?.recurringAllocation || 0)} of {displayCurrency(data.budgetImpact?.totalBudget || 0)}
           </p>
         </div>
 

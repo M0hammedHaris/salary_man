@@ -1,7 +1,6 @@
 import { eq, and, sql, desc, asc, gte, lte, inArray } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { transactions, accounts, categories } from '@/lib/db/schema';
-import type { AccountType } from '@/lib/db/schema';
 import type {
   AnalyticsOverview,
   CashFlowData,

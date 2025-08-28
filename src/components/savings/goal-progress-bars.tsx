@@ -8,11 +8,10 @@ import type { GoalWithProgress } from '@/lib/types/savings';
 
 interface GoalProgressBarsProps {
   goal: GoalWithProgress;
-  onMilestoneAchieved?: (milestoneId: string) => void;
   className?: string;
 }
 
-export function GoalProgressBars({ goal, onMilestoneAchieved, className }: GoalProgressBarsProps) {
+export function GoalProgressBars({ goal, className }: GoalProgressBarsProps) {
   const progressPercentage = Math.min((goal.currentAmount / goal.targetAmount) * 100, 100);
   const isCompleted = progressPercentage >= 100;
   const isNearlyComplete = progressPercentage >= 90;

@@ -4,7 +4,7 @@ import { AnalyticsDashboard } from '@/components/analytics/analytics-dashboard';
 
 // Mock the date range selector hook
 vi.mock('@/components/analytics/date-range-selector', () => ({
-  DateRangeSelector: ({ value, onChange }: any) => (
+  DateRangeSelector: ({ value }: any) => (
     <div data-testid="date-range-selector">
       <span>Start: {value.startDate.toISOString()}</span>
       <span>End: {value.endDate.toISOString()}</span>

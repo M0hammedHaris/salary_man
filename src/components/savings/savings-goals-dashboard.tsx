@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Settings, BarChart3, Target } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -35,7 +35,6 @@ export function SavingsGoalsDashboard({
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isResourceDialogOpen, setIsResourceDialogOpen] = useState(false);
   const [isPriorityDialogOpen, setIsPriorityDialogOpen] = useState(false);
-  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
 
   // Categorize goals by status
   const activeGoals = goals.filter(goal => goal.status === 'active');
@@ -47,8 +46,7 @@ export function SavingsGoalsDashboard({
     onGoalCreated();
   };
 
-  const handleGoalSelect = (goalId: string) => {
-    setSelectedGoalId(goalId);
+  const handleGoalSelect = (_goalId: string) => {
     // You could navigate to a detailed goal view here
   };
 
