@@ -1,29 +1,41 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Settings, BarChart3, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { GoalCreationForm } from './goal-creation-form';
 import { GoalProgressCard } from './goal-progress-card';
 import { GoalAnalytics } from './goal-analytics';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { MultiGoalOverview } from './multi-goal-overview';
+import { ResourceAllocationHelper } from './resource-allocation-helper';
+import { PriorityRanking } from './priority-ranking';
 import type { GoalWithProgress } from '@/lib/types/savings';
 
 interface SavingsGoalsDashboardProps {
   goals: GoalWithProgress[];
+  monthlyIncome?: number;
+  monthlyExpenses?: number;
   onGoalCreated: () => void;
   onGoalUpdated: () => void;
   onGoalDeleted: () => void;
+  onGoalPriorityUpdated?: (goalId: string, newPriority: number) => void;
 }
 
 export function SavingsGoalsDashboard({
   goals,
+  monthlyIncome = 0,
+  monthlyExpenses = 0,
   onGoalCreated,
   onGoalUpdated,
+  onGoalPriorityUpdated,
 }: SavingsGoalsDashboardProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isResourceDialogOpen, setIsResourceDialogOpen] = useState(false);
+  const [isPriorityDialogOpen, setIsPriorityDialogOpen] = useState(false);
+  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
 
   // Categorize goals by status
   const activeGoals = goals.filter(goal => goal.status === 'active');
@@ -33,6 +45,23 @@ export function SavingsGoalsDashboard({
   const handleGoalCreated = () => {
     setIsCreateDialogOpen(false);
     onGoalCreated();
+  };
+
+  const handleGoalSelect = (goalId: string) => {
+    setSelectedGoalId(goalId);
+    // You could navigate to a detailed goal view here
+  };
+
+  const handleResourceAllocation = () => {
+    setIsResourceDialogOpen(true);
+  };
+
+  const handlePriorityReorder = () => {
+    setIsPriorityDialogOpen(true);
+  };
+
+  const handlePriorityUpdate = (goalId: string, newPriority: number) => {
+    onGoalPriorityUpdated?.(goalId, newPriority);
   };
 
   return (
@@ -61,14 +90,12 @@ export function SavingsGoalsDashboard({
         </Dialog>
       </div>
 
-      {/* Analytics Overview */}
-      <GoalAnalytics goals={goals} />
-
-      {/* Goals Tabs */}
-      <Tabs defaultValue="active" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
+      {/* Enhanced Dashboard Tabs */}
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="active">
-            Active Goals ({activeGoals.length})
+            Active ({activeGoals.length})
           </TabsTrigger>
           <TabsTrigger value="completed">
             Completed ({completedGoals.length})
@@ -76,7 +103,21 @@ export function SavingsGoalsDashboard({
           <TabsTrigger value="paused">
             Paused ({pausedGoals.length})
           </TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="planning">Planning</TabsTrigger>
         </TabsList>
+
+        {/* Multi-Goal Overview Tab */}
+        <TabsContent value="overview" className="space-y-4">
+          <MultiGoalOverview
+            goals={goals}
+            monthlyIncome={monthlyIncome}
+            monthlyExpenses={monthlyExpenses}
+            onGoalSelect={handleGoalSelect}
+            onResourceAllocation={handleResourceAllocation}
+            onPriorityReorder={handlePriorityReorder}
+          />
+        </TabsContent>
 
         <TabsContent value="active" className="space-y-4">
           {activeGoals.length === 0 ? (
@@ -159,7 +200,65 @@ export function SavingsGoalsDashboard({
             </div>
           )}
         </TabsContent>
+
+        {/* Analytics Tab */}
+        <TabsContent value="analytics" className="space-y-4">
+          <GoalAnalytics goals={goals} />
+        </TabsContent>
+
+        {/* Planning Tab */}
+        <TabsContent value="planning" className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card>
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Resource Allocation</h3>
+                <ResourceAllocationHelper
+                  goals={activeGoals}
+                  monthlyIncome={monthlyIncome}
+                  monthlyExpenses={monthlyExpenses}
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Priority Management</h3>
+                <PriorityRanking
+                  goals={goals}
+                  onPriorityUpdate={handlePriorityUpdate}
+                />
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
       </Tabs>
+
+      {/* Resource Allocation Dialog */}
+      <Dialog open={isResourceDialogOpen} onOpenChange={setIsResourceDialogOpen}>
+        <DialogContent className="sm:max-w-[800px]">
+          <DialogHeader>
+            <DialogTitle>Resource Allocation Helper</DialogTitle>
+          </DialogHeader>
+          <ResourceAllocationHelper
+            goals={activeGoals}
+            monthlyIncome={monthlyIncome}
+            monthlyExpenses={monthlyExpenses}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Priority Ranking Dialog */}
+      <Dialog open={isPriorityDialogOpen} onOpenChange={setIsPriorityDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Goal Priority Ranking</DialogTitle>
+          </DialogHeader>
+          <PriorityRanking
+            goals={goals}
+            onPriorityUpdate={handlePriorityUpdate}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -13,6 +13,7 @@ import { DashboardSkeleton } from '@/components/dashboard/dashboard-skeleton';
 import { UpcomingBills } from '@/components/bills/upcoming-bills';
 import { RecurringPaymentInsights } from '@/components/dashboard/recurring-payment-insights';
 import { AnalyticsQuickAccess } from '@/components/dashboard/analytics-quick-access';
+import { SavingsQuickAccess } from '@/components/dashboard/savings-quick-access';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 async function DashboardContent({ userId }: { userId: string }) {
@@ -53,6 +54,9 @@ async function DashboardContent({ userId }: { userId: string }) {
             <div className="space-y-6">
               {/* Analytics Quick Access */}
               <AnalyticsQuickAccess />
+
+              {/* Savings Goals Quick Access */}
+              <SavingsQuickAccess />
 
               {/* Recurring Payment Insights */}
               <RecurringPaymentInsights userId={userId} />

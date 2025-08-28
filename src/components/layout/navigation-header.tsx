@@ -30,6 +30,7 @@ import {
   DollarSign,
   Bell,
   BarChart3,
+  Target,
 } from "lucide-react";
 
 interface NavigationItem {
@@ -52,6 +53,12 @@ const navigationItems: NavigationItem[] = [
     href: "/analytics",
     icon: BarChart3,
     description: "Financial insights and trends",
+  },
+  {
+    label: "Savings Goals",
+    href: "/savings",
+    icon: Target,
+    description: "Track savings goals and financial planning",
   },
   {
     label: "Accounts",

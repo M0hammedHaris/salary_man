@@ -1,13 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { CalendarIcon, Target, TrendingUp, MoreVertical, Trash2, Edit3, PauseCircle, PlayCircle } from 'lucide-react';
+import { CalendarIcon, Target, TrendingUp, MoreVertical, Trash2, Edit3, PauseCircle, PlayCircle, Trophy } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { 
   DropdownMenu,
@@ -27,6 +26,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
+import { GoalProgressBars } from './goal-progress-bars';
+import { PercentageCompletionIndicators } from './percentage-completion-indicators';
+import { GoalCelebration } from './goal-celebration';
 import type { GoalWithProgress } from '@/lib/types/savings';
 
 interface GoalProgressCardProps {
@@ -38,9 +40,47 @@ export function GoalProgressCard({ goal, onUpdate }: GoalProgressCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [celebrationMilestone, setCelebrationMilestone] = useState<{
+    id: string;
+    percentage: number;
+    title: string;
+    description: string;
+    reward?: string;
+  } | null>(null);
 
   // Calculate progress percentage
   const progressPercentage = (goal.currentAmount / goal.targetAmount) * 100;
+
+  // Handle milestone achievement
+  const handleMilestoneAchieved = (milestoneId: string) => {
+    const milestoneMap = {
+      '25': { id: '25', percentage: 25, title: 'First Quarter', description: 'Great start! You\'ve saved 25% of your goal.', reward: '🌟 Achievement Badge' },
+      '50': { id: '50', percentage: 50, title: 'Halfway Hero', description: 'Amazing progress! You\'re halfway to your goal.', reward: '🏆 Halfway Champion' },
+      '75': { id: '75', percentage: 75, title: 'Almost There', description: 'You\'re in the final stretch! 75% complete.', reward: '⭐ Nearly There Badge' },
+      '100': { id: '100', percentage: 100, title: 'Goal Achieved!', description: 'Congratulations! You\'ve reached your savings goal.', reward: '🎉 Goal Master Trophy' }
+    };
+    
+    const milestone = milestoneMap[milestoneId as keyof typeof milestoneMap];
+    if (milestone) {
+      setCelebrationMilestone(milestone);
+      setShowCelebration(true);
+    }
+  };
+
+  // Check for milestone celebration
+  const shouldShowMilestoneCelebration = () => {
+    const currentProgress = progressPercentage;
+    
+    // Check if we've just reached a milestone
+    if (currentProgress >= 100 && goal.status !== 'completed') {
+      return { isGoalComplete: true, milestone: null };
+    }
+    
+    return { isGoalComplete: false, milestone: null };
+  };
+
+  const { isGoalComplete } = shouldShowMilestoneCelebration();
   const isCompleted = progressPercentage >= 100;
   
   // Calculate days remaining
@@ -225,26 +265,28 @@ export function GoalProgressCard({ goal, onUpdate }: GoalProgressCardProps) {
         </CardHeader>
         
         <CardContent className="space-y-4">
-          {/* Progress Bar */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Progress</span>
-              <span className="font-medium">
-                ₹{goal.currentAmount.toLocaleString()} / ₹{goal.targetAmount.toLocaleString()}
-              </span>
+          {/* Progress Visualization */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Main Progress Section */}
+            <div className="lg:col-span-2">
+              <GoalProgressBars 
+                goal={goal} 
+                onMilestoneAchieved={handleMilestoneAchieved}
+              />
             </div>
-            <Progress 
-              value={Math.min(progressPercentage, 100)} 
-              className="h-2"
-            />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>{progressPercentage.toFixed(1)}% complete</span>
-              <span>₹{(goal.targetAmount - goal.currentAmount).toLocaleString()} remaining</span>
+            
+            {/* Circular Progress Indicator */}
+            <div className="flex justify-center lg:justify-end">
+              <PercentageCompletionIndicators 
+                goal={goal} 
+                variant="circular" 
+                size="md"
+              />
             </div>
           </div>
 
-          {/* Goal Details */}
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          {/* Goal Details Grid - Responsive */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm pt-4 border-t">
             <div className="space-y-1">
               <div className="flex items-center gap-1 text-muted-foreground">
                 <CalendarIcon className="h-3 w-3" />
@@ -276,23 +318,24 @@ export function GoalProgressCard({ goal, onUpdate }: GoalProgressCardProps) {
             </div>
           </div>
 
-          {/* Account Info */}
-          {goal.accountName && (
-            <div className="pt-2 border-t">
-              <p className="text-xs text-muted-foreground">
-                Linked to <span className="font-medium">{goal.accountName}</span>
-              </p>
-            </div>
-          )}
-
-          {/* Category */}
-          {goal.categoryName && (
-            <div className="flex items-center gap-2">
-              <div 
-                className="w-3 h-3 rounded-full" 
-                style={{ backgroundColor: goal.categoryColor || '#6b7280' }}
-              />
-              <span className="text-xs text-muted-foreground">{goal.categoryName}</span>
+          {/* Account and Category Info */}
+          {(goal.accountName || goal.categoryName) && (
+            <div className="space-y-2 pt-2 border-t">
+              {goal.accountName && (
+                <p className="text-xs text-muted-foreground">
+                  Linked to <span className="font-medium">{goal.accountName}</span>
+                </p>
+              )}
+              
+              {goal.categoryName && (
+                <div className="flex items-center gap-2">
+                  <div 
+                    className="w-3 h-3 rounded-full" 
+                    style={{ backgroundColor: goal.categoryColor || '#6b7280' }}
+                  />
+                  <span className="text-xs text-muted-foreground">{goal.categoryName}</span>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
@@ -319,6 +362,22 @@ export function GoalProgressCard({ goal, onUpdate }: GoalProgressCardProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Milestone Celebration */}
+      {showCelebration && (
+        <GoalCelebration
+          goal={goal}
+          milestone={celebrationMilestone || undefined}
+          isGoalComplete={isGoalComplete}
+          onClose={() => {
+            setShowCelebration(false);
+            setCelebrationMilestone(null);
+          }}
+          onShare={() => {
+            toast.success('Achievement shared successfully!');
+          }}
+        />
+      )}
     </>
   );
 }

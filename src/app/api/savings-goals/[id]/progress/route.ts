@@ -4,7 +4,7 @@ import { savingsService } from '@/lib/services/savings-service';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -13,6 +13,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const params = await context.params;
     const projection = await savingsService.getTimelineProjection(params.id, userId);
 
     return NextResponse.json({
