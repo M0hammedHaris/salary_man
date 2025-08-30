@@ -79,7 +79,7 @@ export function QuickActionFloatingButton({ className = "" }: QuickActionFloatin
                 <Button
                   size="sm"
                   variant="secondary"
-                  className={`w-12 h-12 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 ${action.color} animate-in slide-in-from-bottom-1`}
+                  className={`min-h-[48px] min-w-[48px] h-12 w-12 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 ${action.color} animate-in slide-in-from-bottom-1`}
                   style={{ animationDelay: `${index * 50}ms` }}
                   onClick={() => {
                     action.action();
@@ -101,7 +101,7 @@ export function QuickActionFloatingButton({ className = "" }: QuickActionFloatin
               <Button
                 size="sm"
                 variant="outline"
-                className="w-12 h-12 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 animate-in slide-in-from-bottom-1"
+                className="min-h-[48px] min-w-[48px] h-12 w-12 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 animate-in slide-in-from-bottom-1"
                 style={{ animationDelay: `${frequentActions.length * 50}ms` }}
                 onClick={() => {
                   router.push('/transactions');
@@ -123,7 +123,7 @@ export function QuickActionFloatingButton({ className = "" }: QuickActionFloatin
         <TooltipTrigger asChild>
           <Button
             size="lg"
-            className={`w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 ${
+            className={`min-h-[56px] min-w-[56px] w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 ${
               isExpanded ? 'rotate-45' : 'rotate-0'
             }`}
             onClick={() => setIsExpanded(!isExpanded)}
