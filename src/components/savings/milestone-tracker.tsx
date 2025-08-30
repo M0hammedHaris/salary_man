@@ -16,6 +16,7 @@ import {
   Star
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils/decimal';
 import { toast } from 'sonner';
 import type { GoalWithProgress } from '@/lib/types/savings';
 
@@ -231,10 +232,13 @@ export function MilestoneTracker({
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Target className="w-5 h-5" />
-              Milestone Progress
-            </CardTitle>
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="w-5 h-5" />
+                Milestone Progress
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">{goal.name}</p>
+            </div>
             <div className="flex items-center gap-2">
               <Badge variant="secondary">
                 {achievedMilestones.length} / {milestones.length}
@@ -286,9 +290,9 @@ export function MilestoneTracker({
 
             {/* Current Progress Info */}
             <div className="flex justify-between items-center text-sm text-muted-foreground">
-              <span>₹{goal.currentAmount.toLocaleString()}</span>
+              <span>{formatCurrency(goal.currentAmount)}</span>
               <span>{progressPercentage.toFixed(1)}% Complete</span>
-              <span>₹{goal.targetAmount.toLocaleString()}</span>
+              <span>{formatCurrency(goal.targetAmount)}</span>
             </div>
           </div>
 
@@ -305,15 +309,15 @@ export function MilestoneTracker({
                 {nextMilestone.description}
               </p>
               <div className="flex justify-between items-center text-sm">
-                <span>Progress: ₹{goal.currentAmount.toLocaleString()}</span>
-                <span>Target: ₹{nextMilestone.targetAmount.toLocaleString()}</span>
+                <span>Progress: {formatCurrency(goal.currentAmount)}</span>
+                <span>Target: {formatCurrency(nextMilestone.targetAmount)}</span>
               </div>
               <Progress 
                 value={(goal.currentAmount / nextMilestone.targetAmount) * 100} 
                 className="h-1 mt-2" 
               />
               <p className="text-xs text-muted-foreground mt-1">
-                ₹{(nextMilestone.targetAmount - goal.currentAmount).toLocaleString()} remaining
+                {formatCurrency(nextMilestone.targetAmount - goal.currentAmount)} remaining
               </p>
             </div>
           )}
@@ -353,7 +357,7 @@ export function MilestoneTracker({
                     {milestone.description}
                   </p>
                   <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                    <span>Target: ₹{milestone.targetAmount.toLocaleString()}</span>
+                    <span>Target: {formatCurrency(milestone.targetAmount)}</span>
                     {milestone.isAchieved && milestone.achievedAt && (
                       <span>Achieved: {milestone.achievedAt.toLocaleDateString()}</span>
                     )}

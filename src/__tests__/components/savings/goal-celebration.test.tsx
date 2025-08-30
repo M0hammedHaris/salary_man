@@ -141,9 +141,12 @@ describe('GoalCelebration', () => {
   });
 
   it('falls back to clipboard when navigator.share is not available', async () => {
-    // Remove navigator.share temporarily
+    // Mock navigator.share to be undefined
     const originalShare = navigator.share;
-    delete (navigator as any).share;
+    Object.defineProperty(navigator, 'share', {
+      writable: true,
+      value: undefined
+    });
     
     const onShare = vi.fn();
     render(<GoalCelebration goal={mockGoal} milestone={mockMilestone} onShare={onShare} />);
@@ -157,7 +160,10 @@ describe('GoalCelebration', () => {
     expect(onShare).toHaveBeenCalled();
     
     // Restore navigator.share
-    (navigator as any).share = originalShare;
+    Object.defineProperty(navigator, 'share', {
+      writable: true,
+      value: originalShare
+    });
   });
 
   it('toggles details view correctly', () => {
