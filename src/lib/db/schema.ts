@@ -63,6 +63,13 @@ export const alertStatusEnum = pgEnum('alert_status', [
   'snoozed'
 ]);
 
+export const goalStatusEnum = pgEnum('goal_status', [
+  'active',
+  'paused',
+  'completed',
+  'cancelled'
+]);
+
 // User Preferences Type
 export interface UserPreferences {
   currency: string;
@@ -251,6 +258,62 @@ export const notificationHistory = pgTable('notification_history', {
   channelStatusIdx: index('notification_history_channel_status_idx').on(table.channel, table.status),
 }));
 
+// Savings Goals table
+export const savingsGoals = pgTable('savings_goals', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  accountId: uuid('account_id').references(() => accounts.id, { onDelete: 'cascade' }).notNull(),
+  categoryId: uuid('category_id').references(() => categories.id, { onDelete: 'restrict' }),
+  name: text('name').notNull(),
+  description: text('description'),
+  targetAmount: numeric('target_amount', { precision: 12, scale: 2 }).notNull(),
+  currentAmount: numeric('current_amount', { precision: 12, scale: 2 }).notNull().default('0.00'),
+  targetDate: timestamp('target_date', { withTimezone: true }).notNull(),
+  status: goalStatusEnum('status').notNull().default('active'),
+  priority: numeric('priority', { precision: 3, scale: 0 }).notNull().default('5'), // 1-10 priority ranking
+  initialBalance: numeric('initial_balance', { precision: 12, scale: 2 }).notNull().default('0.00'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  userStatusIdx: index('savings_goals_user_status_idx').on(table.userId, table.status),
+  targetDateIdx: index('savings_goals_target_date_idx').on(table.targetDate),
+  priorityIdx: index('savings_goals_priority_idx').on(table.priority),
+}));
+
+// Goal Milestones table
+export const goalMilestones = pgTable('goal_milestones', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  goalId: uuid('goal_id').references(() => savingsGoals.id, { onDelete: 'cascade' }).notNull(),
+  userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  milestonePercentage: numeric('milestone_percentage', { precision: 5, scale: 2 }).notNull(), // 25.00, 50.00, 75.00, 100.00
+  targetAmount: numeric('target_amount', { precision: 12, scale: 2 }).notNull(),
+  achievedAmount: numeric('achieved_amount', { precision: 12, scale: 2 }),
+  achievedAt: timestamp('achieved_at', { withTimezone: true }),
+  isAchieved: boolean('is_achieved').notNull().default(false),
+  notified: boolean('notified').notNull().default(false),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  goalPercentageIdx: index('goal_milestones_goal_percentage_idx').on(table.goalId, table.milestonePercentage),
+  achievedIdx: index('goal_milestones_achieved_idx').on(table.isAchieved, table.achievedAt),
+}));
+
+// Goal Progress History table
+export const goalProgressHistory = pgTable('goal_progress_history', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  goalId: uuid('goal_id').references(() => savingsGoals.id, { onDelete: 'cascade' }).notNull(),
+  userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  previousAmount: numeric('previous_amount', { precision: 12, scale: 2 }).notNull(),
+  newAmount: numeric('new_amount', { precision: 12, scale: 2 }).notNull(),
+  changeAmount: numeric('change_amount', { precision: 12, scale: 2 }).notNull(),
+  accountBalance: numeric('account_balance', { precision: 12, scale: 2 }).notNull(),
+  progressPercentage: numeric('progress_percentage', { precision: 5, scale: 2 }).notNull(),
+  transactionId: uuid('transaction_id').references(() => transactions.id, { onDelete: 'set null' }),
+  recordedAt: timestamp('recorded_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  goalRecordedIdx: index('goal_progress_history_goal_recorded_idx').on(table.goalId, table.recordedAt),
+  userRecordedIdx: index('goal_progress_history_user_recorded_idx').on(table.userId, table.recordedAt),
+}));
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
@@ -261,6 +324,9 @@ export const usersRelations = relations(users, ({ many }) => ({
   alertSettings: many(alertSettings),
   notificationPreferences: many(notificationPreferences),
   notificationHistory: many(notificationHistory),
+  savingsGoals: many(savingsGoals),
+  goalMilestones: many(goalMilestones),
+  goalProgressHistory: many(goalProgressHistory),
 }));
 
 export const accountsRelations = relations(accounts, ({ one, many }) => ({
@@ -272,6 +338,7 @@ export const accountsRelations = relations(accounts, ({ one, many }) => ({
   recurringPayments: many(recurringPayments),
   alerts: many(alerts),
   alertSettings: many(alertSettings),
+  savingsGoals: many(savingsGoals),
 }));
 
 export const categoriesRelations = relations(categories, ({ one, many }) => ({
@@ -289,9 +356,10 @@ export const categoriesRelations = relations(categories, ({ one, many }) => ({
   }),
   transactions: many(transactions),
   recurringPayments: many(recurringPayments),
+  savingsGoals: many(savingsGoals),
 }));
 
-export const transactionsRelations = relations(transactions, ({ one }) => ({
+export const transactionsRelations = relations(transactions, ({ one, many }) => ({
   user: one(users, {
     fields: [transactions.userId],
     references: [users.id],
@@ -304,6 +372,7 @@ export const transactionsRelations = relations(transactions, ({ one }) => ({
     fields: [transactions.categoryId],
     references: [categories.id],
   }),
+  goalProgressHistory: many(goalProgressHistory),
 }));
 
 export const recurringPaymentsRelations = relations(recurringPayments, ({ one }) => ({
@@ -362,6 +431,49 @@ export const notificationHistoryRelations = relations(notificationHistory, ({ on
   }),
 }));
 
+export const savingsGoalsRelations = relations(savingsGoals, ({ one, many }) => ({
+  user: one(users, {
+    fields: [savingsGoals.userId],
+    references: [users.id],
+  }),
+  account: one(accounts, {
+    fields: [savingsGoals.accountId],
+    references: [accounts.id],
+  }),
+  category: one(categories, {
+    fields: [savingsGoals.categoryId],
+    references: [categories.id],
+  }),
+  milestones: many(goalMilestones),
+  progressHistory: many(goalProgressHistory),
+}));
+
+export const goalMilestonesRelations = relations(goalMilestones, ({ one }) => ({
+  goal: one(savingsGoals, {
+    fields: [goalMilestones.goalId],
+    references: [savingsGoals.id],
+  }),
+  user: one(users, {
+    fields: [goalMilestones.userId],
+    references: [users.id],
+  }),
+}));
+
+export const goalProgressHistoryRelations = relations(goalProgressHistory, ({ one }) => ({
+  goal: one(savingsGoals, {
+    fields: [goalProgressHistory.goalId],
+    references: [savingsGoals.id],
+  }),
+  user: one(users, {
+    fields: [goalProgressHistory.userId],
+    references: [users.id],
+  }),
+  transaction: one(transactions, {
+    fields: [goalProgressHistory.transactionId],
+    references: [transactions.id],
+  }),
+}));
+
 // TypeScript types derived from schema
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -381,6 +493,12 @@ export type NotificationPreferences = typeof notificationPreferences.$inferSelec
 export type NewNotificationPreferences = typeof notificationPreferences.$inferInsert;
 export type NotificationHistory = typeof notificationHistory.$inferSelect;
 export type NewNotificationHistory = typeof notificationHistory.$inferInsert;
+export type SavingsGoal = typeof savingsGoals.$inferSelect;
+export type NewSavingsGoal = typeof savingsGoals.$inferInsert;
+export type GoalMilestone = typeof goalMilestones.$inferSelect;
+export type NewGoalMilestone = typeof goalMilestones.$inferInsert;
+export type GoalProgressHistory = typeof goalProgressHistory.$inferSelect;
+export type NewGoalProgressHistory = typeof goalProgressHistory.$inferInsert;
 
 // Enum types
 export type AccountType = typeof accounts.type.enumValues[number];
@@ -390,3 +508,4 @@ export type PaymentFrequency = typeof recurringPayments.frequency.enumValues[num
 export type BillStatus = typeof recurringPayments.status.enumValues[number];
 export type AlertType = typeof alerts.alertType.enumValues[number];
 export type AlertStatus = typeof alerts.status.enumValues[number];
+export type GoalStatus = typeof savingsGoals.status.enumValues[number];

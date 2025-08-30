@@ -64,8 +64,8 @@ export function formatCurrency(value: Decimal | number, currency: string = 'INR'
   const formatter = new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   });
   
   const numericValue = typeof value === 'number' ? value : value.toNumber();

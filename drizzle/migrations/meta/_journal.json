@@ -43,6 +43,13 @@
       "when": 1756280448088,
       "tag": "0005_chemical_frog_thor",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1756392026478,
+      "tag": "0006_aromatic_dreadnoughts",
+      "breakpoints": true
     }
   ]
 }
