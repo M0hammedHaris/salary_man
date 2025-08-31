@@ -76,7 +76,7 @@ export class SavingsService {
 
     return Promise.all(
       goalsWithDetails.map(async (goal) => {
-        const progressData = await this.calculateProgress(goal.id, parseFloat(goal.currentAmount), parseFloat(goal.targetAmount));
+        const progressData = this.calculateProgress(goal.id, parseFloat(goal.currentAmount), parseFloat(goal.targetAmount));
         const savingsRate = await this.calculateSavingsRate(goal.id);
         
         return {

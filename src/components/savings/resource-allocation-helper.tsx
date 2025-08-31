@@ -77,6 +77,20 @@ export function ResourceAllocationHelper({
   const [allocation, setAllocation] = useState<ResourceAllocation | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [optimizedAllocations, setOptimizedAllocations] = useState<GoalAllocation[]>([]);
+  const [hasOptimizationChanges, setHasOptimizationChanges] = useState(false);
+
+  // Efficiently compare allocation arrays for changes
+  const compareAllocations = (current: GoalAllocation[], optimized: GoalAllocation[]): boolean => {
+    if (current.length !== optimized.length) return true;
+    
+    for (let i = 0; i < current.length; i++) {
+      if (current[i].goalId !== optimized[i].goalId || 
+          current[i].currentAllocation !== optimized[i].currentAllocation) {
+        return true;
+      }
+    }
+    return false;
+  };
 
   // Calculate resource allocation
   useEffect(() => {
@@ -170,6 +184,7 @@ export function ResourceAllocationHelper({
     const result = calculateAllocation();
     setAllocation(result);
     setOptimizedAllocations(result.currentGoalAllocations);
+    setHasOptimizationChanges(false); // Reset changes when recalculating
     setIsLoading(false);
   }, [goals, monthlyIncome, monthlyExpenses]);
 
@@ -203,6 +218,7 @@ export function ResourceAllocationHelper({
     });
 
     setOptimizedAllocations(optimized);
+    setHasOptimizationChanges(compareAllocations(allocation.currentGoalAllocations, optimized));
   };
 
   const handleApplyOptimization = () => {
@@ -211,6 +227,7 @@ export function ResourceAllocationHelper({
         onAllocationUpdate(alloc.goalId, alloc.currentAllocation);
       }
     });
+    setHasOptimizationChanges(false);
   };
 
   const getSeverityColor = (severity: 'low' | 'medium' | 'high') => {
@@ -398,7 +415,7 @@ export function ResourceAllocationHelper({
                 <Button 
                   size="sm"
                   onClick={handleApplyOptimization}
-                  disabled={JSON.stringify(optimizedAllocations) === JSON.stringify(allocation.currentGoalAllocations)}
+                  disabled={!hasOptimizationChanges}
                 >
                   Apply Changes
                 </Button>
@@ -408,7 +425,7 @@ export function ResourceAllocationHelper({
               <div className="space-y-4">
                 {optimizedAllocations.map((alloc) => {
                   const original = allocation.currentGoalAllocations.find(a => a.goalId === alloc.goalId);
-                  const isChanged = original && original.currentAllocation !== alloc.currentAllocation;
+                  const isChanged = original && Math.abs(original.currentAllocation - alloc.currentAllocation) > 0.01; // Use small epsilon for floating point comparison
                   
                   return (
                     <div key={alloc.goalId} className={cn(

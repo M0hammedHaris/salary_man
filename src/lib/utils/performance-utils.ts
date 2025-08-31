@@ -6,6 +6,75 @@ import { subDays, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startO
  */
 
 /**
+ * Efficient hash function for creating cache keys from dependencies
+ */
+function createDependencyHash(dependencies: unknown[]): string {
+  let hash = 0;
+  const str = dependencies.map(dep => {
+    if (dep === null) return 'null';
+    if (dep === undefined) return 'undefined';
+    if (typeof dep === 'object') {
+      // For objects, create a simple hash based on constructor and key count
+      if (dep instanceof Date) return dep.getTime().toString();
+      if (Array.isArray(dep)) return `arr_${dep.length}`;
+      return `obj_${Object.keys(dep as object).length}`;
+    }
+    return String(dep);
+  }).join('|');
+  
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  
+  return hash.toString(36); // Base36 for shorter strings
+}
+
+/**
+ * Fast primitive-only dependency comparison for React hooks
+ * More efficient than JSON.stringify for simple values
+ */
+function createPrimitiveDependencyKey(dependencies: (string | number | boolean | null | undefined)[]): string {
+  return dependencies.map(dep => dep ?? 'null').join('|');
+}
+
+/**
+ * Optimized hook for calculations with primitive dependencies only
+ * Use this when dependencies are simple primitive values for better performance.
+ * 
+ * @example
+ * const result = useCachedPrimitiveCalculation(
+ *   'simpleCalculation',
+ *   () => amount * rate,
+ *   [amount, rate, userId]
+ * );
+ */
+export function useCachedPrimitiveCalculation<T>(
+  key: string,
+  calculationFn: () => T,
+  dependencies: (string | number | boolean | null | undefined)[]
+): T {
+  const primitiveKey = useMemo(() => createPrimitiveDependencyKey(dependencies), [dependencies]);
+  
+  return useMemo(() => {
+    const cacheKey = `${key}_${primitiveKey}`;
+    
+    // Try to get from cache first
+    const cached = analyticsCache.get<T>(cacheKey);
+    if (cached !== null) {
+      return cached;
+    }
+    
+    // Calculate and cache the result
+    const result = calculationFn();
+    analyticsCache.set(cacheKey, result);
+    
+    return result;
+  }, [key, calculationFn, primitiveKey]);
+}
+
+/**
  * Memoized date range calculator for analytics
  */
 export function useDateRangeCalculation(timeframe: 'month' | 'quarter' | 'year' | 'custom', customRange?: { start: Date; end: Date }) {
@@ -221,15 +290,28 @@ class CalculationCache {
 export const analyticsCache = new CalculationCache(5); // 5-minute TTL
 
 /**
- * Hook for cached calculations
+ * Hook for cached calculations with efficient dependency tracking
+ * 
+ * Use this for complex calculations with mixed dependency types.
+ * For primitive-only dependencies, consider using useCachedPrimitiveCalculation instead.
+ * 
+ * @example
+ * const expensiveResult = useCachedCalculation(
+ *   'monthlyAnalytics',
+ *   () => calculateMonthlyAnalytics(transactions, goals),
+ *   [transactions, goals, selectedMonth]
+ * );
  */
 export function useCachedCalculation<T>(
   key: string,
   calculationFn: () => T,
   dependencies: unknown[]
 ): T {
+  // Create a stable dependency hash for React's useMemo
+  const dependencyHash = useMemo(() => createDependencyHash(dependencies), [dependencies]);
+  
   return useMemo(() => {
-    const cacheKey = `${key}_${JSON.stringify(dependencies)}`;
+    const cacheKey = `${key}_${dependencyHash}`;
     
     // Try to get from cache first
     const cached = analyticsCache.get<T>(cacheKey);
@@ -242,5 +324,5 @@ export function useCachedCalculation<T>(
     analyticsCache.set(cacheKey, result);
     
     return result;
-  }, [key, calculationFn, dependencies]);
+  }, [key, calculationFn, dependencyHash]);
 }
