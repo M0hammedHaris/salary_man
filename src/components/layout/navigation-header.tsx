@@ -29,6 +29,8 @@ import {
   Menu,
   DollarSign,
   Bell,
+  BarChart3,
+  Target,
 } from "lucide-react";
 
 interface NavigationItem {
@@ -45,6 +47,18 @@ const navigationItems: NavigationItem[] = [
     href: "/dashboard",
     icon: LayoutDashboard,
     description: "Overview of your finances",
+  },
+  {
+    label: "Analytics",
+    href: "/analytics",
+    icon: BarChart3,
+    description: "Financial insights and trends",
+  },
+  {
+    label: "Savings Goals",
+    href: "/savings",
+    icon: Target,
+    description: "Track savings goals and financial planning",
   },
   {
     label: "Accounts",
@@ -132,7 +146,8 @@ export function NavigationHeader() {
           <SheetTrigger asChild>
             <Button
               variant="ghost"
-              className="mr-2 px-0 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden"
+              size="icon"
+              className="mr-2 h-11 w-11 hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden"
               aria-label="Open navigation menu"
             >
               <Menu className="h-5 w-5" />
@@ -151,13 +166,13 @@ export function NavigationHeader() {
               </SheetTitle>
             </SheetHeader>
             <div className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
-              <div className="flex flex-col space-y-2">
+              <div className="flex flex-col space-y-1">
                 {navigationItems.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "flex items-center space-x-2 rounded-md px-2 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                      "flex items-center space-x-3 rounded-md px-3 py-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground min-h-[44px]",
                       isActive(item.href) && "bg-accent text-accent-foreground"
                     )}
                     aria-current={isActive(item.href) ? "page" : undefined}
@@ -165,7 +180,7 @@ export function NavigationHeader() {
                     {item.useStatusIndicator ? (
                       <NotificationStatusIndicator />
                     ) : (
-                      <item.icon className="h-4 w-4" />
+                      <item.icon className="h-4 w-4 flex-shrink-0" />
                     )}
                     <span>{item.label}</span>
                   </Link>
@@ -181,16 +196,18 @@ export function NavigationHeader() {
 
           {/* User Profile */}
           <div className="flex items-center space-x-2">
-            <UserButton
-              afterSignOutUrl="/sign-in"
-              appearance={{
-                elements: {
-                  avatarBox: "h-8 w-8",
-                  userButtonPopoverCard: "bg-background border border-border",
-                  userButtonPopoverActionButton: "hover:bg-accent",
-                },
-              }}
-            />
+            <div className="flex h-11 w-11 items-center justify-center">
+              <UserButton
+                afterSignOutUrl="/sign-in"
+                appearance={{
+                  elements: {
+                    avatarBox: "h-8 w-8",
+                    userButtonPopoverCard: "bg-background border border-border",
+                    userButtonPopoverActionButton: "hover:bg-accent",
+                  },
+                }}
+              />
+            </div>
           </div>
         </div>
       </div>

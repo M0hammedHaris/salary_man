@@ -12,6 +12,8 @@ import { QuickActionFloatingButton } from '@/components/dashboard/quick-action-f
 import { DashboardSkeleton } from '@/components/dashboard/dashboard-skeleton';
 import { UpcomingBills } from '@/components/bills/upcoming-bills';
 import { RecurringPaymentInsights } from '@/components/dashboard/recurring-payment-insights';
+import { AnalyticsQuickAccess } from '@/components/dashboard/analytics-quick-access';
+import { SavingsQuickAccess } from '@/components/dashboard/savings-quick-access';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 async function DashboardContent({ userId }: { userId: string }) {
@@ -20,14 +22,14 @@ async function DashboardContent({ userId }: { userId: string }) {
 
     return (
       <div className="min-h-screen bg-background">
-        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <BreadcrumbNavigation className="mb-6" />
+        <main className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-8 lg:px-8">
+          <BreadcrumbNavigation className="mb-4 sm:mb-6" />
           
           {/* Mobile: Single column, Desktop: 3-column grid layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
             
             {/* Left Column - Primary Metrics */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 space-y-4 sm:space-y-6">
               {/* Financial Health Score */}
               <FinancialHealthScore
                 score={dashboardData.financialHealthScore.score}
@@ -49,7 +51,13 @@ async function DashboardContent({ userId }: { userId: string }) {
             </div>
 
             {/* Right Column - Secondary Metrics & Alerts */}
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
+              {/* Analytics Quick Access */}
+              <AnalyticsQuickAccess />
+
+              {/* Savings Goals Quick Access */}
+              <SavingsQuickAccess />
+
               {/* Recurring Payment Insights */}
               <RecurringPaymentInsights userId={userId} />
 
