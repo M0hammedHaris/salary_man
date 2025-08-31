@@ -36,6 +36,24 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import type { GoalWithProgress } from '@/lib/types/savings';
 
+// Priority calculation constants
+const PRIORITY_SCALE = {
+  MAX: 10,  // Highest priority (top position)
+  MIN: 1,   // Lowest priority (bottom position)
+} as const;
+
+/**
+ * Calculates priority value based on position in ordered list
+ * @param index Position in the list (0-based)
+ * @returns Priority value between PRIORITY_SCALE.MIN and PRIORITY_SCALE.MAX
+ */
+const calculatePriorityFromPosition = (index: number): number => {
+  return Math.max(
+    PRIORITY_SCALE.MIN, 
+    Math.min(PRIORITY_SCALE.MAX, PRIORITY_SCALE.MAX - index)
+  );
+};
+
 interface PriorityRankingProps {
   goals: GoalWithProgress[];
   onPriorityUpdate?: (goalId: string, newPriority: number) => void;
@@ -209,10 +227,10 @@ export function PriorityRanking({
       if (oldIndex !== -1 && newIndex !== -1) {
         const newItems = arrayMove(items, oldIndex, newIndex);
         
-        // Update priorities based on new order
+        // Update priorities based on new order using explicit priority calculation
         const updatedItems = newItems.map((item: GoalWithProgress, index: number) => ({
           ...item,
-          priority: newItems.length - index, // Higher position = higher priority
+          priority: calculatePriorityFromPosition(index),
         }));
 
         setItems(updatedItems);
@@ -297,7 +315,9 @@ export function PriorityRanking({
         <CardContent>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Drag and drop goals to reorder their priority. Higher positions have higher priority and will be suggested for increased allocation.
+              Drag and drop goals to reorder their priority. The top position receives priority {PRIORITY_SCALE.MAX}, 
+              with each subsequent position decreasing by 1 down to a minimum of {PRIORITY_SCALE.MIN}. 
+              Higher priority goals will be suggested for increased allocation.
             </p>
 
             {/* Quick Stats */}

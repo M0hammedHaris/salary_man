@@ -110,12 +110,12 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
                           {getCategoryIcon(transaction.categoryName)}
                         </div>
                       </div>
-                      <div className="flex flex-col">
-                        <span className="font-medium text-sm">{transaction.description}</span>
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-medium text-sm truncate">{transaction.description}</span>
                         <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                          <span>{transaction.categoryName}</span>
-                          <span>•</span>
-                          <span>{transaction.accountName}</span>
+                          <span className="truncate">{transaction.categoryName}</span>
+                          <span className="hidden sm:inline">•</span>
+                          <span className="hidden sm:inline truncate">{transaction.accountName}</span>
                         </div>
                       </div>
                     </div>
