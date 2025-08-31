@@ -8,6 +8,7 @@ import { RealTimeNotificationProvider } from '@/components/notifications/real-ti
 import { PWARegistration } from '@/components/pwa/pwa-registration';
 import { Providers } from '@/components/providers';
 import { Toaster } from 'sonner';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import "./globals.css";
 
 const geistSans = Geist({
@@ -77,6 +78,7 @@ export default function RootLayout({
               </RealTimeNotificationProvider>
             </NotificationProvider>
           </Providers>
+          <SpeedInsights />
         </body>
       </html>
     </ClerkProvider>
