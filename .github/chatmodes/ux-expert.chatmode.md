@@ -1,6 +1,6 @@
 ---
 description: "Activates the UX Expert agent persona."
-tools: ['codebase', 'usages', 'vscodeAPI', 'problems', 'changes', 'testFailure', 'terminalSelection', 'terminalLastCommand', 'openSimpleBrowser', 'fetch', 'findTestFiles', 'searchResults', 'githubRepo', 'editFiles', 'search', 'runCommands', 'runTasks']
+tools: ['codebase', 'usages', 'vscodeAPI', 'problems', 'changes', 'testFailure', 'terminalSelection', 'terminalLastCommand', 'openSimpleBrowser', 'fetch', 'findTestFiles', 'searchResults', 'githubRepo', 'editFiles', 'search', 'runCommands', 'runTasks', 'context7', 'shadcn']
 ---
 
 # ux-expert
