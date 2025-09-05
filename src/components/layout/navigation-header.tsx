@@ -20,6 +20,8 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { HeaderLogo } from "@/components/ui/logo";
+import { AnimatedNavItem } from "@/components/ui/animated-nav";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -27,7 +29,6 @@ import {
   Receipt,
   User,
   Menu,
-  DollarSign,
   Bell,
   BarChart3,
   Target,
@@ -104,113 +105,128 @@ export function NavigationHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
-        {/* Logo/Brand */}
-        <div className="mr-6">
-          <Link href="/dashboard" className="flex items-center space-x-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <DollarSign className="h-4 w-4" />
-            </div>
-            <span className="hidden font-bold sm:inline-block">SalaryMan</span>
-          </Link>
-        </div>
+    <div className="min-h-0">
+      <nav className="fixed top-6 inset-x-4 h-16 bg-background border dark:border-slate-700/70 max-w-screen-xl mx-auto rounded-full z-50 shadow-lg">
+        <div className="h-full flex items-center justify-between mx-auto px-6">
+          {/* Enhanced Logo/Brand */}
+          <div className="mr-4">
+            <HeaderLogo />
+          </div>
 
-        {/* Desktop Navigation */}
-        <NavigationMenu className="hidden md:flex">
-          <NavigationMenuList>
-            {navigationItems.map((item) => (
-              <NavigationMenuItem key={item.href}>
-                <NavigationMenuLink
-                  className={cn(
-                    navigationMenuTriggerStyle(),
-                    isActive(item.href) && "bg-accent text-accent-foreground"
-                  )}
-                  aria-current={isActive(item.href) ? "page" : undefined}
-                  href={item.href}
+          {/* Enhanced Desktop Navigation */}
+          <NavigationMenu className="hidden lg:flex">
+            <NavigationMenuList className="gap-1">
+              {navigationItems.slice(0, 5).map((item) => (
+                <NavigationMenuItem key={item.href}>
+                  <AnimatedNavItem isActive={isActive(item.href)}>
+                    <NavigationMenuLink
+                      className={cn(
+                        navigationMenuTriggerStyle(),
+                        "h-10 px-3 py-2 text-sm font-medium transition-all duration-200 rounded-full border-2 border-transparent",
+                        isActive(item.href) 
+                          ? "bg-accent text-accent-foreground shadow-sm border-primary" 
+                          : "hover:bg-accent/50 hover:text-accent-foreground hover:border-accent"
+                      )}
+                      aria-current={isActive(item.href) ? "page" : undefined}
+                      href={item.href}
+                    >
+                      <div className="flex items-center space-x-2">
+                        {item.useStatusIndicator ? (
+                          <NotificationStatusIndicator className="h-4 w-4" />
+                        ) : (
+                          <item.icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
+                        )}
+                        <span className="hidden xl:inline">{item.label}</span>
+                      </div>
+                    </NavigationMenuLink>
+                  </AnimatedNavItem>
+                </NavigationMenuItem>
+              ))}
+            </NavigationMenuList>
+          </NavigationMenu>
+
+          {/* Action buttons and user profile */}
+          <div className="flex items-center gap-3">
+            {/* Enhanced Mobile Navigation */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="group relative h-10 w-10 rounded-full border border-border/50 hover:border-border hover:bg-accent transition-all duration-200 lg:hidden"
+                  aria-label="Open navigation menu"
                 >
-                  {item.useStatusIndicator ? (
-                    <NotificationStatusIndicator className="mr-2" />
-                  ) : (
-                    <item.icon className="mr-2 h-4 w-4" />
-                  )}
-                  {item.label}
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-            ))}
-          </NavigationMenuList>
-        </NavigationMenu>
+                  <Menu className="h-5 w-5 transition-transform duration-200 group-hover:scale-110" />
+                  <span className="sr-only">Toggle Menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-80 p-0">
+                <SheetHeader className="border-b border-border/40 p-6">
+                  <SheetTitle>
+                    <HeaderLogo />
+                  </SheetTitle>
+                </SheetHeader>
+                
+                <div className="flex flex-col space-y-2 p-6">
+                  {navigationItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        "group flex items-center space-x-4 rounded-xl px-4 py-4 text-sm font-medium transition-all duration-200 hover:bg-accent hover:text-accent-foreground min-h-[56px] border border-transparent",
+                        isActive(item.href) && "bg-accent text-accent-foreground border-accent shadow-sm"
+                      )}
+                      aria-current={isActive(item.href) ? "page" : undefined}
+                    >
+                      <div className={cn(
+                        "flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-200 border",
+                        isActive(item.href) 
+                          ? "bg-primary text-primary-foreground border-primary shadow-sm" 
+                          : "bg-background border-border group-hover:bg-accent group-hover:border-accent"
+                      )}>
+                        {item.useStatusIndicator ? (
+                          <NotificationStatusIndicator className="h-4 w-4" />
+                        ) : (
+                          <item.icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
+                        )}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="transition-colors duration-200">{item.label}</span>
+                        {item.description && (
+                          <span className="text-xs text-muted-foreground group-hover:text-muted-foreground/80 transition-colors duration-200">
+                            {item.description}
+                          </span>
+                        )}
+                      </div>
+                      {isActive(item.href) && (
+                        <div className="ml-auto">
+                          <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                        </div>
+                      )}
+                    </Link>
+                  ))}
+                </div>
+              </SheetContent>
+            </Sheet>
 
-        {/* Mobile Navigation */}
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="mr-2 h-11 w-11 hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden"
-              aria-label="Open navigation menu"
-            >
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Toggle Menu</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="pr-0">
-            <SheetHeader>
-              <SheetTitle>
-                <Link href="/dashboard" className="flex items-center space-x-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                    <DollarSign className="h-4 w-4" />
-                  </div>
-                  <span className="font-bold">SalaryMan</span>
-                </Link>
-              </SheetTitle>
-            </SheetHeader>
-            <div className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
-              <div className="flex flex-col space-y-1">
-                {navigationItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      "flex items-center space-x-3 rounded-md px-3 py-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground min-h-[44px]",
-                      isActive(item.href) && "bg-accent text-accent-foreground"
-                    )}
-                    aria-current={isActive(item.href) ? "page" : undefined}
-                  >
-                    {item.useStatusIndicator ? (
-                      <NotificationStatusIndicator />
-                    ) : (
-                      <item.icon className="h-4 w-4 flex-shrink-0" />
-                    )}
-                    <span>{item.label}</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </SheetContent>
-        </Sheet>
-
-        {/* Spacer */}
-        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-          <div className="w-full flex-1 md:w-auto md:flex-none" />
-
-          {/* User Profile */}
-          <div className="flex items-center space-x-2">
-            <div className="flex h-11 w-11 items-center justify-center">
+            {/* Enhanced User Profile */}
+            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border/50 hover:border-border transition-all duration-200 hover:shadow-sm hover:bg-accent/50">
               <UserButton
                 afterSignOutUrl="/sign-in"
                 appearance={{
                   elements: {
-                    avatarBox: "h-8 w-8",
-                    userButtonPopoverCard: "bg-background border border-border",
-                    userButtonPopoverActionButton: "hover:bg-accent",
+                    avatarBox: "h-7 w-7 rounded-full transition-all duration-200 group-hover:scale-105",
+                    userButtonPopoverCard: "bg-background border border-border shadow-xl rounded-xl mt-2",
+                    userButtonPopoverActionButton: "hover:bg-accent transition-colors duration-200 rounded-lg mx-1",
+                    userButtonPopoverActionButtonText: "text-sm font-medium",
+                    userButtonPopoverFooter: "hidden"
                   },
                 }}
               />
             </div>
           </div>
         </div>
-      </div>
-    </header>
+      </nav>
+    </div>
   );
 }

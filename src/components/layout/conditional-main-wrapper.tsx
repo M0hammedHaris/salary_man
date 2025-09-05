@@ -13,7 +13,7 @@ export function ConditionalMainWrapper({ children }: ConditionalMainWrapperProps
   const shouldAddPadding = pathname !== '/';
 
   if (shouldAddPadding) {
-    return <main className="min-h-screen pt-14">{children}</main>;
+    return <main className="min-h-screen pt-24">{children}</main>;
   }
 
   return <>{children}</>;

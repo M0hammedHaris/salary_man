@@ -24,6 +24,7 @@
     "@originui": "https://originui.com/r/{name}.json",
     "@cult": "https://cult-ui.com/r/{name}.json",
     "@kibo": "https://www.kibo-ui.com/r/{name}.json",
-    "@reui": "https://reui.io/r/{name}.json"
+    "@reui": "https://reui.io/r/{name}.json",
+    "@shadcnuiblock": "https://shadcn-ui-blocks.akashmoradiya.com/r/{name}.json"
   }
 }
