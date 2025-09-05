@@ -32,6 +32,7 @@ import {
   Bell,
   BarChart3,
   Target,
+  FileText,
 } from "lucide-react";
 
 interface NavigationItem {
@@ -42,24 +43,13 @@ interface NavigationItem {
   useStatusIndicator?: boolean;
 }
 
-const navigationItems: NavigationItem[] = [
+// Primary navigation - core financial features
+const primaryNavigationItems: NavigationItem[] = [
   {
     label: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
     description: "Overview of your finances",
-  },
-  {
-    label: "Analytics",
-    href: "/analytics",
-    icon: BarChart3,
-    description: "Financial insights and trends",
-  },
-  {
-    label: "Savings Goals",
-    href: "/savings",
-    icon: Target,
-    description: "Track savings goals and financial planning",
   },
   {
     label: "Accounts",
@@ -74,6 +64,28 @@ const navigationItems: NavigationItem[] = [
     description: "View and manage transactions",
   },
   {
+    label: "Bills",
+    href: "/bills",
+    icon: FileText,
+    description: "Manage bill payments and reminders",
+  },
+  {
+    label: "Analytics",
+    href: "/analytics",
+    icon: BarChart3,
+    description: "Financial insights and trends",
+  },
+  {
+    label: "Savings",
+    href: "/savings",
+    icon: Target,
+    description: "Track savings goals and planning",
+  },
+];
+
+// Profile and settings navigation
+const profileNavigationItems: NavigationItem[] = [
+  {
     label: "Notifications",
     href: "/dashboard/notifications",
     icon: Bell,
@@ -85,12 +97,6 @@ const navigationItems: NavigationItem[] = [
     href: "/dashboard/alerts",
     icon: Bell,
     description: "Credit card usage alerts",
-  },
-  {
-    label: "Profile",
-    href: "/profile",
-    icon: User,
-    description: "Account settings and preferences",
   },
 ];
 
@@ -113,10 +119,10 @@ export function NavigationHeader() {
             <HeaderLogo />
           </div>
 
-          {/* Enhanced Desktop Navigation */}
+          {/* Enhanced Desktop Navigation - All Core Features Visible */}
           <NavigationMenu className="hidden lg:flex">
             <NavigationMenuList className="gap-1">
-              {navigationItems.slice(0, 5).map((item) => (
+              {primaryNavigationItems.map((item) => (
                 <NavigationMenuItem key={item.href}>
                   <AnimatedNavItem isActive={isActive(item.href)}>
                     <NavigationMenuLink
@@ -168,7 +174,8 @@ export function NavigationHeader() {
                 </SheetHeader>
                 
                 <div className="flex flex-col space-y-2 p-6">
-                  {navigationItems.map((item) => (
+                  {/* All Primary Navigation Items */}
+                  {primaryNavigationItems.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
@@ -205,9 +212,94 @@ export function NavigationHeader() {
                       )}
                     </Link>
                   ))}
+                  
+                  {/* Divider */}
+                  <div className="border-t border-border/50 my-2" />
+                  
+                  {/* Profile and Settings */}
+                  {profileNavigationItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        "group flex items-center space-x-4 rounded-xl px-4 py-4 text-sm font-medium transition-all duration-200 hover:bg-accent hover:text-accent-foreground min-h-[56px] border border-transparent",
+                        isActive(item.href) && "bg-accent text-accent-foreground border-accent shadow-sm"
+                      )}
+                      aria-current={isActive(item.href) ? "page" : undefined}
+                    >
+                      <div className={cn(
+                        "flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-200 border",
+                        isActive(item.href) 
+                          ? "bg-primary text-primary-foreground border-primary shadow-sm" 
+                          : "bg-background border-border group-hover:bg-accent group-hover:border-accent"
+                      )}>
+                        {item.useStatusIndicator ? (
+                          <NotificationStatusIndicator className="h-4 w-4" />
+                        ) : (
+                          <item.icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
+                        )}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="transition-colors duration-200">{item.label}</span>
+                        {item.description && (
+                          <span className="text-xs text-muted-foreground group-hover:text-muted-foreground/80 transition-colors duration-200">
+                            {item.description}
+                          </span>
+                        )}
+                      </div>
+                      {isActive(item.href) && (
+                        <div className="ml-auto">
+                          <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                        </div>
+                      )}
+                    </Link>
+                  ))}
+
+                  {/* Profile Link */}
+                  <Link
+                    href="/profile"
+                    className={cn(
+                      "group flex items-center space-x-4 rounded-xl px-4 py-4 text-sm font-medium transition-all duration-200 hover:bg-accent hover:text-accent-foreground min-h-[56px] border border-transparent",
+                      isActive("/profile") && "bg-accent text-accent-foreground border-accent shadow-sm"
+                    )}
+                    aria-current={isActive("/profile") ? "page" : undefined}
+                  >
+                    <div className={cn(
+                      "flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-200 border",
+                      isActive("/profile") 
+                        ? "bg-primary text-primary-foreground border-primary shadow-sm" 
+                        : "bg-background border-border group-hover:bg-accent group-hover:border-accent"
+                    )}>
+                      <User className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="transition-colors duration-200">Profile</span>
+                      <span className="text-xs text-muted-foreground group-hover:text-muted-foreground/80 transition-colors duration-200">
+                        Account settings and preferences
+                      </span>
+                    </div>
+                    {isActive("/profile") && (
+                      <div className="ml-auto">
+                        <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                      </div>
+                    )}
+                  </Link>
                 </div>
               </SheetContent>
             </Sheet>
+
+            {/* Notifications Button - Clear and Accessible */}
+            <Link
+              href="/dashboard/notifications"
+              className={cn(
+                "hidden lg:flex group relative h-10 w-10 rounded-full border border-border/50 hover:border-border hover:bg-accent transition-all duration-200 items-center justify-center",
+                isActive("/dashboard/notifications") && "bg-accent border-accent"
+              )}
+              aria-label="View notifications"
+            >
+              <NotificationStatusIndicator className="h-5 w-5 transition-transform duration-200 group-hover:scale-110" />
+              <span className="sr-only">Notifications</span>
+            </Link>
 
             {/* Enhanced User Profile */}
             <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border/50 hover:border-border transition-all duration-200 hover:shadow-sm hover:bg-accent/50">
