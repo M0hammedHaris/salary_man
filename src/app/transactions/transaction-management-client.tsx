@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { PlusIcon, FilterIcon, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,12 +34,21 @@ interface TransactionFilters {
 }
 
 export function TransactionManagementClient() {
+  const searchParams = useSearchParams();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [filters, setFilters] = useState<TransactionFilters>({});
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoadingFilters, setIsLoadingFilters] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Check URL params on mount to auto-open create dialog
+  useEffect(() => {
+    const action = searchParams.get('action');
+    if (action === 'create') {
+      setIsCreateDialogOpen(true);
+    }
+  }, [searchParams]);
 
   // Load filter data
   useEffect(() => {

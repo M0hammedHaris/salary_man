@@ -50,18 +50,11 @@ export function EnhancedDashboard({
   // Quick actions configuration
   const quickActions = [
     {
-      id: 'add-income',
-      icon: <TrendingUp className="h-4 w-4" />,
-      label: 'Add Income',
+      id: 'add-transaction',
+      icon: <Plus className="h-4 w-4" />,
+      label: 'Add Transaction',
       variant: 'default' as const,
-      action: () => router.push('/transactions?action=create&type=income'),
-    },
-    {
-      id: 'add-expense',
-      icon: <TrendingDown className="h-4 w-4" />,
-      label: 'Add Expense',
-      variant: 'destructive' as const,
-      action: () => router.push('/transactions?action=create&type=expense'),
+      action: () => router.push('/transactions?action=create'),
     },
     {
       id: 'transfer',
