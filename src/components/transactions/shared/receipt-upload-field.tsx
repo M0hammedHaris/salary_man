@@ -12,6 +12,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { type Control, type FieldValues, type Path } from "react-hook-form";
+import { cn } from "@/lib/utils";
 
 interface ReceiptUploadFieldProps<T extends FieldValues> {
   control: Control<T>;
@@ -39,22 +40,26 @@ export function ReceiptUploadField<T extends FieldValues>({
       control={control}
       name={name}
       render={() => (
-        <FormItem className={className}>
-          <FormLabel>{label}</FormLabel>
+        <FormItem className={cn("space-y-2", className)}>
+          <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground ml-1">
+            {label}
+          </FormLabel>
           <FormControl>
             <div className="space-y-4">
               {!receiptPreview ? (
-                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
-                  <div className="flex flex-col items-center gap-2 text-center">
-                    <Upload className="h-8 w-8 text-muted-foreground" />
-                    <div className="text-sm text-muted-foreground">
+                <div className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[28px] p-8 bg-slate-50/50 dark:bg-slate-900/50 hover:bg-slate-50 transition-all group">
+                  <div className="flex flex-col items-center gap-4 text-center">
+                    <div className="w-16 h-16 rounded-3xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <span className="material-symbols-outlined text-3xl text-primary">cloud_upload</span>
+                    </div>
+                    <div className="space-y-1">
                       <label
                         htmlFor="receipt-upload"
-                        className="font-medium text-primary cursor-pointer hover:underline"
+                        className="text-sm font-black text-foreground cursor-pointer hover:text-primary transition-colors inline-block"
                       >
                         Click to upload receipt
                       </label>
-                      <p>PNG, JPG, PDF up to 10MB</p>
+                      <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">PNG, JPG, PDF up to 10MB</p>
                     </div>
                     <input
                       id="receipt-upload"
@@ -66,33 +71,38 @@ export function ReceiptUploadField<T extends FieldValues>({
                   </div>
                 </div>
               ) : (
-                <div className="border rounded-lg p-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">
-                      Receipt uploaded
-                    </span>
+                <div className="border border-slate-200 dark:border-slate-800 rounded-[28px] p-4 bg-white dark:bg-slate-900 shadow-sm relative overflow-hidden group">
+                  <div className="flex items-center justify-between mb-3 px-2">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-emerald-500">task_alt</span>
+                      <span className="text-sm font-black text-foreground">
+                        Receipt uploaded
+                      </span>
+                    </div>
                     <Button
                       type="button"
                       variant="ghost"
-                      size="sm"
+                      size="icon"
                       onClick={onRemoveReceipt}
+                      className="w-8 h-8 rounded-xl hover:bg-rose-50 hover:text-rose-500"
                     >
-                      <X className="h-4 w-4" />
+                      <span className="material-symbols-outlined text-[20px]">close</span>
                     </Button>
                   </div>
-                  <Image
-                    src={receiptPreview}
-                    alt="Receipt preview"
-                    width={300}
-                    height={200}
-                    className="w-full max-w-xs mx-auto rounded-lg object-contain"
-                  />
+                  <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-800">
+                    <Image
+                      src={receiptPreview}
+                      alt="Receipt preview"
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
                 </div>
               )}
             </div>
           </FormControl>
-          <FormDescription>{description}</FormDescription>
-          <FormMessage />
+          <FormDescription className="text-xs font-medium ml-1">{description}</FormDescription>
+          <FormMessage className="ml-1 font-bold text-xs" />
         </FormItem>
       )}
     />

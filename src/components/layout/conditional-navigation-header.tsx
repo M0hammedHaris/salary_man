@@ -1,11 +1,11 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { NavigationHeader } from "./navigation-header";
+import { TopHeader } from "./top-header";
 
 export function ConditionalNavigationHeader() {
   const pathname = usePathname();
-  
+
   // Don't show navigation on landing page (root path)
   const shouldShowNavigation = pathname !== '/';
 
@@ -13,5 +13,5 @@ export function ConditionalNavigationHeader() {
     return null;
   }
 
-  return <NavigationHeader />;
+  return <TopHeader />;
 }

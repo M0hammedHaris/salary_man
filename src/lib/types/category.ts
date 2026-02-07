@@ -16,6 +16,7 @@ export interface Category {
   name: string;
   type: CategoryType;
   color: string;
+  icon?: string;
   isDefault: boolean;
   parentId: string | null;
   createdAt: Date;
@@ -43,6 +44,7 @@ export const categoryResponseSchema = z.object({
   name: z.string(),
   type: z.enum(['income', 'expense']),
   color: z.string(),
+  icon: z.string().optional(),
   isDefault: z.boolean(),
   parentId: z.string().optional(),
   createdAt: z.string(),

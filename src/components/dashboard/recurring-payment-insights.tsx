@@ -1,19 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getRecurringPaymentInsights } from '@/lib/actions/dashboard';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-  TrendingUp,
-  TrendingDown,
-  AlertTriangle,
-  DollarSign,
-  Repeat
-} from 'lucide-react';
-import { displayCurrency } from '@/lib/utils/currency';
+import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils/decimal';
 import Link from 'next/link';
 
 interface RecurringPaymentInsightsData {
@@ -57,174 +47,91 @@ export function RecurringPaymentInsights({ userId, className }: RecurringPayment
         const insights = await getRecurringPaymentInsights() as unknown as RecurringPaymentInsightsData;
         setData(insights);
       } catch (err) {
-        console.error('Error fetching recurring payment insights:', err);
         setError(err instanceof Error ? err.message : 'Failed to load data');
       } finally {
         setLoading(false);
       }
     }
-
     fetchRecurringPaymentInsights();
   }, [userId]);
 
   if (loading) {
     return (
-      <Card className={className}>
-        <CardHeader className="pb-2">
-          <div className="flex items-center space-x-2">
-            <Repeat className="h-5 w-5 text-muted-foreground" />
-            <CardTitle className="text-lg">Recurring Payments</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="animate-pulse space-y-3">
-            <div className="h-4 bg-muted rounded w-3/4"></div>
-            <div className="h-2 bg-muted rounded"></div>
-            <div className="h-4 bg-muted rounded w-1/2"></div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className={cn("space-y-4", className)}>
+        <div className="h-6 w-36 bg-slate-100 dark:bg-slate-800 animate-pulse rounded" />
+        <div className="h-48 rounded-3xl bg-slate-50 dark:bg-slate-900 animate-pulse" />
+      </div>
     );
   }
 
   if (error || !data) {
-    return (
-      <Card className={className}>
-        <CardHeader className="pb-2">
-          <div className="flex items-center space-x-2">
-            <Repeat className="h-5 w-5 text-muted-foreground" />
-            <CardTitle className="text-lg">Recurring Payments</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-4">
-            <AlertTriangle className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">
-              Unable to load recurring payment insights
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return null;
   }
 
   return (
-    <Card className={className}>
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Repeat className="h-5 w-5 text-muted-foreground" />
-            <CardTitle className="text-lg">Recurring Payments</CardTitle>
-          </div>
-          <Link href="/recurring-payments">
-            <Button variant="ghost" size="sm">View All</Button>
-          </Link>
-        </div>
-        <CardDescription>
-          Monthly spending on subscriptions and recurring bills
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Monthly Total with Trend */}
+    <div className={cn("space-y-4", className)}>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          Recurring
+        </h3>
+        <Link href="/recurring-payments" className="text-sm font-medium text-primary hover:underline">
+          View All
+        </Link>
+      </div>
+
+      <div className="rounded-3xl bg-white dark:bg-slate-900 border border-border p-6 shadow-sm space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-2xl font-bold">
-              {displayCurrency(data.monthlyTotal)}
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">
+              {formatCurrency(data.monthlyTotal)}
             </p>
-            <p className="text-xs text-muted-foreground">Monthly Total</p>
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">Monthly Total</p>
           </div>
-          <div className="flex items-center space-x-1">
-            {data.trends.direction === 'up' && (
-              <TrendingUp className="h-4 w-4 text-red-500" />
-            )}
-            {data.trends.direction === 'down' && (
-              <TrendingDown className="h-4 w-4 text-green-500" />
-            )}
-            <span className={`text-xs ${data.trends.direction === 'up' ? 'text-red-500' :
-              data.trends.direction === 'down' ? 'text-green-500' :
-                'text-muted-foreground'
-              }`}>
-              {(data.trends.monthlyChangePercentage || 0) > 0 ? '+' : ''}
-              {(data.trends.monthlyChangePercentage || 0).toFixed(1)}%
+          <div className={cn(
+            "flex items-center gap-1 px-2 py-1 rounded-lg font-bold text-xs",
+            data.trends.direction === 'up' ? "bg-rose-50 text-rose-500" : "bg-emerald-50 text-emerald-500"
+          )}>
+            <span className="material-symbols-outlined text-[16px]">
+              {data.trends.direction === 'up' ? 'trending_up' : 'trending_down'}
             </span>
+            {data.trends.monthlyChangePercentage.toFixed(1)}%
           </div>
         </div>
 
-        {/* Budget Impact */}
         <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Budget Impact</span>
-            <span className="font-medium">
-              {(data.budgetImpact?.utilizationPercentage || 0).toFixed(1)}%
+          <div className="flex justify-between items-center">
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Budget Allocation</p>
+            <span className="text-xs font-bold text-slate-900 dark:text-white">
+              {data.budgetImpact.utilizationPercentage.toFixed(0)}%
             </span>
           </div>
-          <Progress
-            value={data.budgetImpact?.utilizationPercentage || 0}
-            className="h-2"
-          />
-          <p className="text-xs text-muted-foreground">
-            {displayCurrency(data.budgetImpact?.recurringAllocation || 0)} of {displayCurrency(data.budgetImpact?.totalBudget || 0)}
-          </p>
+          <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+            <div
+              className="h-full bg-indigo-400 transition-all duration-500"
+              style={{ width: `${Math.min(data.budgetImpact.utilizationPercentage, 100)}%` }}
+            />
+          </div>
         </div>
 
-        {/* Payment Status */}
-        <div className="grid grid-cols-3 gap-4 pt-2">
-          <div className="text-center">
-            <p className="text-lg font-semibold text-green-600">{data.activePayments}</p>
-            <p className="text-xs text-muted-foreground">Active</p>
-          </div>
-          <div className="text-center">
-            <p className="text-lg font-semibold text-blue-600">{data.upcomingPayments}</p>
-            <p className="text-xs text-muted-foreground">Upcoming</p>
-          </div>
-          {data.missedPayments > 0 && (
-            <div className="text-center">
-              <p className="text-lg font-semibold text-red-600">{data.missedPayments}</p>
-              <p className="text-xs text-muted-foreground">Missed</p>
+        <div className="grid grid-cols-2 gap-3">
+          {data.topCategories.slice(0, 2).map((cat, idx) => (
+            <div key={idx} className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate mb-1">{cat.category}</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-white">{formatCurrency(cat.amount)}</p>
             </div>
-          )}
+          ))}
         </div>
 
-        {/* Top Categories */}
-        {data.topCategories.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Top Categories</p>
-            <div className="space-y-1">
-              {data.topCategories.slice(0, 3).map((category) => (
-                <div key={category.category} className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">{category.category}</span>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm font-medium">
-                      {displayCurrency(category.amount)}
-                    </span>
-                    <Badge variant="secondary" className="text-xs">
-                      {category.percentage.toFixed(0)}%
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Quick Actions */}
-        <div className="flex space-x-2 pt-2">
-          <Link href="/recurring-payments/detect" className="flex-1">
-            <Button variant="outline" size="sm" className="w-full text-xs">
-              <DollarSign className="h-3 w-3 mr-1" />
-              Detect Patterns
-            </Button>
+        <div className="pt-2">
+          <Link
+            href="/recurring-payments/detect"
+            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border-2 border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+          >
+            <span className="material-symbols-outlined text-[18px]">find_in_page</span>
+            Detect Patterns
           </Link>
-          {data.missedPayments > 0 && (
-            <Link href="/recurring-payments?tab=missed" className="flex-1">
-              <Button variant="outline" size="sm" className="w-full text-xs">
-                <AlertTriangle className="h-3 w-3 mr-1" />
-                Review Missed
-              </Button>
-            </Link>
-          )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

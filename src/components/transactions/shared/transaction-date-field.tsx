@@ -41,37 +41,45 @@ export function TransactionDateField<T extends FieldValues>({
       name={name}
       render={({ field }) => {
         return (
-          <FormItem>
-            <FormLabel>{label}</FormLabel>
+          <FormItem className="space-y-2">
+            <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground ml-1">
+              {label}
+            </FormLabel>
             <Popover>
               <PopoverTrigger asChild>
                 <FormControl>
                   <Button
                     variant="outline"
                     className={cn(
-                      'w-full pl-3 text-left font-normal',
-                      !field.value && 'text-muted-foreground'
+                      'h-14 w-full pl-4 pr-4 rounded-2xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-all focus:ring-primary/20 shadow-sm text-left font-bold group',
+                      !field.value && 'text-muted-foreground font-medium'
                     )}
                   >
-                    {field.value ? (
-                      format(new Date(field.value), 'PPP')
-                    ) : (
-                      <span>{placeholder}</span>
-                    )}
-                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center group-hover:bg-slate-100 transition-all text-slate-400">
+                        <span className="material-symbols-outlined text-[20px]">calendar_today</span>
+                      </div>
+                      {field.value ? (
+                        format(new Date(field.value), 'PPP')
+                      ) : (
+                        <span>{placeholder}</span>
+                      )}
+                    </div>
                   </Button>
                 </FormControl>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 z-[60]" align="start">
+              <PopoverContent className="w-auto p-0 z-[60] rounded-2xl border-slate-100 dark:border-slate-800 shadow-xl overflow-hidden" align="start">
                 <Calendar
                   mode="single"
                   selected={field.value ? new Date(field.value) : undefined}
                   onSelect={(date: Date | undefined) => field.onChange(date?.toISOString())}
-                  disabled={(date: Date) => date > new Date() || date < new Date('1900-01-01')} />
+                  disabled={(date: Date) => date > new Date() || date < new Date('1900-01-01')}
+                  initialFocus
+                />
               </PopoverContent>
             </Popover>
-            <FormDescription>{description}</FormDescription>
-            <FormMessage />
+            <FormDescription className="text-xs font-medium ml-1">{description}</FormDescription>
+            <FormMessage className="ml-1 font-bold text-xs" />
           </FormItem>
         );
       }}

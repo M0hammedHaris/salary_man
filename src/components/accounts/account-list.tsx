@@ -1,18 +1,30 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils/decimal';
 import { AccountDeleteDialog } from '@/components/accounts/account-delete-dialog';
-import { 
-  AccountType, 
-  type AccountResponse, 
-  accountTypeLabels, 
-  accountTypeIcons 
+import {
+  AccountType,
+  type AccountResponse,
+  accountTypeLabels
 } from '@/lib/types/account';
-import { Edit, Trash2, Plus, AlertTriangle } from 'lucide-react';
+
+const accountTypeMaterialIcons: Record<AccountType, string> = {
+  [AccountType.CHECKING]: 'payments',
+  [AccountType.SAVINGS]: 'savings',
+  [AccountType.INVESTMENT]: 'monitoring',
+  [AccountType.CREDIT_CARD]: 'credit_card',
+  [AccountType.OTHER]: 'account_balance'
+};
+
+const accountTypeColors: Record<AccountType, { bg: string, text: string, icon: string, border: string, bgDark: string }> = {
+  [AccountType.CHECKING]: { bg: 'bg-blue-50', text: 'text-blue-700', icon: 'text-blue-500', border: 'border-blue-100', bgDark: 'dark:bg-blue-900/20' },
+  [AccountType.SAVINGS]: { bg: 'bg-emerald-50', text: 'text-emerald-700', icon: 'text-emerald-500', border: 'border-emerald-100', bgDark: 'dark:bg-emerald-900/20' },
+  [AccountType.INVESTMENT]: { bg: 'bg-purple-50', text: 'text-purple-700', icon: 'text-purple-500', border: 'border-purple-100', bgDark: 'dark:bg-purple-900/20' },
+  [AccountType.CREDIT_CARD]: { bg: 'bg-rose-50', text: 'text-rose-700', icon: 'text-rose-500', border: 'border-rose-100', bgDark: 'dark:bg-rose-900/20' },
+  [AccountType.OTHER]: { bg: 'bg-amber-50', text: 'text-amber-700', icon: 'text-amber-500', border: 'border-amber-100', bgDark: 'dark:bg-amber-900/20' },
+};
 
 interface AccountListProps {
   onEditAccount?: (account: AccountResponse) => void;
@@ -20,54 +32,31 @@ interface AccountListProps {
   onCreateAccount?: () => void;
   refreshTrigger?: number;
   onAccountDeleted?: () => void;
+  activeFilter?: string;
 }
 
-export function AccountList({ 
-  onEditAccount, 
-  onDeleteAccount, 
+export function AccountList({
+  onEditAccount,
   onCreateAccount,
   refreshTrigger = 0,
-  onAccountDeleted
+  onAccountDeleted,
+  activeFilter = 'all'
 }: AccountListProps) {
   const [accounts, setAccounts] = useState<AccountResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const formatCurrency = (amount: string): string => {
-    const num = parseFloat(amount);
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 2,
-    }).format(num);
-  };
-
-  const getAccountTypeVariant = (type: AccountType): "default" | "secondary" | "destructive" | "outline" => {
-    switch (type) {
-      case AccountType.CHECKING:
-        return 'default';
-      case AccountType.SAVINGS:
-        return 'secondary';
-      case AccountType.INVESTMENT:
-        return 'outline';
-      case AccountType.CREDIT_CARD:
-        return 'destructive';
-      default:
-        return 'outline';
-    }
-  };
-
   const fetchAccounts = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const response = await fetch('/api/accounts');
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch accounts');
       }
-      
+
       const data = await response.json();
       setAccounts(data.accounts || []);
     } catch (err) {
@@ -81,204 +70,202 @@ export function AccountList({
     fetchAccounts();
   }, [refreshTrigger]);
 
+  const filteredAccounts = activeFilter === 'all'
+    ? accounts
+    : accounts.filter(account => account.type === activeFilter);
+
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-8 w-32" />
-          <Skeleton className="h-10 w-32" />
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[...Array(6)].map((_, i) => (
-            <Card key={i}>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <Skeleton className="h-5 w-24" />
-                  <Skeleton className="h-5 w-16" />
-                </div>
-                <Skeleton className="h-4 w-16" />
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <Skeleton className="h-6 w-20" />
-                  <div className="flex gap-2">
-                    <Skeleton className="h-8 w-16" />
-                    <Skeleton className="h-8 w-16" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="h-64 rounded-[40px] bg-white dark:bg-slate-900 animate-pulse border border-slate-100 dark:border-slate-800 shadow-sm" />
+        ))}
       </div>
     );
   }
 
   if (error) {
     return (
-      <Card className="p-6">
-        <div className="flex flex-col items-center text-center space-y-4">
-          <AlertTriangle className="h-12 w-12 text-destructive" />
-          <div>
-            <h3 className="text-lg font-semibold">Error Loading Accounts</h3>
-            <p className="text-muted-foreground">{error}</p>
-          </div>
-          <Button onClick={fetchAccounts} variant="outline">
-            Try Again
-          </Button>
+      <div className="flex flex-col items-center justify-center p-16 bg-white dark:bg-slate-900 rounded-[48px] border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/5 rounded-full blur-3xl -mr-32 -mt-32" />
+        <div className="w-20 h-20 rounded-[30px] bg-rose-50 dark:bg-rose-900/20 flex items-center justify-center mb-8 relative z-10">
+          <span className="material-symbols-outlined text-rose-500 text-4xl">warning</span>
         </div>
-      </Card>
+        <h3 className="text-3xl font-black mb-3 tracking-tight relative z-10">Something went wrong</h3>
+        <p className="text-slate-500 max-w-xs text-center font-medium leading-relaxed mb-10 relative z-10">{error}</p>
+        <button
+          onClick={fetchAccounts}
+          className="px-10 py-4 bg-slate-900 dark:bg-white dark:text-slate-900 text-white rounded-2xl font-black transition-all hover:scale-105 active:scale-95 relative z-10"
+        >
+          Try Again
+        </button>
+      </div>
     );
   }
 
   if (accounts.length === 0) {
     return (
-      <Card className="p-8">
-        <div className="flex flex-col items-center text-center space-y-4">
-          <div className="rounded-full bg-muted p-4">
-            <Plus className="h-8 w-8 text-muted-foreground" />
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-xl font-semibold">No Accounts Yet</h3>
-            <p className="text-muted-foreground max-w-md">
-              Start by creating your first account to track your finances. You can add checking, savings, investment, or credit card accounts.
-            </p>
-          </div>
-          {onCreateAccount && (
-            <Button onClick={onCreateAccount} className="mt-4">
-              <Plus className="mr-2 h-4 w-4" />
-              Create Your First Account
-            </Button>
-          )}
+      <div className="flex flex-col items-center justify-center py-32 bg-white dark:bg-slate-900 rounded-[48px] border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32" />
+        <div className="w-24 h-24 rounded-[36px] bg-slate-50 dark:bg-slate-800 flex items-center justify-center mb-8 relative z-10">
+          <span className="material-symbols-outlined text-muted-foreground text-5xl">account_balance_wallet</span>
         </div>
-      </Card>
+        <h3 className="text-3xl font-black mb-3 tracking-tight relative z-10">No accounts found</h3>
+        <p className="text-slate-500 max-w-xs text-center font-medium leading-relaxed mb-10 relative z-10">
+          Connect your first bank account or credit card to see your financial world come alive.
+        </p>
+        {onCreateAccount && (
+          <button
+            onClick={onCreateAccount}
+            className="px-10 py-4 bg-primary text-white rounded-2xl font-black transition-all hover:scale-105 active:scale-95 relative z-10 shadow-xl shadow-primary/20"
+          >
+            Create First Account
+          </button>
+        )}
+      </div>
     );
   }
 
   const totalBalance = accounts.reduce((sum, account) => {
+    const balanceNum = parseFloat(account.balance);
     if (account.type === AccountType.CREDIT_CARD) {
-      // For credit cards, subtract the balance (debt)
-      return sum - parseFloat(account.balance);
+      return sum - balanceNum;
     }
-    return sum + parseFloat(account.balance);
+    return sum + balanceNum;
   }, 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-12">
       {/* Summary Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-semibold">Your Accounts</h2>
-          <p className="text-muted-foreground">
-            Net Worth: <span className="font-semibold">{formatCurrency(totalBalance.toString())}</span>
-          </p>
+      <div className="relative group overflow-hidden bg-white dark:bg-slate-900 p-10 rounded-[48px] border border-slate-100 dark:border-slate-800 shadow-sm">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-[100px] -mr-48 -mt-48 transition-transform group-hover:scale-110 duration-700" />
+
+        <div className="flex flex-col items-center md:items-start md:flex-row md:justify-between gap-8 relative z-10">
+          <div className="text-center md:text-left space-y-2">
+            <p className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Current Portfolio</p>
+            <h2 className="text-6xl font-black text-slate-900 dark:text-white tracking-tighter">
+              {formatCurrency(totalBalance)}
+            </h2>
+          </div>
+
+          <div className="flex gap-4">
+            <div className="flex flex-col items-center md:items-end justify-center px-6 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Assets</span>
+              <span className="text-lg font-black text-emerald-500">
+                {formatCurrency(accounts.reduce((sum, acc) => acc.type !== AccountType.CREDIT_CARD ? sum + parseFloat(acc.balance) : sum, 0))}
+              </span>
+            </div>
+            <div className="flex flex-col items-center md:items-end justify-center px-6 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Liabilities</span>
+              <span className="text-lg font-black text-rose-500">
+                {formatCurrency(accounts.reduce((sum, acc) => acc.type === AccountType.CREDIT_CARD ? sum + parseFloat(acc.balance) : sum, 0))}
+              </span>
+            </div>
+          </div>
         </div>
-        {onCreateAccount && (
-          <Button onClick={onCreateAccount}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Account
-          </Button>
-        )}
       </div>
 
       {/* Accounts Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {accounts.map((account) => (
-          <Card key={account.id} className="transition-all hover:shadow-md">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{account.name}</CardTitle>
-                <span className="text-2xl">{accountTypeIcons[account.type as AccountType]}</span>
+      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        {filteredAccounts.map((account) => {
+          const colors = accountTypeColors[account.type as AccountType] || accountTypeColors[AccountType.OTHER];
+          const isCreditCard = account.type === AccountType.CREDIT_CARD;
+          const balanceNum = parseFloat(account.balance);
+          const showLimit = isCreditCard && typeof account.creditLimit === 'string';
+          const creditLimitNum = showLimit ? parseFloat(account.creditLimit as string) : 0;
+          const utilization = showLimit ? (balanceNum / creditLimitNum) * 100 : 0;
+
+          return (
+            <div
+              key={account.id}
+              className="group flex flex-col p-8 rounded-[40px] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-2xl transition-all cursor-default relative overflow-hidden hover:-translate-y-2 active:scale-[0.98]"
+            >
+              {/* Background Accent */}
+              <div className={cn("absolute -top-12 -right-12 w-32 h-32 rounded-full opacity-[0.08] group-hover:scale-150 transition-transform duration-700", colors.bg)} />
+
+              <div className="flex items-start justify-between mb-8 relative z-10">
+                <div className="space-y-1">
+                  <div className={cn(
+                    "inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border mb-3",
+                    colors.bg, colors.text, colors.border, colors.bgDark
+                  )}>
+                    {accountTypeLabels[account.type as AccountType]}
+                  </div>
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white leading-tight truncate max-w-[180px]">
+                    {account.name}
+                  </h3>
+                </div>
+
+                <div className={cn(
+                  "w-14 h-14 rounded-[22px] flex items-center justify-center shadow-sm transition-transform group-hover:rotate-12",
+                  colors.bg, colors.bgDark
+                )}>
+                  <span className={cn("material-symbols-outlined text-[28px]", colors.icon)}>
+                    {accountTypeMaterialIcons[account.type as AccountType]}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Badge variant={getAccountTypeVariant(account.type as AccountType)}>
-                  {accountTypeLabels[account.type as AccountType]}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {/* Balance */}
+
+              <div className="mt-auto space-y-4 relative z-10">
                 <div>
-                  <p className="text-sm text-muted-foreground">
-                    {account.type === AccountType.CREDIT_CARD ? 'Current Balance' : 'Balance'}
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-1.5">
+                    {isCreditCard ? 'Current Debt' : 'Available Balance'}
                   </p>
-                  <p className={`text-xl font-semibold ${
-                    account.type === AccountType.CREDIT_CARD && parseFloat(account.balance) > 0
-                      ? 'text-destructive'
-                      : 'text-foreground'
-                  }`}>
-                    {account.type === AccountType.CREDIT_CARD && parseFloat(account.balance) > 0
-                      ? `-${formatCurrency(account.balance)}`
-                      : formatCurrency(account.balance)
-                    }
+                  <p className={cn(
+                    "text-3xl font-black tracking-tighter",
+                    isCreditCard && balanceNum > 0 ? "text-rose-600 dark:text-rose-400" : "text-slate-900 dark:text-white"
+                  )}>
+                    {isCreditCard && balanceNum > 0 ? `-${formatCurrency(balanceNum)}` : formatCurrency(balanceNum)}
                   </p>
                 </div>
 
-                {/* Credit Limit for Credit Cards */}
-                {account.type === AccountType.CREDIT_CARD && account.creditLimit && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Credit Limit</p>
-                    <p className="text-sm font-medium">{formatCurrency(account.creditLimit)}</p>
-                    <div className="mt-1">
-                      <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-destructive transition-all duration-300"
-                          style={{
-                            width: `${Math.min(
-                              (parseFloat(account.balance) / parseFloat(account.creditLimit)) * 100, 
-                              100
-                            )}%`
-                          }}
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {Math.round((parseFloat(account.balance) / parseFloat(account.creditLimit)) * 100)}% utilized
-                      </p>
+                {showLimit && (
+                  <div className="space-y-3 pt-2">
+                    <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
+                      <span>Utilization</span>
+                      <span className={cn(utilization > 80 ? "text-rose-500" : "text-slate-500")}>
+                        {Math.round(utilization)}%
+                      </span>
+                    </div>
+                    <div className="h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-[2px]">
+                      <div
+                        className={cn(
+                          "h-full rounded-full transition-all duration-1000 ease-out",
+                          utilization > 80 ? "bg-rose-500 shadow-sm shadow-rose-200" : utilization > 50 ? "bg-amber-500 shadow-sm shadow-amber-200" : "bg-emerald-500 shadow-sm shadow-emerald-200"
+                        )}
+                        style={{ width: `${Math.min(utilization, 100)}%` }}
+                      />
                     </div>
                   </div>
                 )}
 
-                {/* Action Buttons */}
-                <div className="flex gap-2 pt-2">
+                <div className="flex gap-3 pt-4 opacity-0 group-hover:opacity-100 transition-opacity">
                   {onEditAccount && (
-                    <Button
-                      variant="outline"
-                      size="sm"
+                    <button
                       onClick={() => onEditAccount(account)}
-                      className="flex-1"
+                      className="flex-1 flex items-center justify-center gap-2 h-12 rounded-[18px] bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-black text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-all border border-slate-100 dark:border-slate-800"
                     >
-                      <Edit className="mr-1 h-3 w-3" />
+                      <span className="material-symbols-outlined text-[18px]">edit_square</span>
                       Edit
-                    </Button>
+                    </button>
                   )}
-                  {onDeleteAccount && (
-                    <AccountDeleteDialog 
-                      account={account}
-                      onSuccess={() => {
-                        onAccountDeleted?.();
-                      }}
-                    >
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1 text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="mr-1 h-3 w-3" />
-                        Delete
-                      </Button>
-                    </AccountDeleteDialog>
-                  )}
-                </div>
 
-                {/* Account Meta */}
-                <div className="text-xs text-muted-foreground">
-                  Created {new Date(account.createdAt).toLocaleDateString()}
+                  <AccountDeleteDialog
+                    account={account}
+                    onSuccess={() => {
+                      onAccountDeleted?.();
+                    }}
+                  >
+                    <button className="flex-1 flex items-center justify-center gap-2 h-12 rounded-[18px] bg-rose-50 dark:bg-rose-900/10 text-rose-600 dark:text-rose-400 font-black text-xs hover:bg-rose-100 dark:hover:bg-rose-900/20 transition-all border border-rose-100/50 dark:border-rose-900/20">
+                      <span className="material-symbols-outlined text-[18px]">delete</span>
+                      Delete
+                    </button>
+                  </AccountDeleteDialog>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        ))}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { BreadcrumbNavigation } from '@/components/layout/breadcrumb-navigation';
 import { getDashboardData } from '@/lib/services/dashboard';
+import { NetWorthCard } from '@/components/dashboard/net-worth-card';
 import { FinancialHealthScore } from '@/components/dashboard/financial-health-score';
 import { AccountBalanceSummary } from '@/components/dashboard/account-balance-summary';
 import { CreditCardUtilization } from '@/components/dashboard/credit-card-utilization';
@@ -21,28 +22,46 @@ async function DashboardContent({ userId }: { userId: string }) {
     const dashboardData = await getDashboardData(userId);
 
     return (
-      <div className="min-h-screen bg-background">
-        <main className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-8 lg:px-8">
-          <BreadcrumbNavigation className="mb-4 sm:mb-6" />
-          
-          {/* Mobile: Single column, Desktop: 3-column grid layout */}
-          <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
-            
-            {/* Left Column - Primary Metrics */}
-            <div className="lg:col-span-2 space-y-4 sm:space-y-6">
-              {/* Financial Health Score */}
-              <FinancialHealthScore
-                score={dashboardData.financialHealthScore.score}
-                trend={dashboardData.financialHealthScore.trend}
-                explanation={dashboardData.financialHealthScore.explanation}
+      <div className="bg-background">
+        <main className="mx-auto max-w-[1280px] px-4 py-6 sm:px-8">
+
+          {/* Dashboard Header - Mobile First */}
+          <div className="flex flex-col gap-6 lg:grid lg:grid-cols-3 lg:gap-8">
+
+            {/* Left Column - Primary Metrics & Transactions */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Net Worth - Hero Component */}
+              <NetWorthCard
+                totalNetWorth={dashboardData.accountSummary.totalBalance}
+                changePercentage={5.2}
               />
 
-              {/* Account Balance Summary */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Financial Health Score */}
+                <FinancialHealthScore
+                  score={dashboardData.financialHealthScore.score}
+                />
+
+                {/* Simplified Analytics Placeholder or Stats */}
+                <div className="rounded-3xl bg-white dark:bg-slate-900 border border-border p-6 shadow-sm flex flex-col justify-center">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="h-12 w-12 rounded-2xl bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center text-purple-600">
+                      <span className="material-symbols-outlined">trending_up</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-500">Savings Rate</p>
+                      <h4 className="text-2xl font-bold">18.5%</h4>
+                    </div>
+                  </div>
+                  <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                    <div className="bg-purple-500 h-full w-[18.5%]"></div>
+                  </div>
+                  <p className="mt-4 text-xs text-slate-400">↑ 2.1% from last month</p>
+                </div>
+              </div>
+
+              {/* Account Balance Summary - Horizontal Cards */}
               <AccountBalanceSummary
-                totalBalance={dashboardData.accountSummary.totalBalance}
-                checkingBalance={dashboardData.accountSummary.checkingBalance}
-                savingsBalance={dashboardData.accountSummary.savingsBalance}
-                creditCardBalance={dashboardData.accountSummary.creditCardBalance}
                 accounts={dashboardData.accountSummary.accounts}
               />
 

@@ -6,31 +6,38 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Form, 
-  FormControl, 
-  FormDescription, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
 } from '@/components/ui/form';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  createAccountSchema, 
-  type CreateAccountRequest, 
-  AccountType, 
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  createAccountSchema,
+  type CreateAccountRequest,
+  AccountType,
   accountTypeLabels,
-  accountTypeIcons
 } from '@/lib/types/account';
-import { Loader2, Plus } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+const accountTypeMaterialIcons: Record<AccountType, string> = {
+  [AccountType.CHECKING]: 'payments',
+  [AccountType.SAVINGS]: 'savings',
+  [AccountType.INVESTMENT]: 'monitoring',
+  [AccountType.CREDIT_CARD]: 'credit_card',
+  [AccountType.OTHER]: 'account_balance'
+};
 
 interface AccountCreateFormProps {
   onSuccess?: () => void;
@@ -51,38 +58,24 @@ export function AccountCreateForm({ onSuccess, onCancel, isModal = false }: Acco
     },
   });
 
-  const formatCurrency = (value: string): string => {
-    // Remove non-numeric characters except decimal point
+  const formatCurrencyValue = (value: string): string => {
     const numericValue = value.replace(/[^0-9.]/g, '');
-    
-    // Ensure only one decimal point
     const parts = numericValue.split('.');
-    if (parts.length > 2) {
-      return parts[0] + '.' + parts[1];
-    }
-    
-    // Limit to 2 decimal places
-    if (parts[1] && parts[1].length > 2) {
-      return parts[0] + '.' + parts[1].slice(0, 2);
-    }
-    
+    if (parts.length > 2) return parts[0] + '.' + parts[1];
+    if (parts[1] && parts[1].length > 2) return parts[0] + '.' + parts[1].slice(0, 2);
     return numericValue;
   };
 
   const handleBalanceChange = (value: string, onChange: (value: string) => void) => {
-    const formattedValue = formatCurrency(value);
-    onChange(formattedValue);
+    onChange(formatCurrencyValue(value));
   };
 
   const onSubmit = async (data: CreateAccountRequest) => {
     setIsSubmitting(true);
-    
     try {
       const response = await fetch('/api/accounts', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
 
@@ -103,28 +96,28 @@ export function AccountCreateForm({ onSuccess, onCancel, isModal = false }: Acco
     }
   };
 
-  const content = (
+  const formContent = (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid gap-4 sm:grid-cols-2">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-10">
+        <div className="grid gap-8 sm:grid-cols-2">
           {/* Account Name */}
           <FormField
             control={form.control}
             name="name"
             render={({ field }) => (
               <FormItem className="sm:col-span-2">
-                  <FormLabel htmlFor="account-name">Account Name</FormLabel>
-                  <FormControl>
+                <FormLabel className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-3 block">Account Name</FormLabel>
+                <FormControl>
+                  <div className="relative group">
                     <Input
-                      id="account-name"
-                      placeholder="My Checking Account"
+                      placeholder="e.g. Primary Checking"
+                      className="h-16 px-6 bg-slate-50 border-none rounded-[24px] text-lg font-bold focus-visible:ring-primary focus-visible:ring-offset-0 transition-all group-hover:bg-slate-100"
                       {...field}
                     />
-                  </FormControl>
-                <FormDescription>
-                  Enter a descriptive name for your account
-                </FormDescription>
-                <FormMessage />
+                    <div className="absolute inset-x-0 bottom-0 h-1 bg-primary scale-x-0 group-focus-within:scale-x-100 transition-transform rounded-b-[24px]" />
+                  </div>
+                </FormControl>
+                <FormMessage className="text-[10px] font-bold uppercase tracking-wider text-rose-500 mt-2" />
               </FormItem>
             )}
           />
@@ -135,25 +128,25 @@ export function AccountCreateForm({ onSuccess, onCancel, isModal = false }: Acco
             name="type"
             render={({ field }) => (
               <FormItem>
-                  <FormLabel htmlFor="account-type">Account Type</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger id="account-type" className="w-full">
-                        <SelectValue placeholder="Select account type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {Object.values(AccountType).map((type) => (
-                        <SelectItem key={type} value={type}>
-                          <span className="flex items-center gap-2">
-                            <span>{accountTypeIcons[type]}</span>
-                            {accountTypeLabels[type]}
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                <FormMessage />
+                <FormLabel className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-3 block">Account Type</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger className="h-16 px-6 bg-slate-50 border-none rounded-[24px] text-lg font-bold focus:ring-primary focus:ring-offset-0 hover:bg-slate-100 transition-all">
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="rounded-[24px] p-2 border-slate-100 shadow-2xl">
+                    {Object.values(AccountType).map((type) => (
+                      <SelectItem key={type} value={type} className="rounded-xl py-3 focus:bg-primary/5 cursor-pointer">
+                        <div className="flex items-center gap-3">
+                          <span className="material-symbols-outlined text-slate-400">{accountTypeMaterialIcons[type]}</span>
+                          <span className="font-bold">{accountTypeLabels[type]}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage className="text-[10px] font-bold uppercase tracking-wider text-rose-500 mt-2" />
               </FormItem>
             )}
           />
@@ -164,26 +157,22 @@ export function AccountCreateForm({ onSuccess, onCancel, isModal = false }: Acco
             name="balance"
             render={({ field }) => (
               <FormItem>
-                  <FormLabel htmlFor="account-balance">Initial Balance</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-                        ₹
-                      </span>
-                      <Input
-                        id="account-balance"
-                        type="text"
-                        placeholder="0.00"
-                        className="pl-8"
-                        {...field}
-                        onChange={(e) => handleBalanceChange(e.target.value, field.onChange)}
-                      />
+                <FormLabel className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-3 block">Initial Balance</FormLabel>
+                <FormControl>
+                  <div className="relative group">
+                    <div className="absolute left-6 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center pointer-events-none">
+                      <span className="text-emerald-500 font-black text-sm">₹</span>
                     </div>
-                  </FormControl>
-                <FormDescription>
-                  Enter the current balance
-                </FormDescription>
-                <FormMessage />
+                    <Input
+                      type="text"
+                      placeholder="0.00"
+                      className="h-16 pl-16 pr-6 bg-slate-50 border-none rounded-[24px] text-xl font-black text-emerald-600 focus-visible:ring-emerald-500/20 focus-visible:ring-offset-0 transition-all group-hover:bg-slate-100 placeholder:text-emerald-200"
+                      {...field}
+                      onChange={(e) => handleBalanceChange(e.target.value, field.onChange)}
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage className="text-[10px] font-bold uppercase tracking-wider text-rose-500 mt-2" />
               </FormItem>
             )}
           />
@@ -195,26 +184,22 @@ export function AccountCreateForm({ onSuccess, onCancel, isModal = false }: Acco
               name="creditLimit"
               render={({ field }) => (
                 <FormItem className="sm:col-span-2">
-                    <FormLabel htmlFor="account-credit-limit">Credit Limit (Optional)</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-                          ₹
-                        </span>
-                        <Input
-                          id="account-credit-limit"
-                          type="text"
-                          placeholder="5000.00"
-                          className="pl-8"
-                          value={field.value || ''}
-                          onChange={(e) => handleBalanceChange(e.target.value, field.onChange)}
-                        />
+                  <FormLabel className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-3 block">Credit Limit (Optional)</FormLabel>
+                  <FormControl>
+                    <div className="relative group">
+                      <div className="absolute left-6 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-rose-500/10 flex items-center justify-center pointer-events-none">
+                        <span className="text-rose-500 font-black text-sm">₹</span>
                       </div>
-                    </FormControl>
-                  <FormDescription>
-                    Enter the credit limit for this card
-                  </FormDescription>
-                  <FormMessage />
+                      <Input
+                        type="text"
+                        placeholder="50000.00"
+                        className="h-16 pl-16 pr-6 bg-slate-50 border-none rounded-[24px] text-xl font-black text-rose-600 focus-visible:ring-rose-500/20 focus-visible:ring-offset-0 transition-all group-hover:bg-slate-100 placeholder:text-rose-200"
+                        value={field.value || ''}
+                        onChange={(e) => handleBalanceChange(e.target.value, field.onChange)}
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage className="text-[10px] font-bold uppercase tracking-wider text-rose-500 mt-2" />
                 </FormItem>
               )}
             />
@@ -226,16 +211,15 @@ export function AccountCreateForm({ onSuccess, onCancel, isModal = false }: Acco
             name="description"
             render={({ field }) => (
               <FormItem className="sm:col-span-2">
-                  <FormLabel htmlFor="account-description">Description (Optional)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      id="account-description"
-                      placeholder="Additional notes about this account..."
-                      className="min-h-20"
-                      {...field}
-                    />
-                  </FormControl>
-                <FormMessage />
+                <FormLabel className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-3 block">Description (Optional)</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Add some notes about this account..."
+                    className="min-h-[120px] px-6 py-5 bg-slate-50 border-none rounded-[24px] text-lg font-medium focus-visible:ring-primary focus-visible:ring-offset-0 transition-all hover:bg-slate-100 resize-none"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage className="text-[10px] font-bold uppercase tracking-wider text-rose-500 mt-2" />
               </FormItem>
             )}
           />
@@ -243,62 +227,92 @@ export function AccountCreateForm({ onSuccess, onCancel, isModal = false }: Acco
 
         {/* Error Message */}
         {form.formState.errors.root && (
-          <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
-            {form.formState.errors.root.message}
+          <div className="text-xs font-bold text-rose-500 bg-rose-50 p-5 rounded-[20px] border border-rose-100 animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-[20px]">warning</span>
+              {form.formState.errors.root.message}
+            </div>
           </div>
         )}
 
-        {/* Form Actions */}
-        <div className="flex gap-3 justify-end">
+        {/* Actions */}
+        <div className="flex flex-col-reverse sm:flex-row gap-4 pt-4">
           {onCancel && (
-            <Button
+            <button
               type="button"
-              variant="outline"
               onClick={onCancel}
               disabled={isSubmitting}
+              className="flex-1 flex items-center justify-center h-16 rounded-[24px] bg-slate-100 text-slate-600 font-black text-lg hover:bg-slate-200 active:scale-95 transition-all disabled:opacity-50"
             >
               Cancel
-            </Button>
+            </button>
           )}
-          <Button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={isSubmitting}
-            className="min-w-[100px]"
+            className="flex-[2] flex items-center justify-center gap-3 h-16 rounded-[24px] bg-primary text-white font-black text-xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/20 disabled:opacity-50"
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
+                <Loader2 className="h-6 w-6 animate-spin" />
+                <span>Creating...</span>
               </>
             ) : (
               <>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Account
+                <span className="material-symbols-outlined text-[24px]">add_circle</span>
+                <span>Create Account</span>
               </>
             )}
-          </Button>
+          </button>
         </div>
       </form>
     </Form>
   );
 
   if (isModal) {
-    return content;
+    return (
+      <div className="bg-white dark:bg-slate-900 rounded-[48px] overflow-hidden shadow-2xl">
+        <div className="relative h-48 bg-slate-900 flex items-center px-10 overflow-hidden">
+          {/* Abstract background blobs */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl -mr-32 -mt-32" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl -ml-24 -mb-24" />
+
+          <div className="relative z-10 flex items-center gap-6">
+            <div className="w-20 h-20 rounded-[30px] bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-2xl">
+              <span className="material-symbols-outlined text-4xl text-white">account_balance_wallet</span>
+            </div>
+            <div>
+              <h2 className="text-3xl font-black text-white tracking-tight">New Account</h2>
+              <p className="text-slate-400 font-bold">Track your assets & liabilities</p>
+            </div>
+          </div>
+        </div>
+        <div className="p-10">
+          {formContent}
+        </div>
+      </div>
+    );
   }
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Plus className="h-5 w-5" />
-          Create New Account
-        </CardTitle>
-        <CardDescription>
-          Add a new bank account to track your finances
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {content}
+    <Card className="w-full max-w-2xl mx-auto border-none shadow-2xl rounded-[48px] overflow-hidden">
+      <div className="relative h-48 bg-slate-900 flex items-center px-10 overflow-hidden">
+        {/* Abstract background blobs */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl -mr-32 -mt-32" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl -ml-24 -mb-24" />
+
+        <div className="relative z-10 flex items-center gap-6">
+          <div className="w-20 h-20 rounded-[30px] bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-2xl">
+            <span className="material-symbols-outlined text-4xl text-white">account_balance_wallet</span>
+          </div>
+          <div>
+            <h2 className="text-3xl font-black text-white tracking-tight">New Account</h2>
+            <p className="text-slate-400 font-bold">Track your assets & liabilities</p>
+          </div>
+        </div>
+      </div>
+      <CardContent className="p-10 bg-white dark:bg-slate-900">
+        {formContent}
       </CardContent>
     </Card>
   );

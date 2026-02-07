@@ -20,6 +20,7 @@ export interface Account {
   type: AccountType;
   balance: string; // Decimal as string for precision
   creditLimit: string | null; // Optional for credit cards
+  description: string | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -49,6 +50,7 @@ export const accountResponseSchema = z.object({
   type: z.enum(['checking', 'savings', 'investment', 'credit_card', 'other']),
   balance: z.string(),
   creditLimit: z.string().optional(),
+  description: z.string().optional(),
   isActive: z.boolean(),
   createdAt: z.string(),
   updatedAt: z.string(),

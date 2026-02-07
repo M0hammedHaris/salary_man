@@ -1,27 +1,10 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils/decimal';
 import { format } from 'date-fns';
-import { 
-  Receipt, 
-  TrendingUp, 
-  TrendingDown, 
-  Calendar,
-  ArrowRight,
-  ShoppingBag,
-  Car,
-  Home,
-  Coffee,
-  Gamepad2,
-  Heart,
-  Briefcase
-} from 'lucide-react';
+import { cn } from "@/lib/utils";
 
 interface RecentTransactionsProps {
   transactions: Array<{
@@ -35,176 +18,69 @@ interface RecentTransactionsProps {
   }>;
 }
 
+const getCategoryIcon = (categoryName: string) => {
+  const category = categoryName.toLowerCase();
+  if (category.includes('groceries') || category.includes('food') || category.includes('restaurant')) return 'restaurant';
+  if (category.includes('transport') || category.includes('gas') || category.includes('car')) return 'directions_car';
+  if (category.includes('shopping') || category.includes('retail')) return 'shopping_bag';
+  if (category.includes('home') || category.includes('utilities')) return 'home';
+  if (category.includes('entertainment') || category.includes('fun')) return 'sports_esports';
+  if (category.includes('health') || category.includes('medical')) return 'medical_services';
+  if (category.includes('salary') || category.includes('income') || category.includes('work')) return 'payments';
+  return 'receipt_long';
+};
+
 export function RecentTransactions({ transactions }: RecentTransactionsProps) {
-  const [expandedTransaction, setExpandedTransaction] = useState<string | null>(null);
-
-  const getCategoryIcon = (categoryName: string) => {
-    const category = categoryName.toLowerCase();
-    if (category.includes('groceries') || category.includes('food') || category.includes('restaurant')) {
-      return <Coffee className="h-4 w-4" />;
-    }
-    if (category.includes('transport') || category.includes('gas') || category.includes('car')) {
-      return <Car className="h-4 w-4" />;
-    }
-    if (category.includes('shopping') || category.includes('retail')) {
-      return <ShoppingBag className="h-4 w-4" />;
-    }
-    if (category.includes('home') || category.includes('utilities')) {
-      return <Home className="h-4 w-4" />;
-    }
-    if (category.includes('entertainment') || category.includes('fun')) {
-      return <Gamepad2 className="h-4 w-4" />;
-    }
-    if (category.includes('health') || category.includes('medical')) {
-      return <Heart className="h-4 w-4" />;
-    }
-    if (category.includes('salary') || category.includes('income') || category.includes('work')) {
-      return <Briefcase className="h-4 w-4" />;
-    }
-    return <Receipt className="h-4 w-4" />;
-  };
-
-  const getAmountColor = (amount: number) => {
-    return amount > 0 ? 'text-green-600' : 'text-red-600';
-  };
-
-  const getAmountIcon = (amount: number) => {
-    return amount > 0 ? TrendingUp : TrendingDown;
-  };
-
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-        <CardTitle className="text-lg">Recent Transactions</CardTitle>
-        <Badge variant="outline" className="text-xs">
-          {transactions.length} Recent
-        </Badge>
-      </CardHeader>
-      <CardContent>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Recent Transactions</h3>
+        <Link href="/transactions" className="text-sm font-medium text-primary hover:underline">
+          View All
+        </Link>
+      </div>
+
+      <div className="rounded-3xl bg-white dark:bg-slate-900 border border-border overflow-hidden shadow-sm">
         {transactions.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <Receipt className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p className="font-medium mb-1">No Recent Transactions</p>
-            <p className="text-sm">Your transactions will appear here once you start adding them.</p>
+          <div className="p-8 text-center text-slate-500">
+            <span className="material-symbols-outlined text-4xl mb-2 opacity-20">receipt_long</span>
+            <p className="text-sm">No transactions yet</p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {transactions.map((transaction) => (
-              <div key={transaction.id} className="border rounded-lg overflow-hidden">
-                {/* Transaction Summary */}
-                <div 
-                  className={`p-3 cursor-pointer hover:bg-muted/50 transition-colors ${
-                    expandedTransaction === transaction.id ? 'bg-muted/30' : ''
-                  }`}
-                  onClick={() => setExpandedTransaction(
-                    expandedTransaction === transaction.id ? null : transaction.id
-                  )}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div 
-                        className="p-2 rounded-full"
-                        style={{ backgroundColor: `${transaction.categoryColor}15` }}
-                      >
-                        <div style={{ color: transaction.categoryColor }}>
-                          {getCategoryIcon(transaction.categoryName)}
-                        </div>
-                      </div>
-                      <div className="flex flex-col min-w-0">
-                        <span className="font-medium text-sm truncate">{transaction.description}</span>
-                        <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                          <span className="truncate">{transaction.categoryName}</span>
-                          <span className="hidden sm:inline">•</span>
-                          <span className="hidden sm:inline truncate">{transaction.accountName}</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <div className="text-right">
-                        <div className={`font-semibold text-sm ${getAmountColor(transaction.amount)}`}>
-                          {transaction.amount > 0 ? '+' : ''}
-                          {formatCurrency(transaction.amount)}
-                        </div>
-                        <div className="flex items-center justify-end space-x-1 text-xs text-muted-foreground">
-                          <Calendar className="h-3 w-3" />
-                          <span>{format(transaction.transactionDate, 'MMM dd')}</span>
-                        </div>
-                      </div>
-                        {React.createElement(getAmountIcon(transaction.amount), { className: 'h-4 w-4' })}
-                    </div>
+          <div className="divide-y divide-border">
+            {transactions.slice(0, 5).map((transaction) => (
+              <div key={transaction.id} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${transaction.categoryColor}15`, color: transaction.categoryColor }}>
+                    <span className="material-symbols-outlined text-[24px]">
+                      {getCategoryIcon(transaction.categoryName)}
+                    </span>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[150px] sm:max-w-[200px]">
+                      {transaction.description}
+                    </h4>
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                      {transaction.categoryName} • {format(new Date(transaction.transactionDate), 'MMM dd')}
+                    </p>
                   </div>
                 </div>
-
-                {/* Expanded Details */}
-                {expandedTransaction === transaction.id && (
-                  <div className="px-3 pb-3 pt-1 bg-muted/20 border-t">
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Date:</span>
-                        <p className="font-medium">{format(transaction.transactionDate, 'PPP')}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Account:</span>
-                        <p className="font-medium">{transaction.accountName}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Category:</span>
-                        <div className="flex items-center space-x-1">
-                          <div 
-                            className="w-3 h-3 rounded-full" 
-                            style={{ backgroundColor: transaction.categoryColor }}
-                          />
-                          <span className="font-medium">{transaction.categoryName}</span>
-                        </div>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Type:</span>
-                        <p className="font-medium">
-                          {transaction.amount > 0 ? 'Income' : 'Expense'}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex space-x-2 mt-3 pt-2 border-t border-muted">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="outline" size="sm" className="text-xs">
-                            Edit
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Edit this transaction</p>
-                        </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="outline" size="sm" className="text-xs">
-                            Duplicate
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Create a similar transaction</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
-                  </div>
-                )}
+                <div className="text-right">
+                  <p className={cn(
+                    "text-sm font-bold",
+                    transaction.amount > 0 ? "text-green-600" : "text-slate-900 dark:text-white"
+                  )}>
+                    {transaction.amount > 0 ? '+' : ''}{formatCurrency(transaction.amount)}
+                  </p>
+                  <p className="text-xs font-medium text-slate-400">
+                    {transaction.accountName}
+                  </p>
+                </div>
               </div>
             ))}
-
-            {/* View All Transactions Link */}
-            <div className="pt-2">
-              <Button variant="ghost" className="w-full text-sm" size="sm" asChild>
-                <Link href="/transactions">
-                  <span>View All Transactions</span>
-                  <ArrowRight className="h-4 w-4 ml-1" />
-                </Link>
-              </Button>
-            </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
