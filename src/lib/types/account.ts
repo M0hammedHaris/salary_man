@@ -1,13 +1,16 @@
 import { z } from 'zod';
 
 // Account type enum to match database schema
-export enum AccountType {
-  CHECKING = 'checking',
-  SAVINGS = 'savings',
-  INVESTMENT = 'investment',
-  CREDIT_CARD = 'credit_card',
-  OTHER = 'other'
-}
+// Account type enum to match database schema
+export const AccountType = {
+  CHECKING: 'checking',
+  SAVINGS: 'savings',
+  INVESTMENT: 'investment',
+  CREDIT_CARD: 'credit_card',
+  OTHER: 'other'
+} as const;
+
+export type AccountType = typeof AccountType[keyof typeof AccountType];
 
 // Account interface for TypeScript
 export interface Account {
@@ -16,7 +19,7 @@ export interface Account {
   name: string;
   type: AccountType;
   balance: string; // Decimal as string for precision
-  creditLimit?: string; // Optional for credit cards
+  creditLimit: string | null; // Optional for credit cards
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

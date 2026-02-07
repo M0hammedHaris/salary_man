@@ -16,6 +16,9 @@ import { Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { handleAmountChange } from '@/lib/utils/currency';
+import { getUserAccounts } from '@/lib/actions/accounts';
+import { getUserCategories } from '@/lib/actions/categories';
+import { createBill, updateBill } from '@/lib/actions/bills';
 
 interface Account {
   id: string;
@@ -85,20 +88,13 @@ export function BillSetupForm({ bill, open, onClose, onSuccess }: BillSetupFormP
     const loadData = async () => {
       try {
         setLoadingData(true);
-        const [accountsResponse, categoriesResponse] = await Promise.all([
-          fetch('/api/accounts'),
-          fetch('/api/categories'),
+        const [{ accounts }, { categories }] = await Promise.all([
+          getUserAccounts(),
+          getUserCategories(),
         ]);
 
-        if (!accountsResponse.ok || !categoriesResponse.ok) {
-          throw new Error('Failed to load data');
-        }
-
-        const accountsData = await accountsResponse.json();
-        const categoriesData = await categoriesResponse.json();
-
-        setAccounts(accountsData);
-        setCategories(categoriesData);
+        setAccounts(accounts);
+        setCategories(categories);
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {
@@ -140,24 +136,29 @@ export function BillSetupForm({ bill, open, onClose, onSuccess }: BillSetupFormP
     setIsLoading(true);
 
     try {
-      const url = bill ? `/api/bills/${bill.id}` : '/api/bills';
-      const method = bill ? 'PUT' : 'POST';
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      if (bill) {
+        // Update existing bill
+        await updateBill({
+          id: bill.id,
           ...data,
+          accountId: data.accountId,
+          categoryId: data.categoryId,
           nextDueDate: data.nextDueDate.toISOString(),
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to save bill');
+          reminderDays: data.reminderDays || "0",
+        });
+      } else {
+        // Create new bill
+        await createBill({
+          ...data,
+          accountId: data.accountId,
+          categoryId: data.categoryId,
+          nextDueDate: data.nextDueDate.toISOString(),
+          reminderDays: data.reminderDays || "0",
+        });
       }
+
+      onSuccess();
+
 
       onSuccess();
     } catch (error) {

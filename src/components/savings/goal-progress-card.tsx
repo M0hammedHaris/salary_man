@@ -4,18 +4,19 @@ import { useState } from 'react';
 import { CalendarIcon, Target, TrendingUp, MoreVertical, Trash2, Edit3, PauseCircle, PlayCircle } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { toast } from 'sonner';
+import { deleteSavingsGoal, updateSavingsGoal } from '@/lib/actions/savings-goals';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
-import { 
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -55,22 +56,22 @@ export function GoalProgressCard({ goal, onUpdate }: GoalProgressCardProps) {
   // Check for milestone celebration
   const shouldShowMilestoneCelebration = () => {
     const currentProgress = progressPercentage;
-    
+
     // Check if we've just reached a milestone
     if (currentProgress >= 100 && goal.status !== 'completed') {
       return { isGoalComplete: true, milestone: null };
     }
-    
+
     return { isGoalComplete: false, milestone: null };
   };
 
   const { isGoalComplete } = shouldShowMilestoneCelebration();
   const isCompleted = progressPercentage >= 100;
-  
+
   // Calculate days remaining
   const daysRemaining = differenceInDays(new Date(goal.targetDate), new Date());
   const isOverdue = daysRemaining < 0 && !isCompleted;
-  
+
   // Get status color
   const getStatusColor = () => {
     switch (goal.status) {
@@ -96,13 +97,7 @@ export function GoalProgressCard({ goal, onUpdate }: GoalProgressCardProps) {
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      const response = await fetch(`/api/savings-goals/${goal.id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete goal');
-      }
+      await deleteSavingsGoal(goal.id);
 
       toast.success('Goal deleted successfully');
       onUpdate();
@@ -118,22 +113,11 @@ export function GoalProgressCard({ goal, onUpdate }: GoalProgressCardProps) {
   const handleStatusToggle = async () => {
     const newStatus = goal.status === 'active' ? 'paused' : 'active';
     setIsUpdatingStatus(true);
-    
-    try {
-      const response = await fetch(`/api/savings-goals/${goal.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...goal,
-          status: newStatus,
-        }),
-      });
 
-      if (!response.ok) {
-        throw new Error('Failed to update goal status');
-      }
+    try {
+      await updateSavingsGoal(goal.id, {
+        status: newStatus,
+      });
 
       toast.success(`Goal ${newStatus === 'active' ? 'resumed' : 'paused'}`);
       onUpdate();
@@ -147,23 +131,12 @@ export function GoalProgressCard({ goal, onUpdate }: GoalProgressCardProps) {
 
   const handleMarkComplete = async () => {
     setIsUpdatingStatus(true);
-    
-    try {
-      const response = await fetch(`/api/savings-goals/${goal.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...goal,
-          status: 'completed',
-          currentAmount: goal.targetAmount, // Ensure it's exactly at target
-        }),
-      });
 
-      if (!response.ok) {
-        throw new Error('Failed to complete goal');
-      }
+    try {
+      await updateSavingsGoal(goal.id, {
+        status: 'completed',
+        currentAmount: goal.targetAmount, // Ensure it's exactly at target
+      });
 
       toast.success('Congratulations! Goal completed! 🎉');
       onUpdate();
@@ -187,8 +160,8 @@ export function GoalProgressCard({ goal, onUpdate }: GoalProgressCardProps) {
               )}
             </div>
             <div className="flex items-center gap-2">
-              <Badge 
-                variant="secondary" 
+              <Badge
+                variant="secondary"
                 className={`${getStatusColor()} text-white`}
               >
                 {getStatusText()}
@@ -204,9 +177,9 @@ export function GoalProgressCard({ goal, onUpdate }: GoalProgressCardProps) {
                     <Edit3 className="mr-2 h-4 w-4" />
                     Edit Goal
                   </DropdownMenuItem>
-                  
+
                   {isCompleted && goal.status !== 'completed' && (
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={handleMarkComplete}
                       disabled={isUpdatingStatus}
                     >
@@ -214,9 +187,9 @@ export function GoalProgressCard({ goal, onUpdate }: GoalProgressCardProps) {
                       Mark Complete
                     </DropdownMenuItem>
                   )}
-                  
+
                   {goal.status !== 'completed' && (
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={handleStatusToggle}
                       disabled={isUpdatingStatus}
                     >
@@ -233,9 +206,9 @@ export function GoalProgressCard({ goal, onUpdate }: GoalProgressCardProps) {
                       )}
                     </DropdownMenuItem>
                   )}
-                  
+
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={() => setShowDeleteDialog(true)}
                     className="text-destructive"
                   >
@@ -247,22 +220,22 @@ export function GoalProgressCard({ goal, onUpdate }: GoalProgressCardProps) {
             </div>
           </div>
         </CardHeader>
-        
+
         <CardContent className="space-y-4">
           {/* Progress Visualization */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Main Progress Section */}
             <div className="lg:col-span-2">
-              <GoalProgressBars 
-                goal={goal} 
+              <GoalProgressBars
+                goal={goal}
               />
             </div>
-            
+
             {/* Circular Progress Indicator */}
             <div className="flex justify-center lg:justify-end">
-              <PercentageCompletionIndicators 
-                goal={goal} 
-                variant="circular" 
+              <PercentageCompletionIndicators
+                goal={goal}
+                variant="circular"
                 size="md"
               />
             </div>
@@ -288,7 +261,7 @@ export function GoalProgressCard({ goal, onUpdate }: GoalProgressCardProps) {
                 </p>
               )}
             </div>
-            
+
             <div className="space-y-1">
               <div className="flex items-center gap-1 text-muted-foreground">
                 <TrendingUp className="h-3 w-3" />
@@ -309,11 +282,11 @@ export function GoalProgressCard({ goal, onUpdate }: GoalProgressCardProps) {
                   Linked to <span className="font-medium">{goal.accountName}</span>
                 </p>
               )}
-              
+
               {goal.categoryName && (
                 <div className="flex items-center gap-2">
-                  <div 
-                    className="w-3 h-3 rounded-full" 
+                  <div
+                    className="w-3 h-3 rounded-full"
                     style={{ backgroundColor: goal.categoryColor || '#6b7280' }}
                   />
                   <span className="text-xs text-muted-foreground">{goal.categoryName}</span>
@@ -335,7 +308,7 @@ export function GoalProgressCard({ goal, onUpdate }: GoalProgressCardProps) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

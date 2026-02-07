@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { getUserBills } from '@/lib/actions/bills';
 import { format, isToday, isTomorrow, isWithinInterval, addDays } from 'date-fns';
 import { Calendar, Clock, AlertTriangle, DollarSign, Bell } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,7 +15,7 @@ interface Bill {
   id: string;
   name: string;
   amount: string;
-  nextDueDate: string;
+  nextDueDate: string | Date;
   reminderDays: string;
   account: {
     id: string;
@@ -42,11 +43,8 @@ export function UpcomingBills({ onPayBill, onSetupReminder, className }: Upcomin
     queryKey: ['bills', 'upcoming', timeFilter],
     queryFn: async () => {
       // The API doesn't support 'upcoming' parameter, so we fetch all bills and filter client-side
-      const response = await fetch('/api/bills');
-      if (!response.ok) {
-        throw new Error('Failed to fetch upcoming bills');
-      }
-      return response.json();
+      const response = await getUserBills();
+      return response;
     },
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   });
@@ -57,9 +55,9 @@ export function UpcomingBills({ onPayBill, onSetupReminder, className }: Upcomin
   const filterBillsByTime = (bills: Bill[]) => {
     const now = new Date();
     const today = new Date();
-    const endDate = timeFilter === 'today' ? today : 
-                   timeFilter === 'week' ? addDays(today, 7) : 
-                   addDays(today, 30);
+    const endDate = timeFilter === 'today' ? today :
+      timeFilter === 'week' ? addDays(today, 7) :
+        addDays(today, 30);
 
     return bills.filter(bill => {
       const dueDate = new Date(bill.nextDueDate); // Updated to use nextDueDate
@@ -67,14 +65,14 @@ export function UpcomingBills({ onPayBill, onSetupReminder, className }: Upcomin
     });
   };
 
-  const getBillUrgency = (nextDueDate: string) => {
+  const getBillUrgency = (nextDueDate: string | Date) => {
     const due = new Date(nextDueDate); // Updated parameter name
-    
+
     if (isToday(due)) return 'today';
     if (isTomorrow(due)) return 'tomorrow';
-    
+
     const daysUntilDue = Math.ceil((due.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-    
+
     if (daysUntilDue <= 3) return 'urgent';
     if (daysUntilDue <= 7) return 'soon';
     return 'upcoming';
@@ -84,15 +82,16 @@ export function UpcomingBills({ onPayBill, onSetupReminder, className }: Upcomin
     switch (urgency) {
       case 'today': return 'destructive';
       case 'tomorrow': return 'destructive';
+      case 'due today': return 'destructive';
       case 'urgent': return 'destructive';
       case 'soon': return 'default';
       default: return 'secondary';
     }
   };
 
-  const getUrgencyText = (urgency: string, nextDueDate: string) => {
+  const getUrgencyText = (urgency: string, nextDueDate: string | Date) => {
     const due = new Date(nextDueDate); // Updated parameter name
-    
+
     switch (urgency) {
       case 'today': return 'Due Today';
       case 'tomorrow': return 'Due Tomorrow';
@@ -134,7 +133,7 @@ export function UpcomingBills({ onPayBill, onSetupReminder, className }: Upcomin
             <Calendar className="h-5 w-5 mr-2" />
             Upcoming Bills
           </CardTitle>
-          
+
           {/* Time Filter */}
           <div className="flex space-x-1">
             {(['today', 'week', 'month'] as const).map((filter) => (
@@ -145,13 +144,13 @@ export function UpcomingBills({ onPayBill, onSetupReminder, className }: Upcomin
                 onClick={() => setTimeFilter(filter)}
                 className="text-xs"
               >
-                {filter === 'today' ? 'Today' : 
-                 filter === 'week' ? '7 Days' : '30 Days'}
+                {filter === 'today' ? 'Today' :
+                  filter === 'week' ? '7 Days' : '30 Days'}
               </Button>
             ))}
           </div>
         </div>
-        
+
         {/* Summary */}
         {!isLoading && upcomingBills.length > 0 && (
           <div className="flex items-center space-x-4 text-sm text-muted-foreground">
@@ -163,7 +162,7 @@ export function UpcomingBills({ onPayBill, onSetupReminder, className }: Upcomin
           </div>
         )}
       </CardHeader>
-      
+
       <CardContent>
         {isLoading ? (
           <div className="space-y-3">
@@ -182,9 +181,9 @@ export function UpcomingBills({ onPayBill, onSetupReminder, className }: Upcomin
           <div className="text-center py-8">
             <Calendar className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
             <p className="text-sm text-muted-foreground">
-              No bills due in the {timeFilter === 'today' ? 'next day' : 
-                                  timeFilter === 'week' ? 'next 7 days' : 
-                                  'next 30 days'}
+              No bills due in the {timeFilter === 'today' ? 'next day' :
+                timeFilter === 'week' ? 'next 7 days' :
+                  'next 30 days'}
             </p>
           </div>
         ) : (
@@ -193,7 +192,7 @@ export function UpcomingBills({ onPayBill, onSetupReminder, className }: Upcomin
               const urgency = getBillUrgency(bill.nextDueDate); // Updated to use nextDueDate
               const urgencyColor = getUrgencyColor(urgency);
               const urgencyText = getUrgencyText(urgency, bill.nextDueDate); // Updated to use nextDueDate
-              
+
               return (
                 <div key={bill.id} className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
                   {/* Bill Icon/Category */}
@@ -202,7 +201,7 @@ export function UpcomingBills({ onPayBill, onSetupReminder, className }: Upcomin
                       <Clock className="h-5 w-5 text-primary" />
                     </div>
                   </div>
-                  
+
                   {/* Bill Details */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-2">
@@ -221,7 +220,7 @@ export function UpcomingBills({ onPayBill, onSetupReminder, className }: Upcomin
                       </span>
                     </div>
                   </div>
-                  
+
                   {/* Amount and Actions */}
                   <div className="flex-shrink-0 text-right">
                     <p className="font-semibold">₹{Number(bill.amount).toFixed(2)}</p>
@@ -253,7 +252,7 @@ export function UpcomingBills({ onPayBill, onSetupReminder, className }: Upcomin
             })}
           </div>
         )}
-        
+
         {/* View All Bills Link */}
         {!isLoading && upcomingBills.length > 0 && (
           <div className="mt-4 pt-3 border-t">

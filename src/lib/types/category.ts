@@ -1,10 +1,13 @@
 import { z } from 'zod';
 
 // Category type enum to match database schema
-export enum CategoryType {
-  INCOME = 'income',
-  EXPENSE = 'expense'
-}
+// Category type enum to match database schema
+export const CategoryType = {
+  INCOME: 'income',
+  EXPENSE: 'expense'
+} as const;
+
+export type CategoryType = typeof CategoryType[keyof typeof CategoryType];
 
 // Category interface for TypeScript
 export interface Category {
@@ -14,7 +17,7 @@ export interface Category {
   type: CategoryType;
   color: string;
   isDefault: boolean;
-  parentId?: string;
+  parentId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -82,7 +85,7 @@ export const defaultCategories = [
   { name: 'Freelance', type: CategoryType.INCOME, color: '#0891b2' },
   { name: 'Investment', type: CategoryType.INCOME, color: '#7c3aed' },
   { name: 'Other Income', type: CategoryType.INCOME, color: '#65a30d' },
-  
+
   // Expense categories
   { name: 'Food & Dining', type: CategoryType.EXPENSE, color: '#dc2626' },
   { name: 'Transportation', type: CategoryType.EXPENSE, color: '#d97706' },

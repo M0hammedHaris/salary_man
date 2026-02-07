@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { getRecurringPaymentInsights } from '@/lib/actions/dashboard';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  AlertTriangle, 
+import {
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
   DollarSign,
   Repeat
 } from 'lucide-react';
@@ -53,11 +54,7 @@ export function RecurringPaymentInsights({ userId, className }: RecurringPayment
     async function fetchRecurringPaymentInsights() {
       try {
         setLoading(true);
-        const response = await fetch('/api/dashboard/recurring-insights');
-        if (!response.ok) {
-          throw new Error('Failed to fetch recurring payment insights');
-        }
-        const insights = await response.json();
+        const insights = await getRecurringPaymentInsights() as unknown as RecurringPaymentInsightsData;
         setData(insights);
       } catch (err) {
         console.error('Error fetching recurring payment insights:', err);
@@ -143,11 +140,10 @@ export function RecurringPaymentInsights({ userId, className }: RecurringPayment
             {data.trends.direction === 'down' && (
               <TrendingDown className="h-4 w-4 text-green-500" />
             )}
-            <span className={`text-xs ${
-              data.trends.direction === 'up' ? 'text-red-500' : 
-              data.trends.direction === 'down' ? 'text-green-500' : 
-              'text-muted-foreground'
-            }`}>
+            <span className={`text-xs ${data.trends.direction === 'up' ? 'text-red-500' :
+              data.trends.direction === 'down' ? 'text-green-500' :
+                'text-muted-foreground'
+              }`}>
               {(data.trends.monthlyChangePercentage || 0) > 0 ? '+' : ''}
               {(data.trends.monthlyChangePercentage || 0).toFixed(1)}%
             </span>
@@ -162,8 +158,8 @@ export function RecurringPaymentInsights({ userId, className }: RecurringPayment
               {(data.budgetImpact?.utilizationPercentage || 0).toFixed(1)}%
             </span>
           </div>
-          <Progress 
-            value={data.budgetImpact?.utilizationPercentage || 0} 
+          <Progress
+            value={data.budgetImpact?.utilizationPercentage || 0}
             className="h-2"
           />
           <p className="text-xs text-muted-foreground">

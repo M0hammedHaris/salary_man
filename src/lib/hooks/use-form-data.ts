@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { type Account } from '@/lib/types/account';
 import { type Category } from '@/lib/types/category';
+import { getUserAccounts } from '@/lib/actions/accounts';
+import { getUserCategories } from '@/lib/actions/categories';
 
 export interface FormData {
   accounts: Account[];
@@ -30,22 +32,13 @@ export function useFormData(): UseFormDataReturn {
       setError(null);
 
       const [accountsResponse, categoriesResponse] = await Promise.all([
-        fetch('/api/accounts'),
-        fetch('/api/categories'),
-      ]);
-
-      if (!accountsResponse.ok || !categoriesResponse.ok) {
-        throw new Error('Failed to load form data');
-      }
-
-      const [accountsData, categoriesData] = await Promise.all([
-        accountsResponse.json(),
-        categoriesResponse.json(),
+        getUserAccounts(),
+        getUserCategories(),
       ]);
 
       setFormData({
-        accounts: accountsData.accounts || [],
-        categories: categoriesData.categories || [],
+        accounts: accountsResponse.accounts || [],
+        categories: categoriesResponse.categories || [],
       });
     } catch (err) {
       console.error('Error loading form data:', err);
