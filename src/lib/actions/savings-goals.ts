@@ -1,9 +1,10 @@
 'use server';
 
 import { auth } from '@clerk/nextjs/server';
+import { z, ZodError } from 'zod';
+import { revalidatePath } from 'next/cache';
 import { savingsService } from '@/lib/services/savings-service';
 import { createGoalSchema, updateGoalSchema, type CreateGoalRequest, type UpdateGoalRequest } from '@/lib/types/savings';
-import { revalidatePath } from 'next/cache';
 
 export async function getSavingsGoals() {
     const { userId } = await auth();
@@ -28,28 +29,36 @@ export async function createSavingsGoal(data: CreateGoalRequest) {
         throw new Error('Unauthorized');
     }
 
-    const parsedData = {
-        ...data,
-        targetDate: typeof data.targetDate === 'string' ? new Date(data.targetDate) : data.targetDate
-    };
+    try {
+        const parsedData = {
+            ...data,
+            targetDate: data.targetDate ? new Date(data.targetDate) : undefined
+        };
 
-    const validatedData = createGoalSchema.parse(parsedData);
+        const validatedData = createGoalSchema.parse(parsedData);
 
-    const goal = await savingsService.createGoal(userId, {
-        name: validatedData.name,
-        description: validatedData.description,
-        targetAmount: validatedData.targetAmount.toString(),
-        targetDate: validatedData.targetDate,
-        accountId: validatedData.accountId,
-        categoryId: validatedData.categoryId,
-        priority: validatedData.priority.toString(),
-    });
+        const goal = await savingsService.createGoal(userId, {
+            name: validatedData.name,
+            description: validatedData.description,
+            targetAmount: validatedData.targetAmount.toString(),
+            targetDate: validatedData.targetDate,
+            accountId: validatedData.accountId,
+            categoryId: validatedData.categoryId,
+            priority: validatedData.priority.toString(),
+        });
 
-    revalidatePath('/savings');
-    revalidatePath('/dashboard');
-    // Revalidate specific goal path if needed, but usually list is enough
+        revalidatePath('/savings');
+        revalidatePath('/dashboard');
 
-    return JSON.parse(JSON.stringify(goal));
+        return JSON.parse(JSON.stringify(goal));
+    } catch (error) {
+        console.error('Error in createSavingsGoal:', error);
+        if (error instanceof ZodError) {
+            const validationError = error as any;
+            throw new Error(`Validation failed: ${validationError.errors.map((e: any) => e.message).join(', ')}`);
+        }
+        throw error;
+    }
 }
 
 export async function updateSavingsGoal(id: string, data: UpdateGoalRequest) {

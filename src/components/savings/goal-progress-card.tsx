@@ -265,12 +265,24 @@ export function GoalProgressCard({ goal, onUpdate }: GoalProgressCardProps) {
             <div className="space-y-1">
               <div className="flex items-center gap-1 text-muted-foreground">
                 <TrendingUp className="h-3 w-3" />
-                <span>Priority</span>
+                <span>Daily Savings Needed</span>
               </div>
-              <p className="font-medium">{goal.priority}/10</p>
-              <p className="text-xs text-muted-foreground">
-                {goal.priority >= 8 ? 'High' : goal.priority >= 5 ? 'Medium' : 'Low'} priority
+              <p className="font-medium">
+                {daysRemaining > 0 && !isCompleted
+                  ? new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD',
+                  }).format(goal.requiredDailySavings)
+                  : isCompleted
+                    ? 'Goal Reached! 🎉'
+                    : 'Overdue'}
               </p>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <span>Priority:</span>
+                <span className={goal.priority >= 8 ? 'text-destructive font-medium' : ''}>
+                  {goal.priority >= 8 ? 'High' : goal.priority >= 5 ? 'Medium' : 'Low'} ({goal.priority}/10)
+                </span>
+              </div>
             </div>
           </div>
 
