@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SalaryMan - App Settings</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3c83f6",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#101722",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom toggle styles */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #3c83f6;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #3c83f6;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white transition-colors duration-300">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<!-- Top Navigation -->
+<header class="sticky top-0 z-50 flex items-center justify-between whitespace-nowrap border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-6 py-3 lg:px-10">
+<div class="flex items-center gap-4">
+<div class="size-8 text-primary flex items-center justify-center bg-primary/10 rounded-lg">
+<span class="material-symbols-outlined text-2xl">account_balance_wallet</span>
+</div>
+<h2 class="text-slate-900 dark:text-white text-xl font-extrabold leading-tight tracking-tight">SalaryMan</h2>
+</div>
+<nav class="hidden md:flex flex-1 justify-center gap-8">
+<a class="text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-primary text-sm font-semibold transition-colors" href="#">Dashboard</a>
+<a class="text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-primary text-sm font-semibold transition-colors" href="#">Transactions</a>
+<a class="text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-primary text-sm font-semibold transition-colors" href="#">Budget</a>
+<a class="text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-primary text-sm font-semibold transition-colors" href="#">Goals</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="hidden sm:flex items-center justify-center text-slate-500 hover:text-primary dark:text-slate-400 transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="h-8 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
+<div class="flex items-center gap-3">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-9 ring-2 ring-white dark:ring-slate-800 shadow-sm" data-alt="User profile photo showing a smiling woman" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuA_UpX4mp_YiKhs_1ag2WcGXw_TN3L0WGCgPov4uJB4RlbX_ixchqLXCfNyu3_51hP1tlFJsmAJ8mGvALz6GUri0oNTeQ6Jjb6UlbPVIgxrzw1LXbWZ9Fq6QR2vn48WN6TH9C46i4YufZC47_bJpKW81Zt02JILw8V_4YISE-0dJX_v-Ji92cJq_tTeikCoBpi6RLeV_JkOA9WwbuMVQzD7CnlsjC7SpHOtWT7_DBjJRQDmdh-RvHPJKuFylySOKm8lp7PNEBL7Zjk");'></div>
+<div class="hidden lg:flex flex-col">
+<span class="text-xs font-bold text-slate-900 dark:text-white leading-none">Sarah Chen</span>
+<span class="text-[10px] text-slate-500 dark:text-slate-400 leading-none mt-1">Free Plan</span>
+</div>
+</div>
+</div>
+</header>
+<div class="flex flex-1 flex-col lg:flex-row max-w-7xl mx-auto w-full p-4 lg:p-8 gap-8">
+<!-- Sidebar Navigation -->
+<aside class="w-full lg:w-64 flex-shrink-0">
+<div class="sticky top-24">
+<div class="mb-6 px-2">
+<h1 class="text-2xl font-bold text-slate-900 dark:text-white">Settings</h1>
+<p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage your preferences</p>
+</div>
+<nav class="flex flex-row lg:flex-col gap-1 overflow-x-auto pb-4 lg:pb-0 no-scrollbar">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 text-primary dark:bg-primary/20 font-semibold text-sm whitespace-nowrap transition-all" href="#">
+<span class="material-symbols-outlined filled text-[20px]">notifications</span>
+                        Notifications
+                    </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-medium text-sm whitespace-nowrap transition-all" href="#appearance">
+<span class="material-symbols-outlined text-[20px]">palette</span>
+                        Appearance
+                    </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-medium text-sm whitespace-nowrap transition-all" href="#privacy">
+<span class="material-symbols-outlined text-[20px]">lock</span>
+                        Privacy &amp; Security
+                    </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-medium text-sm whitespace-nowrap transition-all" href="#billing">
+<span class="material-symbols-outlined text-[20px]">credit_card</span>
+                        Billing
+                    </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-medium text-sm whitespace-nowrap transition-all" href="#about">
+<span class="material-symbols-outlined text-[20px]">info</span>
+                        About
+                    </a>
+</nav>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 min-w-0 flex flex-col gap-8 pb-20">
+<!-- Notifications Section -->
+<section class="scroll-mt-24" id="notifications">
+<div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700">
+<div class="flex items-center gap-4 mb-6">
+<div class="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
+<span class="material-symbols-outlined text-2xl">notifications_active</span>
+</div>
+<div>
+<h3 class="text-lg font-bold text-slate-900 dark:text-white">Notifications</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400">Manage how SalaryMan communicates with you.</p>
+</div>
+</div>
+<div class="space-y-6">
+<div class="flex items-center justify-between group">
+<div class="flex flex-col">
+<span class="text-slate-900 dark:text-white font-medium">Push Notifications</span>
+<span class="text-slate-500 dark:text-slate-400 text-sm">Receive instant alerts about transactions</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer" for="push-toggle">
+<input checked="" class="sr-only peer" id="push-toggle" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="h-px bg-slate-100 dark:bg-slate-700 w-full"></div>
+<div class="flex items-center justify-between group">
+<div class="flex flex-col">
+<span class="text-slate-900 dark:text-white font-medium">Email Digests</span>
+<span class="text-slate-500 dark:text-slate-400 text-sm">Weekly summary of your spending habits</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer" for="email-toggle">
+<input class="sr-only peer" id="email-toggle" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="h-px bg-slate-100 dark:bg-slate-700 w-full"></div>
+<div class="flex items-center justify-between group">
+<div class="flex flex-col">
+<span class="text-slate-900 dark:text-white font-medium">Bill Reminders</span>
+<span class="text-slate-500 dark:text-slate-400 text-sm">Get notified 2 days before due dates</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer" for="bills-toggle">
+<input checked="" class="sr-only peer" id="bills-toggle" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</div>
+</section>
+<!-- Appearance Section -->
+<section class="scroll-mt-24" id="appearance">
+<div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700">
+<div class="flex items-center gap-4 mb-6">
+<div class="p-3 rounded-xl bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400">
+<span class="material-symbols-outlined text-2xl">palette</span>
+</div>
+<div>
+<h3 class="text-lg font-bold text-slate-900 dark:text-white">Appearance</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400">Customize your visual experience.</p>
+</div>
+</div>
+<div class="space-y-6">
+<!-- Theme Selector -->
+<div class="flex flex-col gap-3">
+<label class="text-slate-900 dark:text-white font-medium">Theme</label>
+<div class="grid grid-cols-3 gap-2 p-1 bg-slate-100 dark:bg-slate-900/50 rounded-xl">
+<button class="flex items-center justify-center gap-2 py-2 px-4 bg-white dark:bg-slate-700 rounded-lg shadow-sm text-primary font-semibold text-sm transition-all">
+<span class="material-symbols-outlined text-lg">light_mode</span>
+                                    Light
+                                </button>
+<button class="flex items-center justify-center gap-2 py-2 px-4 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-medium text-sm transition-all">
+<span class="material-symbols-outlined text-lg">dark_mode</span>
+                                    Dark
+                                </button>
+<button class="flex items-center justify-center gap-2 py-2 px-4 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-medium text-sm transition-all">
+<span class="material-symbols-outlined text-lg">settings_system_daydream</span>
+                                    System
+                                </button>
+</div>
+</div>
+<!-- Accent Color -->
+<div class="flex flex-col gap-3">
+<label class="text-slate-900 dark:text-white font-medium">Accent Color</label>
+<div class="flex items-center gap-3">
+<button class="w-10 h-10 rounded-full bg-[#3c83f6] ring-2 ring-offset-2 ring-primary dark:ring-offset-slate-800 flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-lg">check</span>
+</button>
+<button class="w-10 h-10 rounded-full bg-emerald-500 hover:opacity-90 transition-opacity"></button>
+<button class="w-10 h-10 rounded-full bg-violet-500 hover:opacity-90 transition-opacity"></button>
+<button class="w-10 h-10 rounded-full bg-rose-500 hover:opacity-90 transition-opacity"></button>
+<button class="w-10 h-10 rounded-full bg-amber-500 hover:opacity-90 transition-opacity"></button>
+</div>
+</div>
+<!-- Font Size -->
+<div class="flex flex-col gap-3">
+<div class="flex justify-between">
+<label class="text-slate-900 dark:text-white font-medium">Font Size</label>
+<span class="text-slate-500 text-sm">Default</span>
+</div>
+<input class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700 accent-primary" max="3" min="1" type="range" value="2"/>
+<div class="flex justify-between text-xs text-slate-400 px-1">
+<span>Small</span>
+<span>Medium</span>
+<span>Large</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Privacy Section -->
+<section class="scroll-mt-24" id="privacy">
+<div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700">
+<div class="flex items-center gap-4 mb-6">
+<div class="p-3 rounded-xl bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400">
+<span class="material-symbols-outlined text-2xl">shield_person</span>
+</div>
+<div>
+<h3 class="text-lg font-bold text-slate-900 dark:text-white">Privacy &amp; Security</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400">Control your data and access.</p>
+</div>
+</div>
+<div class="space-y-6">
+<div class="flex items-center justify-between group">
+<div class="flex flex-col">
+<span class="text-slate-900 dark:text-white font-medium">App Lock</span>
+<span class="text-slate-500 dark:text-slate-400 text-sm">Require PIN or Biometrics on app open</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer" for="lock-toggle">
+<input class="sr-only peer" id="lock-toggle" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="h-px bg-slate-100 dark:bg-slate-700 w-full"></div>
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-slate-900 dark:text-white font-medium">Data Export</span>
+<span class="text-slate-500 dark:text-slate-400 text-sm">Download a copy of your financial data</span>
+</div>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-sm font-semibold">
+<span class="material-symbols-outlined text-lg">download</span>
+                                Export CSV
+                            </button>
+</div>
+</div>
+</div>
+</section>
+<!-- About Section -->
+<section class="scroll-mt-24" id="about">
+<div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700">
+<div class="flex items-center gap-4 mb-6">
+<div class="p-3 rounded-xl bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400">
+<span class="material-symbols-outlined text-2xl">info</span>
+</div>
+<div>
+<h3 class="text-lg font-bold text-slate-900 dark:text-white">About</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400">SalaryMan v2.4.0</p>
+</div>
+</div>
+<div class="flex flex-col gap-4">
+<a class="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group" href="#">
+<span class="text-slate-700 dark:text-slate-200 font-medium">Terms of Service</span>
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">chevron_right</span>
+</a>
+<a class="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group" href="#">
+<span class="text-slate-700 dark:text-slate-200 font-medium">Privacy Policy</span>
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">chevron_right</span>
+</a>
+<a class="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group" href="#">
+<span class="text-slate-700 dark:text-slate-200 font-medium">Help Center</span>
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">open_in_new</span>
+</a>
+</div>
+</div>
+</section>
+<!-- Danger Zone -->
+<section class="mt-4">
+<div class="bg-red-50 dark:bg-red-900/10 rounded-2xl p-6 border border-red-100 dark:border-red-900/30">
+<h3 class="text-lg font-bold text-red-700 dark:text-red-400 mb-2">Danger Zone</h3>
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+<p class="text-sm text-red-600/80 dark:text-red-400/70">
+                            Once you delete your account, there is no going back. Please be certain.
+                        </p>
+<button class="px-5 py-2.5 bg-white dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 font-bold text-sm rounded-lg hover:bg-red-50 dark:hover:bg-red-900/40 transition-colors whitespace-nowrap shadow-sm">
+                            Delete Account
+                        </button>
+</div>
+</div>
+</section>
+<!-- Action Footer Mobile Only -->
+<div class="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3 z-40">
+<button class="px-6 py-2.5 rounded-xl font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm">Cancel</button>
+<button class="px-6 py-2.5 bg-primary text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/30">Save Changes</button>
+</div>
+</main>
+</div>
+</div>
+</body></html>

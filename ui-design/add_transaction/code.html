@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Add Transaction - SalaryMan</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3c83f6",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#101722",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar for clean look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 20px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background-color: #334155;
+        }
+        
+        /* Pastel colors for categories */
+        .bg-pastel-red { background-color: #fee2e2; }
+        .bg-pastel-purple { background-color: #f3e8ff; }
+        .bg-pastel-yellow { background-color: #fef9c3; }
+        .bg-pastel-blue { background-color: #dbeafe; }
+        .bg-pastel-pink { background-color: #fce7f3; }
+        .bg-pastel-green { background-color: #dcfce7; }
+        .bg-pastel-orange { background-color: #ffedd5; }
+        .bg-pastel-grey { background-color: #f1f5f9; }
+
+        .dark .bg-pastel-red { background-color: #450a0a; color: #fca5a5; }
+        .dark .bg-pastel-purple { background-color: #3b0764; color: #d8b4fe; }
+        .dark .bg-pastel-yellow { background-color: #422006; color: #fde047; }
+        .dark .bg-pastel-blue { background-color: #172554; color: #93c5fd; }
+        .dark .bg-pastel-pink { background-color: #500724; color: #f9a8d4; }
+        .dark .bg-pastel-green { background-color: #052e16; color: #86efac; }
+        .dark .bg-pastel-orange { background-color: #431407; color: #fdba74; }
+        .dark .bg-pastel-grey { background-color: #1e293b; color: #cbd5e1; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8">
+<!-- Modal Container -->
+<div class="relative w-full max-w-[1000px] h-[85vh] bg-white dark:bg-[#1e293b] rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row ring-1 ring-black/5 dark:ring-white/10">
+<!-- Left/Top Section: High Contrast Header & Amount (Dark Theme) -->
+<div class="w-full md:w-[40%] bg-[#101722] text-white flex flex-col relative z-10 shrink-0">
+<!-- Header Nav -->
+<div class="flex items-center justify-between p-6">
+<button class="p-2 hover:bg-white/10 rounded-full transition-colors text-white/70 hover:text-white">
+<span class="material-symbols-outlined text-[24px]">close</span>
+</button>
+<div class="text-sm font-medium text-white/50 uppercase tracking-widest">New Entry</div>
+<button class="p-2 hover:bg-white/10 rounded-full transition-colors text-white/70 hover:text-white">
+<span class="material-symbols-outlined text-[24px]">more_horiz</span>
+</button>
+</div>
+<!-- Transaction Type Toggle -->
+<div class="px-6 flex justify-center mb-8">
+<div class="bg-white/10 p-1 rounded-xl flex w-full max-w-[280px]">
+<button class="flex-1 py-2 px-4 rounded-lg text-sm font-semibold bg-primary text-white shadow-sm transition-all">Expense</button>
+<button class="flex-1 py-2 px-4 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/5 transition-all">Income</button>
+</div>
+</div>
+<!-- Amount Display -->
+<div class="flex-1 flex flex-col items-center justify-center px-6">
+<div class="text-white/40 text-lg font-medium mb-2">Amount</div>
+<div class="relative group cursor-text">
+<h1 class="text-[56px] lg:text-[72px] font-extrabold leading-none tracking-tight text-white transition-transform group-hover:scale-105">₹1,250</h1>
+<div class="absolute -right-8 top-2 text-primary animate-pulse">
+<span class="material-symbols-outlined text-[32px]">edit</span>
+</div>
+</div>
+</div>
+<!-- Account Selector -->
+<div class="px-6 pb-8 flex justify-center">
+<div class="relative group w-full max-w-[280px]">
+<select class="appearance-none w-full bg-white/10 text-white border-0 rounded-xl py-3 pl-12 pr-10 text-base font-medium focus:ring-2 focus:ring-primary focus:bg-white/20 transition-all cursor-pointer">
+<option class="bg-[#101722]">Main Wallet</option>
+<option class="bg-[#101722]" selected="">HDFC Bank ****1234</option>
+<option class="bg-[#101722]">SBI Savings</option>
+</select>
+<div class="absolute left-4 top-1/2 -translate-y-1/2 text-primary pointer-events-none">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+</div>
+<div class="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none">
+<span class="material-symbols-outlined">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Mobile Numpad Indicator (Hidden on Desktop usually, but good for responsive completeness) -->
+<div class="md:hidden w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+</div>
+<!-- Right/Bottom Section: Form & Controls (Light Theme) -->
+<div class="flex-1 bg-[#f8f9fc] dark:bg-[#0f172a] flex flex-col h-full overflow-hidden">
+<!-- Scrollable Content Area -->
+<div class="flex-1 overflow-y-auto p-6 lg:p-8">
+<!-- Date & Note Row -->
+<div class="flex gap-4 mb-8">
+<div class="relative">
+<input class="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-primary focus:border-primary block w-full pl-10 p-2.5 dark:placeholder-gray-400" type="date" value="2023-10-24"/>
+<div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+</div>
+</div>
+<div class="flex-1 relative">
+<input class="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-primary focus:border-primary block w-full pl-10 p-2.5 dark:placeholder-gray-400" placeholder="Add a note..." type="text"/>
+<div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+<span class="material-symbols-outlined text-[18px]">edit_note</span>
+</div>
+</div>
+</div>
+<!-- Category Grid -->
+<div>
+<h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 px-1">Select Category</h3>
+<div class="grid grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-3">
+<!-- Food -->
+<label class="group cursor-pointer relative">
+<input checked="" class="peer sr-only" name="category" type="radio"/>
+<div class="h-24 rounded-xl bg-pastel-red flex flex-col items-center justify-center gap-2 border-2 border-transparent peer-checked:border-primary peer-checked:shadow-lg peer-checked:scale-[1.02] transition-all hover:shadow-md">
+<span class="text-2xl">🍔</span>
+<span class="text-sm font-bold text-slate-700 dark:text-slate-200">Food</span>
+</div>
+<div class="absolute top-2 right-2 text-primary opacity-0 peer-checked:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[20px] bg-white rounded-full">check_circle</span>
+</div>
+</label>
+<!-- Shopping -->
+<label class="group cursor-pointer relative">
+<input class="peer sr-only" name="category" type="radio"/>
+<div class="h-24 rounded-xl bg-pastel-purple flex flex-col items-center justify-center gap-2 border-2 border-transparent peer-checked:border-primary peer-checked:shadow-lg peer-checked:scale-[1.02] transition-all hover:shadow-md">
+<span class="text-2xl">🛍️</span>
+<span class="text-sm font-bold text-slate-700 dark:text-slate-200">Shopping</span>
+</div>
+</label>
+<!-- Transport -->
+<label class="group cursor-pointer relative">
+<input class="peer sr-only" name="category" type="radio"/>
+<div class="h-24 rounded-xl bg-pastel-yellow flex flex-col items-center justify-center gap-2 border-2 border-transparent peer-checked:border-primary peer-checked:shadow-lg peer-checked:scale-[1.02] transition-all hover:shadow-md">
+<span class="text-2xl">🚕</span>
+<span class="text-sm font-bold text-slate-700 dark:text-slate-200">Transport</span>
+</div>
+</label>
+<!-- Bills -->
+<label class="group cursor-pointer relative">
+<input class="peer sr-only" name="category" type="radio"/>
+<div class="h-24 rounded-xl bg-pastel-blue flex flex-col items-center justify-center gap-2 border-2 border-transparent peer-checked:border-primary peer-checked:shadow-lg peer-checked:scale-[1.02] transition-all hover:shadow-md">
+<span class="text-2xl">🧾</span>
+<span class="text-sm font-bold text-slate-700 dark:text-slate-200">Bills</span>
+</div>
+</label>
+<!-- Entertainment -->
+<label class="group cursor-pointer relative">
+<input class="peer sr-only" name="category" type="radio"/>
+<div class="h-24 rounded-xl bg-pastel-pink flex flex-col items-center justify-center gap-2 border-2 border-transparent peer-checked:border-primary peer-checked:shadow-lg peer-checked:scale-[1.02] transition-all hover:shadow-md">
+<span class="text-2xl">🍿</span>
+<span class="text-sm font-bold text-slate-700 dark:text-slate-200">Fun</span>
+</div>
+</label>
+<!-- Health -->
+<label class="group cursor-pointer relative">
+<input class="peer sr-only" name="category" type="radio"/>
+<div class="h-24 rounded-xl bg-pastel-green flex flex-col items-center justify-center gap-2 border-2 border-transparent peer-checked:border-primary peer-checked:shadow-lg peer-checked:scale-[1.02] transition-all hover:shadow-md">
+<span class="text-2xl">🏥</span>
+<span class="text-sm font-bold text-slate-700 dark:text-slate-200">Health</span>
+</div>
+</label>
+<!-- Education -->
+<label class="group cursor-pointer relative">
+<input class="peer sr-only" name="category" type="radio"/>
+<div class="h-24 rounded-xl bg-pastel-orange flex flex-col items-center justify-center gap-2 border-2 border-transparent peer-checked:border-primary peer-checked:shadow-lg peer-checked:scale-[1.02] transition-all hover:shadow-md">
+<span class="text-2xl">📚</span>
+<span class="text-sm font-bold text-slate-700 dark:text-slate-200">Education</span>
+</div>
+</label>
+<!-- Others -->
+<label class="group cursor-pointer relative">
+<input class="peer sr-only" name="category" type="radio"/>
+<div class="h-24 rounded-xl bg-pastel-grey flex flex-col items-center justify-center gap-2 border-2 border-transparent peer-checked:border-primary peer-checked:shadow-lg peer-checked:scale-[1.02] transition-all hover:shadow-md">
+<span class="text-2xl">📦</span>
+<span class="text-sm font-bold text-slate-700 dark:text-slate-200">Others</span>
+</div>
+</label>
+</div>
+</div>
+</div>
+<!-- Footer: Numpad & Save -->
+<div class="p-6 bg-white dark:bg-[#1e293b] border-t border-slate-100 dark:border-slate-800">
+<div class="grid grid-cols-4 gap-4 h-full">
+<!-- Numpad -->
+<div class="col-span-3 grid grid-cols-3 gap-2">
+<button class="h-12 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-900 dark:text-white font-semibold text-lg transition-colors">1</button>
+<button class="h-12 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-900 dark:text-white font-semibold text-lg transition-colors">2</button>
+<button class="h-12 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-900 dark:text-white font-semibold text-lg transition-colors">3</button>
+<button class="h-12 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-900 dark:text-white font-semibold text-lg transition-colors">4</button>
+<button class="h-12 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-900 dark:text-white font-semibold text-lg transition-colors">5</button>
+<button class="h-12 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-900 dark:text-white font-semibold text-lg transition-colors">6</button>
+<button class="h-12 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-900 dark:text-white font-semibold text-lg transition-colors">7</button>
+<button class="h-12 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-900 dark:text-white font-semibold text-lg transition-colors">8</button>
+<button class="h-12 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-900 dark:text-white font-semibold text-lg transition-colors">9</button>
+<button class="h-12 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-900 dark:text-white font-semibold text-lg transition-colors">.</button>
+<button class="h-12 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-900 dark:text-white font-semibold text-lg transition-colors">0</button>
+<button class="h-12 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-900 dark:text-white font-semibold text-lg transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">backspace</span>
+</button>
+</div>
+<!-- Actions -->
+<div class="col-span-1 flex flex-col gap-2">
+<button class="flex-1 w-full bg-primary hover:bg-primary/90 text-white rounded-xl text-lg font-bold shadow-lg shadow-primary/30 transition-all transform hover:scale-[1.02] flex flex-col items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[28px]">check</span>
+<span class="text-sm">Save</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body></html>
