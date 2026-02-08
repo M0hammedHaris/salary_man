@@ -24,11 +24,11 @@ interface SpendingBreakdownChartProps {
   className?: string;
 }
 
-export function SpendingBreakdownChart({ 
-  data, 
-  height = 400, 
+export function SpendingBreakdownChart({
+  data,
+  height = 400,
   chartType = 'pie',
-  className 
+  className
 }: SpendingBreakdownChartProps) {
   // Generate colors for pie chart
   const COLORS = [
@@ -73,18 +73,18 @@ export function SpendingBreakdownChart({
   const CustomizedLabel = (props: any) => {
     const { cx, cy, midAngle, innerRadius, outerRadius, percentage } = props;
     if (percentage < 5) return null; // Hide labels for small slices
-    
+
     const RADIAN = Math.PI / 180;
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
     return (
-      <text 
-        x={x} 
-        y={y} 
-        fill="white" 
-        textAnchor={x > cx ? 'start' : 'end'} 
+      <text
+        x={x}
+        y={y}
+        fill="white"
+        textAnchor={x > cx ? 'start' : 'end'}
         dominantBaseline="central"
         fontSize={12}
         fontWeight="bold"
@@ -111,14 +111,14 @@ export function SpendingBreakdownChart({
               nameKey="categoryName"
             >
               {data.map((entry, index) => (
-                <Cell 
-                  key={`cell-${index}`} 
+                <Cell
+                  key={`cell-${index}`}
                   fill={entry.categoryColor || COLORS[index % COLORS.length]}
                 />
               ))}
             </Pie>
             <Tooltip content={CustomPieTooltip} />
-            <Legend 
+            <Legend
               wrapperStyle={{
                 paddingTop: '20px',
                 fontSize: '12px',
@@ -144,15 +144,15 @@ export function SpendingBreakdownChart({
           }}
         >
           <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-          <XAxis 
+          <XAxis
             dataKey="categoryName"
             angle={-45}
             textAnchor="end"
             height={80}
             fontSize={11}
-            interval={0}
+
           />
-          <YAxis 
+          <YAxis
             tickFormatter={(value) => {
               // Compact formatting for chart Y-axis
               if (Math.abs(value) >= 100000) {
@@ -184,8 +184,8 @@ export function SpendingBreakdownChart({
             radius={[4, 4, 0, 0]}
           >
             {data.map((entry, index) => (
-              <Cell 
-                key={`cell-${index}`} 
+              <Cell
+                key={`cell-${index}`}
                 fill={entry.categoryColor || COLORS[index % COLORS.length]}
               />
             ))}
@@ -206,12 +206,12 @@ export function SpendingBreakdownGrid({ data, className }: SpendingBreakdownGrid
     <div className={className}>
       <div className="grid gap-3">
         {data.map((category) => (
-          <div 
+          <div
             key={category.categoryId}
             className="flex items-center justify-between p-3 rounded-lg border bg-card"
           >
             <div className="flex items-center gap-3">
-              <div 
+              <div
                 className="w-4 h-4 rounded-full"
                 style={{ backgroundColor: category.categoryColor }}
               />
@@ -227,7 +227,7 @@ export function SpendingBreakdownGrid({ data, className }: SpendingBreakdownGrid
             </div>
           </div>
         ))}
-        
+
         {data.length === 0 && (
           <div className="flex items-center justify-center p-8 text-muted-foreground">
             <div className="text-center">

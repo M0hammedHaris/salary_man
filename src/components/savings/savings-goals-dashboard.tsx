@@ -90,7 +90,7 @@ export function SavingsGoalsDashboard({
 
       {/* Enhanced Dashboard Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full h-auto grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-1">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="active">
             Active ({activeGoals.length})
@@ -126,7 +126,7 @@ export function SavingsGoalsDashboard({
                   <p className="text-muted-foreground">
                     Create your first savings goal to start tracking your progress.
                   </p>
-                  <Button 
+                  <Button
                     onClick={() => setIsCreateDialogOpen(true)}
                     className="mt-4"
                   >

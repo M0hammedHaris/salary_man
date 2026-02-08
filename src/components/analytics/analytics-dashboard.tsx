@@ -70,11 +70,11 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
         };
 
         const [
-          { cashFlow }, 
-          { spendingBreakdown }, 
-          { accountTrends }, 
-          { creditUtilization }, 
-          { netWorthHistory }, 
+          { cashFlow },
+          { spendingBreakdown },
+          { accountTrends },
+          { creditUtilization },
+          { netWorthHistory },
           { comparisons }
         ] = await Promise.all([
           parseResponseSafely(cashFlowRes, { cashFlow: [] }),
@@ -101,7 +101,7 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
         setLoading(false);
       }
     };
-    
+
     fetchData();
   }, [dateRange]);
 
@@ -185,7 +185,7 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Net Cash Flow</CardTitle>
-                  {dashboardData.comparisons?.find(c => c.metric === 'netCashFlow') && 
+                  {dashboardData.comparisons?.find(c => c.metric === 'netCashFlow') &&
                     getTrendIcon(
                       dashboardData.comparisons.find(c => c.metric === 'netCashFlow')!.trend,
                       dashboardData.comparisons.find(c => c.metric === 'netCashFlow')!.change
@@ -205,7 +205,7 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Income</CardTitle>
-                  {dashboardData.comparisons?.find(c => c.metric === 'income') && 
+                  {dashboardData.comparisons?.find(c => c.metric === 'income') &&
                     getTrendIcon(
                       dashboardData.comparisons.find(c => c.metric === 'income')!.trend,
                       dashboardData.comparisons.find(c => c.metric === 'income')!.change
@@ -225,7 +225,7 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
-                  {dashboardData.comparisons?.find(c => c.metric === 'expenses') && 
+                  {dashboardData.comparisons?.find(c => c.metric === 'expenses') &&
                     getTrendIcon(
                       dashboardData.comparisons.find(c => c.metric === 'expenses')!.trend,
                       -dashboardData.comparisons.find(c => c.metric === 'expenses')!.change // Reverse for expenses
@@ -245,7 +245,7 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Net Worth</CardTitle>
-                  {dashboardData.comparisons?.find(c => c.metric === 'netWorth') && 
+                  {dashboardData.comparisons?.find(c => c.metric === 'netWorth') &&
                     getTrendIcon(
                       dashboardData.comparisons.find(c => c.metric === 'netWorth')!.trend,
                       dashboardData.comparisons.find(c => c.metric === 'netWorth')!.change
@@ -267,7 +267,7 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
 
         {/* Charts Tabs */}
         <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList>
+          <TabsList className="justify-start w-full overflow-x-auto">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="cashflow">Cash Flow</TabsTrigger>
             <TabsTrigger value="spending">Spending</TabsTrigger>
@@ -343,9 +343,8 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
                       </div>
                       <div className="flex justify-between border-t pt-2">
                         <span className="font-medium">Net Worth:</span>
-                        <span className={`font-bold ${
-                          dashboardData.overview.netWorth >= 0 ? 'text-green-600' : 'text-red-600'
-                        }`}>
+                        <span className={`font-bold ${dashboardData.overview.netWorth >= 0 ? 'text-green-600' : 'text-red-600'
+                          }`}>
                           {formatCurrency(dashboardData.overview.netWorth)}
                         </span>
                       </div>
@@ -364,7 +363,7 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
                 <CardDescription>Income vs expenses over time</CardDescription>
               </CardHeader>
               <CardContent>
-                <CashFlowChart 
+                <CashFlowChart
                   data={dashboardData?.cashFlow || []}
                   height={400}
                   showNetFlow={true}
@@ -381,7 +380,7 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
                   <CardDescription>Pie chart visualization</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <SpendingBreakdownChart 
+                  <SpendingBreakdownChart
                     data={dashboardData?.spendingBreakdown || []}
                     height={350}
                     chartType="pie"
@@ -394,7 +393,7 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
                   <CardDescription>Bar chart visualization</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <SpendingBreakdownChart 
+                  <SpendingBreakdownChart
                     data={dashboardData?.spendingBreakdown || []}
                     height={350}
                     chartType="bar"
@@ -405,26 +404,26 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
           </TabsContent>
 
           <TabsContent value="accounts">
-            <AccountTrendsChart 
-              data={dashboardData?.accountTrends || []} 
+            <AccountTrendsChart
+              data={dashboardData?.accountTrends || []}
               className="mb-6"
             />
           </TabsContent>
 
           <TabsContent value="credit">
-            <CreditUtilizationChart 
-              data={dashboardData?.creditUtilization || []} 
+            <CreditUtilizationChart
+              data={dashboardData?.creditUtilization || []}
               className="mb-6"
             />
           </TabsContent>
 
           <TabsContent value="networth" className="space-y-6">
-            <NetWorthTracker 
-              data={dashboardData?.netWorthHistory || []} 
+            <NetWorthTracker
+              data={dashboardData?.netWorthHistory || []}
               className="mb-6"
             />
-            
-            <ComparisonWidgets 
+
+            <ComparisonWidgets
               data={dashboardData ? transformComparisonsData(dashboardData.comparisons) : {
                 incomeChange: { current: 0, previous: 0, change: 0, percentChange: 0 },
                 expenseChange: { current: 0, previous: 0, change: 0, percentChange: 0 },

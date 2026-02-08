@@ -214,7 +214,7 @@ export function BillCenter() {
 
       {/* Bills Management */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList>
+        <TabsList className="justify-start w-full overflow-x-auto">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
           <TabsTrigger value="overdue">Overdue</TabsTrigger>
