@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { format, isToday, isYesterday, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,10 +20,14 @@ import { TransactionEditForm } from './transaction-edit-form';
 import { TransactionDeleteMenuItem } from './transaction-delete-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { type Transaction } from '@/lib/types/transaction';
-import { type Account } from '@/lib/types/account';
+import { type AccountResponse } from '@/lib/types/account';
 import { type Category } from '@/lib/types/category';
 import { cn } from '@/lib/utils';
 import { useModalManager } from '@/lib/hooks/use-modal-manager';
+import { useTransactions } from '@/lib/hooks/use-transactions';
+import { useAccounts } from '@/lib/hooks/use-accounts';
+import { useCategories } from '@/lib/hooks/use-categories';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface TransactionListProps {
   accountId?: string;
@@ -37,7 +41,7 @@ interface TransactionListProps {
 }
 
 interface EnrichedTransaction extends Transaction {
-  account?: Account;
+  account?: AccountResponse;
   category?: Category;
 }
 
@@ -50,82 +54,57 @@ export function TransactionList({
   onView,
   className
 }: TransactionListProps) {
-  const [transactions, setTransactions] = useState<EnrichedTransaction[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const queryClient = useQueryClient();
 
   const { restorePointerEvents } = useModalManager(!!editingTransaction);
 
+  // Use React Query hooks for cached data fetching
+  const {
+    data: transactionsData,
+    isLoading: isLoadingTransactions,
+    error: transactionsError,
+    refetch: refetchTransactions
+  } = useTransactions({ accountId, categoryId, type, limit });
 
-  const loadTransactions = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
+  const { data: accounts = [] } = useAccounts();
+  const { data: categories = [] } = useCategories();
 
-      const params = new URLSearchParams();
-      if (accountId && accountId !== "all") params.set('accountId', accountId);
-      if (categoryId && categoryId !== "all") params.set('categoryId', categoryId);
-      if (type && type !== 'all') params.set('type', type);
-      params.set('limit', limit.toString());
+  // Build lookup maps for enriching transactions
+  const accountsMap = useMemo(() => {
+    const map: Record<string, AccountResponse> = {};
+    accounts.forEach((account) => {
+      map[account.id] = account;
+    });
+    return map;
+  }, [accounts]);
 
-      const [transactionsResponse, accountsResponse, categoriesResponse] = await Promise.all([
-        fetch(`/api/transactions?${params}`),
-        fetch('/api/accounts'),
-        fetch('/api/categories')
-      ]);
+  const categoriesMap = useMemo(() => {
+    const map: Record<string, Category> = {};
+    categories.forEach((category) => {
+      map[category.id] = category;
+    });
+    return map;
+  }, [categories]);
 
-      if (!transactionsResponse.ok) {
-        throw new Error('Failed to load transactions');
-      }
+  // Enrich transactions with account and category data
+  const transactions: EnrichedTransaction[] = useMemo(() => {
+    const rawTransactions = transactionsData?.transactions || [];
+    return rawTransactions.map((transaction: Transaction) => ({
+      ...transaction,
+      account: accountsMap[transaction.accountId],
+      category: categoriesMap[transaction.categoryId],
+    }));
+  }, [transactionsData, accountsMap, categoriesMap]);
 
-      const [transactionsData, accountsData, categoriesData] = await Promise.all([
-        transactionsResponse.json(),
-        accountsResponse.ok ? accountsResponse.json() : { success: false, data: { accounts: [] } },
-        categoriesResponse.ok ? categoriesResponse.json() : { success: false, data: { categories: [] } }
-      ]);
-
-      const accountsMap: Record<string, Account> = {};
-      const categoriesMap: Record<string, Category> = {};
-
-      // Handle both standardized ActionResponse and direct array response
-      const accountsList = accountsData.data?.accounts || accountsData.accounts || [];
-      accountsList.forEach((account: Account) => {
-        accountsMap[account.id] = account;
-      });
-
-      const categoriesList = categoriesData.data?.categories || categoriesData.categories || [];
-      categoriesList.forEach((category: Category) => {
-        categoriesMap[category.id] = category;
-      });
-
-      const enrichedTransactions: EnrichedTransaction[] = (transactionsData.transactions || []).map(
-        (transaction: Transaction) => ({
-          ...transaction,
-          account: accountsMap[transaction.accountId],
-          category: categoriesMap[transaction.categoryId],
-        })
-      );
-
-      setTransactions(enrichedTransactions);
-    } catch (error) {
-      console.error('Error loading transactions:', error);
-      setError(error instanceof Error ? error.message : 'Failed to load transactions');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [accountId, categoryId, type, limit]);
-
-  useEffect(() => {
-    loadTransactions();
-  }, [loadTransactions]);
+  const isLoading = isLoadingTransactions;
+  const error = transactionsError instanceof Error ? transactionsError.message : null;
 
   const handleEditSuccess = () => {
     setEditingTransaction(null);
     restorePointerEvents();
-    setTimeout(() => {
-      loadTransactions();
-    }, 100);
+    // React Query will auto-invalidate via the mutation hooks
+    queryClient.invalidateQueries({ queryKey: ['transactions'] });
   };
 
   const handleEditCancel = () => {
@@ -134,7 +113,8 @@ export function TransactionList({
   };
 
   const handleDeleteSuccess = () => {
-    loadTransactions();
+    // React Query will auto-invalidate via the mutation hooks
+    queryClient.invalidateQueries({ queryKey: ['transactions'] });
   };
 
   const groupedTransactions = useMemo(() => {
@@ -217,7 +197,7 @@ export function TransactionList({
         <p className="text-muted-foreground mb-8 font-medium text-center max-w-sm">{error}</p>
         <Button
           variant="outline"
-          onClick={() => loadTransactions()}
+          onClick={() => refetchTransactions()}
           className="h-12 px-8 rounded-2xl font-black uppercase tracking-widest border-2 hover:bg-slate-50 transition-all"
         >
           Try Again

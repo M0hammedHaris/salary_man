@@ -3,20 +3,19 @@
 import React from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { useSavingsSummary } from '@/lib/hooks/use-savings-summary';
 
 interface SavingsQuickAccessProps {
   className?: string;
-  activeGoalsCount?: number;
-  totalProgress?: number;
-  nextMilestone?: string;
 }
 
-export function SavingsQuickAccess({
-  className,
-  activeGoalsCount = 0,
-  totalProgress = 0,
-  nextMilestone = "First Quarter"
-}: SavingsQuickAccessProps) {
+export function SavingsQuickAccess({ className }: SavingsQuickAccessProps) {
+  // Use React Query hook for cached data
+  const { data, isLoading } = useSavingsSummary();
+
+  const activeGoalsCount = data?.activeGoalsCount ?? 0;
+  const totalProgress = data?.totalProgress ?? 0;
+  const nextMilestone = data?.nextMilestone ?? "First Quarter";
   return (
     <div className={cn("space-y-4", className)}>
       <div className="flex items-center justify-between">

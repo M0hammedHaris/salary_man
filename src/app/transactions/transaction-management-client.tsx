@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -24,8 +24,8 @@ import {
 } from '@/components/ui/select';
 import { TransactionCreateForm } from '@/components/transactions/transaction-create-form';
 import { TransactionList } from '@/components/transactions/transaction-list';
-import { type Account } from '@/lib/types/account';
-import { type Category } from '@/lib/types/category';
+import { useAccounts } from '@/lib/hooks/use-accounts';
+import { useCategories } from '@/lib/hooks/use-categories';
 import { cn } from "@/lib/utils";
 
 interface TransactionFilters {
@@ -37,40 +37,13 @@ interface TransactionFilters {
 export function TransactionManagementClient() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [filters, setFilters] = useState<TransactionFilters>({});
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoadingFilters, setIsLoadingFilters] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Load accounts and categories for filters
-  useEffect(() => {
-    async function loadFilterData() {
-      try {
-        const [accountsResponse, categoriesResponse] = await Promise.all([
-          fetch("/api/accounts"),
-          fetch("/api/categories"),
-        ]);
+  // Use React Query hooks for cached data
+  const { data: accounts = [], isLoading: isLoadingAccounts } = useAccounts();
+  const { data: categories = [], isLoading: isLoadingCategories } = useCategories();
 
-        if (accountsResponse.ok) {
-          const result = await accountsResponse.json();
-          // Access accounts from result.data.accounts since it follows ActionResponse pattern
-          setAccounts(result.data?.accounts || result.accounts || []);
-        }
-
-        if (categoriesResponse.ok) {
-          const result = await categoriesResponse.json();
-          // Access categories from result.data.categories
-          setCategories(result.data?.categories || result.categories || []);
-        }
-      } catch (error) {
-        console.error("Failed to load filter data:", error);
-      } finally {
-        setIsLoadingFilters(false);
-      }
-    }
-
-    loadFilterData();
-  }, []);
+  const isLoadingFilters = isLoadingAccounts || isLoadingCategories;
 
   const handleCreateSuccess = () => {
     setIsCreateDialogOpen(false);

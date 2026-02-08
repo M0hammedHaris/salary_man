@@ -1,61 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { getRecurringPaymentInsights } from '@/lib/actions/dashboard';
+import { useRecurringPaymentInsights } from '@/lib/hooks/use-recurring-payments';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils/decimal';
 import Link from 'next/link';
-
-interface RecurringPaymentInsightsData {
-  monthlyTotal: number;
-  quarterlyTotal: number;
-  yearlyTotal: number;
-  activePayments: number;
-  upcomingPayments: number;
-  missedPayments: number;
-  budgetImpact: {
-    totalBudget: number;
-    recurringAllocation: number;
-    utilizationPercentage: number;
-  };
-  trends: {
-    monthlyChange: number;
-    monthlyChangePercentage: number;
-    direction: 'up' | 'down' | 'stable';
-  };
-  topCategories: Array<{
-    category: string;
-    amount: number;
-    percentage: number;
-  }>;
-}
 
 interface RecurringPaymentInsightsProps {
   userId: string;
   className?: string;
 }
 
-export function RecurringPaymentInsights({ userId, className }: RecurringPaymentInsightsProps) {
-  const [data, setData] = useState<RecurringPaymentInsightsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export function RecurringPaymentInsights({ className }: RecurringPaymentInsightsProps) {
+  // Use React Query hook for cached data fetching
+  const { data, isLoading, error } = useRecurringPaymentInsights();
 
-  useEffect(() => {
-    async function fetchRecurringPaymentInsights() {
-      try {
-        setLoading(true);
-        const insights = await getRecurringPaymentInsights() as unknown as RecurringPaymentInsightsData;
-        setData(insights);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load data');
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchRecurringPaymentInsights();
-  }, [userId]);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className={cn("space-y-4", className)}>
         <div className="h-6 w-36 bg-slate-100 dark:bg-slate-800 animate-pulse rounded" />
