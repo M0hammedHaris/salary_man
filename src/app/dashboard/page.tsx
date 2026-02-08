@@ -9,7 +9,6 @@ import { AccountBalanceSummary } from '@/components/dashboard/account-balance-su
 import { CreditCardUtilization } from '@/components/dashboard/credit-card-utilization';
 import { RecentTransactions } from '@/components/dashboard/recent-transactions';
 import { AlertNotificationPanel } from '@/components/dashboard/alert-notification-panel';
-import { QuickActionFloatingButton } from '@/components/dashboard/quick-action-floating-button';
 import { DashboardSkeleton } from '@/components/dashboard/dashboard-skeleton';
 import { UpcomingBills } from '@/components/bills/upcoming-bills';
 import { RecurringPaymentInsights } from '@/components/dashboard/recurring-payment-insights';
@@ -22,87 +21,54 @@ async function DashboardContent({ userId }: { userId: string }) {
     const dashboardData = await getDashboardData(userId);
 
     return (
-      <div className="bg-background">
-        <main className="mx-auto max-w-[1280px] px-4 py-6 sm:px-8">
+      <div className="bg-background min-h-screen">
+        <main className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">
 
-          {/* Dashboard Header - Mobile First */}
-          <div className="flex flex-col gap-6 lg:grid lg:grid-cols-3 lg:gap-8">
+          {/* Dashboard Grid - Optimized Layout */}
+          <div className="space-y-6">
 
-            {/* Left Column - Primary Metrics & Transactions */}
-            <div className="lg:col-span-2 space-y-8">
-              {/* Net Worth - Hero Component */}
+            {/* Top Row - Net Worth & Credit Utilization */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Net Worth Card */}
               <NetWorthCard
                 totalNetWorth={dashboardData.accountSummary.totalBalance}
                 changePercentage={0} // TODO: Calculate from historical data
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Financial Health Score */}
-                <FinancialHealthScore
-                  score={dashboardData.financialHealthScore.score}
-                />
-
-                {/* Simplified Analytics Placeholder or Stats */}
-                <div className="rounded-3xl bg-white dark:bg-slate-900 border border-border p-6 shadow-sm flex flex-col justify-center">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="h-12 w-12 rounded-2xl bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center text-purple-600">
-                      <span className="material-symbols-outlined">trending_up</span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-slate-500">Financial Health</p>
-                      <h4 className="text-2xl font-bold">
-                        {dashboardData.financialHealthScore.trend === 'up' ? '↑' : 
-                         dashboardData.financialHealthScore.trend === 'down' ? '↓' : '→'} 
-                        {' '}{dashboardData.financialHealthScore.score}/100
-                      </h4>
-                    </div>
-                  </div>
-                  <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-                    <div 
-                      className="bg-purple-500 h-full transition-all duration-1000" 
-                      style={{ width: `${dashboardData.financialHealthScore.score}%` }}
-                    ></div>
-                  </div>
-                  <p className="mt-4 text-xs text-slate-400">
-                    {dashboardData.financialHealthScore.explanation}
-                  </p>
-                </div>
-              </div>
-
-              {/* Account Balance Summary - Horizontal Cards */}
-              <AccountBalanceSummary
-                accounts={dashboardData.accountSummary.accounts}
-              />
-
-              {/* Recent Transactions */}
-              <RecentTransactions transactions={dashboardData.recentTransactions} />
+              {/* Credit Card Utilization */}
+              <CreditCardUtilization creditCards={dashboardData.creditCardUtilization} />
             </div>
 
-            {/* Right Column - Secondary Metrics & Alerts */}
-            <div className="space-y-4 sm:space-y-6">
+            {/* Second Row - Upcoming Bills & Recurring Payments */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Upcoming Bills */}
+              <UpcomingBills />
+
+              {/* Recurring Payment Insights */}
+              <RecurringPaymentInsights userId={userId} />
+            </div>
+
+            {/* Account Balance Summary */}
+            <AccountBalanceSummary
+              accounts={dashboardData.accountSummary.accounts}
+            />
+
+            {/* Recent Transactions */}
+            <RecentTransactions transactions={dashboardData.recentTransactions} />
+
+            {/* Bottom Row - Quick Access Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Analytics Quick Access */}
               <AnalyticsQuickAccess />
 
               {/* Savings Goals Quick Access */}
               <SavingsQuickAccess />
-
-              {/* Recurring Payment Insights */}
-              <RecurringPaymentInsights userId={userId} />
-
-              {/* Upcoming Bills */}
-              <UpcomingBills />
-
-              {/* Credit Card Utilization */}
-              <CreditCardUtilization creditCards={dashboardData.creditCardUtilization} />
-
-              {/* Alert Notification Panel */}
-              <AlertNotificationPanel alerts={dashboardData.alerts} />
             </div>
+
+            {/* Alert Notification Panel */}
+            <AlertNotificationPanel alerts={dashboardData.alerts} />
           </div>
         </main>
-
-        {/* Quick Action Floating Button */}
-        <QuickActionFloatingButton />
       </div>
     );
   } catch (error) {
