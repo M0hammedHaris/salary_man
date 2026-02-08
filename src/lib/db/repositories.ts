@@ -320,6 +320,7 @@ export class TransactionRepository {
     filters: {
       accountId?: string;
       categoryId?: string;
+      type?: 'income' | 'expense' | 'all';
       startDate?: Date;
       endDate?: Date;
       limit?: number;
@@ -327,7 +328,7 @@ export class TransactionRepository {
     } = {}
   ): Promise<Transaction[]> {
     try {
-      const { accountId, categoryId, startDate, endDate, limit = 50, offset = 0 } = filters;
+      const { accountId, categoryId, type, startDate, endDate, limit = 50, offset = 0 } = filters;
       
       // Build conditions array
       const conditions = [eq(transactions.userId, userId)];
@@ -338,6 +339,14 @@ export class TransactionRepository {
       
       if (categoryId) {
         conditions.push(eq(transactions.categoryId, categoryId));
+      }
+      
+      if (type && type !== 'all') {
+        if (type === 'income') {
+          conditions.push(sql`${transactions.amount} > 0`);
+        } else if (type === 'expense') {
+          conditions.push(sql`${transactions.amount} < 0`);
+        }
       }
       
       if (startDate) {

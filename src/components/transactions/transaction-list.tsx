@@ -28,6 +28,7 @@ import { useModalManager } from '@/lib/hooks/use-modal-manager';
 interface TransactionListProps {
   accountId?: string;
   categoryId?: string;
+  type?: 'income' | 'expense' | 'all';
   limit?: number;
   onEdit?: (transaction: Transaction) => void;
   onDelete?: (transaction: Transaction) => void;
@@ -43,6 +44,7 @@ interface EnrichedTransaction extends Transaction {
 export function TransactionList({
   accountId,
   categoryId,
+  type = 'all',
   limit = 50,
   onEdit,
   onView,
@@ -64,6 +66,7 @@ export function TransactionList({
       const params = new URLSearchParams();
       if (accountId && accountId !== "all") params.set('accountId', accountId);
       if (categoryId && categoryId !== "all") params.set('categoryId', categoryId);
+      if (type && type !== 'all') params.set('type', type);
       params.set('limit', limit.toString());
 
       const [transactionsResponse, accountsResponse, categoriesResponse] = await Promise.all([
@@ -108,7 +111,7 @@ export function TransactionList({
     } finally {
       setIsLoading(false);
     }
-  }, [accountId, categoryId, limit]);
+  }, [accountId, categoryId, type, limit]);
 
   useEffect(() => {
     loadTransactions();
@@ -236,28 +239,28 @@ export function TransactionList({
   }
 
   return (
-    <div className={cn("space-y-12", className)}>
+    <div className={cn("space-y-8", className)}>
       {groupedTransactions.map(([date, transactions]) => (
-        <div key={date} className="space-y-5">
+        <div key={date} className="space-y-4">
           <div className="flex items-center gap-4 px-2">
             <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">
               {formatDateLabel(date)}
             </h3>
             <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
           </div>
-          <div className="grid gap-4">
+          <div className="grid gap-3">
             {transactions.map((transaction) => (
               <div
                 key={transaction.id}
-                className="group flex items-center gap-5 p-5 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-[32px] border border-slate-100 dark:border-slate-800 transition-all cursor-pointer relative overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 active:scale-[0.98]"
+                className="group flex items-center gap-4 p-4 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-[28px] border border-slate-100 dark:border-slate-800 transition-all cursor-pointer relative overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98]"
               >
                 {/* Category Icon */}
                 <div
-                  className="w-14 h-14 rounded-[22px] flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-110"
+                  className="w-12 h-12 rounded-[18px] flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-110"
                   style={{ backgroundColor: `${transaction.category?.color}15` }}
                 >
                   <span
-                    className="material-symbols-outlined text-2xl"
+                    className="material-symbols-outlined text-xl"
                     style={{ color: transaction.category?.color || '#94a3b8' }}
                   >
                     {transaction.category?.icon || 'payments'}
@@ -267,14 +270,14 @@ export function TransactionList({
                 {/* Details */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
-                    <h4 className="font-black text-slate-900 dark:text-white truncate text-base">{transaction.description}</h4>
+                    <h4 className="font-black text-slate-900 dark:text-white truncate text-sm">{transaction.description}</h4>
                     {transaction.isRecurring && (
-                      <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
-                        <span className="material-symbols-outlined text-[12px] text-primary font-bold">sync</span>
+                      <div className="w-4 h-4 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-[10px] text-primary font-bold">sync</span>
                       </div>
                     )}
                   </div>
-                  <p className="text-xs text-slate-500 font-black uppercase tracking-wider flex items-center gap-2">
+                  <p className="text-[11px] text-slate-500 font-black uppercase tracking-wider flex items-center gap-2">
                     {transaction.account?.name}
                     <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
                     {transaction.category?.name}
@@ -284,17 +287,17 @@ export function TransactionList({
                 {/* Amount */}
                 <div className="text-right flex flex-col items-end gap-0.5">
                   <span className={cn(
-                    "text-xl font-black tracking-tight",
+                    "text-lg font-black tracking-tight",
                     isIncome(transaction.amount) ? "text-emerald-500" : "text-slate-900 dark:text-white"
                   )}>
                     {isIncome(transaction.amount) ? "+" : "-"}{formatAmount(transaction.amount)}
                   </span>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+                    <span className="text-[9px] text-slate-400 font-black uppercase tracking-wider">
                       {format(new Date(transaction.transactionDate), 'hh:mm a')}
                     </span>
                     {transaction.receiptUrl && (
-                      <span className="material-symbols-outlined text-[14px] text-slate-300">attach_file</span>
+                      <span className="material-symbols-outlined text-[12px] text-slate-300">attach_file</span>
                     )}
                   </div>
                 </div>

@@ -52,6 +52,7 @@ export const updateTransactionSchema = z.object({
 export const getTransactionsQuerySchema = z.object({
   accountId: z.string().optional(),
   categoryId: z.string().optional(),
+  type: z.enum(['income', 'expense', 'all']).optional(),
   startDate: z.string().refine((dateStr) => {
     if (!dateStr) return true;
     const date = new Date(dateStr);

@@ -84,9 +84,9 @@ export function TransactionManagementClient() {
   }, [filters]);
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-6">
       {/* Action Bar & Filters */}
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center gap-4">
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
@@ -234,7 +234,7 @@ export function TransactionManagementClient() {
       </div>
 
       {/* Transaction Content */}
-      <Tabs defaultValue="all" className="space-y-8">
+      <Tabs defaultValue="all" className="space-y-4">
         <TabsList className="inline-flex h-14 items-center justify-start rounded-3xl bg-slate-100 p-1.5 dark:bg-slate-900 gap-1 overflow-x-auto scrollbar-hide max-w-full">
           <TabsTrigger value="all" className="inline-flex items-center justify-center whitespace-nowrap rounded-2xl px-6 py-2.5 text-sm font-black ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-800 dark:text-slate-400">
             All
@@ -263,6 +263,7 @@ export function TransactionManagementClient() {
         <TabsContent value="income" className="space-y-4 outline-none">
           <TransactionList
             key={`income-${refreshKey}`}
+            type="income"
             accountId={filters.accountId}
             categoryId={filters.categoryId}
             limit={50}
@@ -273,6 +274,7 @@ export function TransactionManagementClient() {
         <TabsContent value="expenses" className="space-y-4 outline-none">
           <TransactionList
             key={`expenses-${refreshKey}`}
+            type="expense"
             accountId={filters.accountId}
             categoryId={filters.categoryId}
             limit={50}

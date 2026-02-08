@@ -13,11 +13,11 @@ export const metadata: Metadata = {
 export default function TransactionsPage() {
   return (
     <div className="flex-1 overflow-y-auto bg-slate-50/50 dark:bg-slate-950">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-4xl font-black text-foreground tracking-tight">Transactions</h1>
-            <p className="text-muted-foreground font-medium">Track and manage your financial activity across all accounts.</p>
+            <h1 className="text-3xl font-black text-foreground tracking-tight">Transactions</h1>
+            <p className="text-muted-foreground font-medium text-sm">Track and manage your financial activity across all accounts.</p>
           </div>
         </div>
 
