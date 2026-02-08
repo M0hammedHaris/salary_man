@@ -121,20 +121,22 @@ export function NavigationHeader() {
           <NavigationMenuList>
             {navigationItems.map((item) => (
               <NavigationMenuItem key={item.href}>
-                <NavigationMenuLink
-                  className={cn(
-                    navigationMenuTriggerStyle(),
-                    isActive(item.href) && "bg-accent text-accent-foreground"
-                  )}
-                  aria-current={isActive(item.href) ? "page" : undefined}
-                  href={item.href}
-                >
-                  {item.useStatusIndicator ? (
-                    <NotificationStatusIndicator className="mr-2" />
-                  ) : (
-                    <item.icon className="mr-2 h-4 w-4" />
-                  )}
-                  {item.label}
+                <NavigationMenuLink asChild>
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      navigationMenuTriggerStyle(),
+                      isActive(item.href) && "bg-accent text-accent-foreground"
+                    )}
+                    aria-current={isActive(item.href) ? "page" : undefined}
+                  >
+                    {item.useStatusIndicator ? (
+                      <NotificationStatusIndicator className="mr-2" />
+                    ) : (
+                      <item.icon className="mr-2 h-4 w-4" />
+                    )}
+                    {item.label}
+                  </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
             ))}

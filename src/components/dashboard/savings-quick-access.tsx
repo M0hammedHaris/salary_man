@@ -2,115 +2,88 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Target, TrendingUp, ArrowRight, Trophy } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+import { useSavingsSummary } from '@/lib/hooks/use-savings-summary';
 
 interface SavingsQuickAccessProps {
   className?: string;
-  activeGoalsCount?: number;
-  totalProgress?: number;
-  nextMilestone?: string;
 }
 
-export function SavingsQuickAccess({ 
-  className,
-  activeGoalsCount = 0,
-  totalProgress = 0,
-  nextMilestone = "First Quarter"
-}: SavingsQuickAccessProps) {
+export function SavingsQuickAccess({ className }: SavingsQuickAccessProps) {
+  // Use React Query hook for cached data
+  const { data, isLoading } = useSavingsSummary();
+
+  const activeGoalsCount = data?.activeGoalsCount ?? 0;
+  const totalProgress = data?.totalProgress ?? 0;
+  const nextMilestone = data?.nextMilestone ?? "First Quarter";
   return (
-    <Card className={className}>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg">Savings Goals</CardTitle>
-          </div>
-          {activeGoalsCount > 0 && (
-            <Badge variant="secondary" className="text-xs">
-              {activeGoalsCount} Active
-            </Badge>
-          )}
-        </div>
-        <CardDescription>
-          Track your financial goals and milestones
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Quick Stats Preview */}
+    <div className={cn("space-y-4", className)}>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Savings Goals</h3>
+        {activeGoalsCount > 0 && (
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+            {activeGoalsCount} ACTIVE
+          </span>
+        )}
+      </div>
+
+      <div className="rounded-3xl bg-white dark:bg-slate-900 border border-border p-6 shadow-sm space-y-6">
         {activeGoalsCount > 0 ? (
-          <>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-muted-foreground">
-                  Progress
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white leading-none">
+                  {totalProgress.toFixed(1)}%
                 </p>
-                <div className="flex items-center gap-1">
-                  <TrendingUp className="h-4 w-4 text-green-500" />
-                  <span className="text-sm font-semibold">{totalProgress.toFixed(1)}%</span>
-                </div>
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">Total Progress</p>
               </div>
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-muted-foreground">
-                  Next Milestone
-                </p>
-                <div className="flex items-center gap-1">
-                  <Trophy className="h-4 w-4 text-yellow-500" />
-                  <span className="text-xs font-semibold truncate">{nextMilestone}</span>
-                </div>
+              <div className="h-12 w-12 rounded-2xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center">
+                <span className="material-symbols-outlined text-amber-500 text-[24px]">workspace_premium</span>
               </div>
             </div>
 
-            {/* Progress Bar */}
             <div className="space-y-2">
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Overall Progress</span>
-                <span>{totalProgress.toFixed(1)}%</span>
-              </div>
-              <div className="w-full bg-secondary rounded-full h-2">
-                <div 
-                  className="bg-primary h-2 rounded-full transition-all duration-300"
+              <div className="relative h-3 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                <div
+                  className="h-full bg-emerald-400 transition-all duration-500"
                   style={{ width: `${Math.min(totalProgress, 100)}%` }}
                 />
               </div>
+              <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                <span>Start</span>
+                <span className="text-emerald-500">Milestone: {nextMilestone}</span>
+              </div>
             </div>
-          </>
+
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 space-y-3">
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Upcoming</p>
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-xl bg-violet-100 dark:bg-violet-500/10 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-violet-500 text-[18px]">event</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1">{nextMilestone}</p>
+                  <p className="text-[10px] font-medium text-slate-500 tracking-tight">Projected completion next month</p>
+                </div>
+              </div>
+            </div>
+          </div>
         ) : (
-          <div className="text-center py-4">
-            <Target className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground mb-1">No active goals yet</p>
-            <p className="text-xs text-muted-foreground">Start your financial planning journey</p>
+          <div className="text-center py-6 text-slate-500">
+            <span className="material-symbols-outlined text-4xl mb-2 opacity-20">target</span>
+            <p className="text-sm font-medium">No savings goals yet</p>
+            <p className="text-xs">Start saving for what matters</p>
           </div>
         )}
 
-        {/* Features List */}
-        <div className="space-y-2">
-          <ul className="text-sm text-muted-foreground space-y-1">
-            <li className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 bg-primary rounded-full" />
-              Goal progress tracking
-            </li>
-            <li className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 bg-primary rounded-full" />
-              Milestone achievements
-            </li>
-            <li className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 bg-primary rounded-full" />
-              Resource allocation planning
-            </li>
-          </ul>
-        </div>
-
-        {/* CTA Button */}
-        <Button asChild className="w-full">
-          <Link href="/savings" className="flex items-center gap-2">
-            {activeGoalsCount > 0 ? 'Manage Goals' : 'Create First Goal'}
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </Button>
-      </CardContent>
-    </Card>
+        <Link
+          href="/savings"
+          className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-indigo-500 text-white text-sm font-bold hover:bg-indigo-600 transition-colors"
+        >
+          {activeGoalsCount > 0 ? 'Manage All Goals' : 'Create a Goal'}
+          <span className="material-symbols-outlined text-[18px]">add</span>
+        </Link>
+      </div>
+    </div>
   );
 }

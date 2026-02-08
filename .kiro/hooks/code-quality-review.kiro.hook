@@ -1,0 +1,15 @@
+{
+  "enabled": true,
+  "name": "Code Quality Review",
+  "description": "Analyzes modified source code files for potential improvements including code smells, design patterns, best practices, readability, maintainability, and performance optimizations",
+  "version": "1",
+  "when": {
+    "type": "userTriggered"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Review the modified code for potential improvements:\n\n1. **Code Smells**: Identify any code smells (long functions, duplicated code, complex conditionals, etc.)\n2. **Design Patterns**: Suggest appropriate design patterns if applicable\n3. **Best Practices**: Check adherence to project conventions (Server Components, Decimal.js for money, @/ imports, Zod validation, etc.)\n4. **Type Safety**: Verify TypeScript usage and type inference\n5. **Performance**: Identify potential performance optimizations\n6. **Readability**: Suggest improvements for code clarity and maintainability\n7. **Security**: Check for authentication, input validation, and data scoping issues\n\nProvide concise, actionable suggestions. Only mention issues that would meaningfully improve the code. If the code looks good, acknowledge it briefly."
+  },
+  "workspaceFolderName": "salary_man",
+  "shortName": "code-quality-review"
+}

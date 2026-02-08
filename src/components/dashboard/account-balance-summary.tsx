@@ -1,269 +1,101 @@
 "use client";
 
+import React from "react";
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatCurrency } from '@/lib/utils/decimal';
-import { CreditCard, PiggyBank, Wallet, AlertCircle, CheckCircle, Settings, Bell } from 'lucide-react';
-import { UtilizationIndicator } from '@/components/alerts/utilization-indicator';
-import { useState, useEffect } from 'react';
+import { cn } from "@/lib/utils";
 
 interface AccountSummaryProps {
-  totalBalance: number;
-  checkingBalance: number;
-  savingsBalance: number;
-  creditCardBalance: number;
   accounts: Array<{
     id: string;
     name: string;
     type: string;
     balance: number;
-    creditLimit?: number;
     status: 'positive' | 'negative' | 'alert';
   }>;
 }
 
-interface UtilizationData {
-  accountId: string;
-  utilizationPercentage: number;
-  utilizationAmount: number;
-  availableCredit: number;
-  creditLimit: number;
-}
+const accountTypeGradients: Record<string, string> = {
+  checking: "from-orange-100 to-orange-50 border-orange-200/50 text-orange-600 dark:from-orange-900/40 dark:to-slate-800 dark:border-orange-900/30",
+  savings: "from-blue-100 to-blue-50 border-blue-200/50 text-blue-600 dark:from-blue-900/40 dark:to-slate-800 dark:border-blue-900/30",
+  investment: "from-indigo-100 to-indigo-50 border-indigo-200/50 text-indigo-600 dark:from-indigo-900/40 dark:to-slate-800 dark:border-indigo-900/30",
+  credit_card: "from-purple-100 to-purple-50 border-purple-200/50 text-purple-600 dark:from-purple-900/40 dark:to-slate-800 dark:border-purple-900/30",
+};
 
-export function AccountBalanceSummary({
-  totalBalance,
-  checkingBalance,
-  savingsBalance,
-  creditCardBalance,
-  accounts
-}: AccountSummaryProps) {
-  const [utilizationData, setUtilizationData] = useState<UtilizationData[]>([]);
-  const [hasAlerts, setHasAlerts] = useState(false);
+const accountTypeLabelStyles: Record<string, string> = {
+  checking: "text-orange-800/60 dark:text-orange-300",
+  savings: "text-blue-800/60 dark:text-blue-300",
+  investment: "text-indigo-800/60 dark:text-indigo-300",
+  credit_card: "text-purple-800/60 dark:text-purple-300",
+};
 
-  useEffect(() => {
-    // Fetch utilization data for credit card accounts
-    const fetchUtilizationData = async () => {
-      try {
-        const response = await fetch('/api/accounts/utilization');
-        if (response.ok) {
-          const data = await response.json();
-          setUtilizationData(data.data || []);
-          
-          // Check if any account has high utilization (>= 70%)
-          const hasHighUtilization = data.data?.some((account: UtilizationData) => 
-            account.utilizationPercentage >= 70
-          );
-          setHasAlerts(hasHighUtilization || false);
-        }
-      } catch (error) {
-        console.error('Failed to fetch utilization data:', error);
-      }
-    };
-
-    fetchUtilizationData();
-  }, []);
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'positive':
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case 'alert':
-        return <AlertCircle className="h-4 w-4 text-red-600" />;
-      default:
-        return <AlertCircle className="h-4 w-4 text-yellow-600" />;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'positive':
-        return 'text-green-600';
-      case 'alert':
-        return 'text-red-600';
-      default:
-        return 'text-yellow-600';
-    }
-  };
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'checking':
-        return <Wallet className="h-4 w-4 text-blue-600" />;
-      case 'savings':
-        return <PiggyBank className="h-4 w-4 text-green-600" />;
-      case 'credit_card':
-        return <CreditCard className="h-4 w-4 text-purple-600" />;
-      default:
-        return <Wallet className="h-4 w-4 text-gray-600" />;
-    }
-  };
-
-  const getAccountTypeLabel = (type: string) => {
-    return type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+export function AccountBalanceSummary({ accounts }: AccountSummaryProps) {
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 3);
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Account Summary</CardTitle>
-          {hasAlerts && (
-            <Link href="/dashboard/alerts" passHref>
-              <Button variant="outline" size="sm" className="text-orange-600 border-orange-200">
-                <Bell className="h-4 w-4 mr-1" />
-                Alerts
-              </Button>
-            </Link>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Total Balance */}
-        <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-          <div className="flex items-center space-x-2">
-            <Wallet className="h-5 w-5 text-primary" />
-            <span className="font-medium">Total Balance</span>
-          </div>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className={`text-xl font-bold cursor-help ${
-                totalBalance >= 0 ? 'text-green-600' : 'text-red-600'
-              }`}>
-                {formatCurrency(totalBalance)}
+    <div className="mb-8">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white">My Accounts</h3>
+        <Link href="/accounts/new" passHref>
+          <button className="flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80 transition-colors">
+            <span className="material-symbols-outlined text-[18px]">add_circle</span>
+            Add New
+          </button>
+        </Link>
+      </div>
+
+      <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar snap-x">
+        {accounts.map((account) => (
+          <div
+            key={account.id}
+            className={cn(
+              "min-w-[240px] snap-center rounded-2xl bg-gradient-to-br p-4 shadow-sm transition-transform hover:scale-[1.02] border",
+              accountTypeGradients[account.type] || "from-slate-100 to-slate-50 border-slate-200/50 dark:from-slate-900/40 dark:to-slate-800 dark:border-slate-900/30"
+            )}
+          >
+            <div className="flex items-center justify-between mb-8">
+              <div className={cn(
+                "h-8 w-8 rounded-full flex items-center justify-center font-bold text-xs",
+                account.type === 'checking' ? "bg-orange-500/20 text-orange-600" :
+                  account.type === 'savings' ? "bg-blue-500/20 text-blue-600" :
+                    account.type === 'investment' ? "bg-indigo-500/20 text-indigo-600" :
+                      "bg-purple-500/20 text-purple-600"
+              )}>
+                {getInitials(account.name)}
               </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Sum of all checking, savings, and credit card balances</p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
-
-        {/* Balance Breakdown */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {/* Checking */}
-          <div className="flex items-center justify-between p-2 border rounded">
-            <div className="flex items-center space-x-2">
-              <Wallet className="h-4 w-4 text-blue-600" />
-              <span className="text-sm">Checking</span>
+              <span className={cn(
+                "text-xs font-semibold capitalize",
+                accountTypeLabelStyles[account.type] || "text-slate-800/60 dark:text-slate-300"
+              )}>
+                {account.type.replace('_', ' ')}
+              </span>
             </div>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className={`text-sm font-medium cursor-help ${
-                  checkingBalance >= 0 ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {formatCurrency(checkingBalance)}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Total balance across all checking accounts</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-
-          {/* Savings */}
-          <div className="flex items-center justify-between p-2 border rounded">
-            <div className="flex items-center space-x-2">
-              <PiggyBank className="h-4 w-4 text-green-600" />
-              <span className="text-sm">Savings</span>
+            <div className="flex flex-col gap-1">
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{account.name}</p>
+              <h4 className="text-2xl font-bold text-slate-900 dark:text-white">
+                {formatCurrency(account.balance)}
+              </h4>
             </div>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className={`text-sm font-medium cursor-help ${
-                  savingsBalance >= 0 ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {formatCurrency(savingsBalance)}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Total balance across all savings accounts</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-
-          {/* Credit Cards */}
-          <div className="flex items-center justify-between p-2 border rounded">
-            <div className="flex items-center space-x-2">
-              <CreditCard className="h-4 w-4 text-purple-600" />
-              <span className="text-sm">Credit</span>
-            </div>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className={`text-sm font-medium cursor-help ${
-                  creditCardBalance <= 0 ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {formatCurrency(creditCardBalance)}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Total debt across all credit cards</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        </div>
-
-        {/* Individual Accounts */}
-        {accounts.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-muted-foreground">Individual Accounts</h4>
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              {accounts.map((account) => {
-                const utilization = utilizationData.find(u => u.accountId === account.id);
-                
-                return (
-                  <div key={account.id} className="space-y-2">
-                    <div className="flex items-center justify-between p-2 border rounded-sm">
-                      <div className="flex items-center space-x-2">
-                        {getTypeIcon(account.type)}
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium">{account.name}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {getAccountTypeLabel(account.type)}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className={`text-sm font-medium ${getStatusColor(account.status)}`}>
-                          {formatCurrency(account.balance)}
-                        </span>
-                        {getStatusIcon(account.status)}
-                      </div>
-                    </div>
-                    
-                    {/* Show utilization indicator for credit cards */}
-                    {account.type === 'credit_card' && utilization && account.creditLimit && (
-                      <UtilizationIndicator
-                        utilizationPercentage={utilization.utilizationPercentage}
-                        currentBalance={account.balance}
-                        creditLimit={account.creditLimit}
-                        accountName={account.name}
-                        size="sm"
-                        showDetails={false}
-                      />
-                    )}
-                  </div>
-                );
-              })}
+            <div className="mt-4 flex items-center gap-2 text-xs text-slate-400">
+              <span>**** {Math.floor(Math.random() * 9000) + 1000}</span>
+              <div className="h-1 w-1 rounded-full bg-slate-400"></div>
+              <span>{account.type === 'credit_card' ? 'Visa' : 'Active'}</span>
             </div>
           </div>
-        )}
+        ))}
 
         {accounts.length === 0 && (
-          <div className="text-center py-4 text-muted-foreground">
-            <p className="text-sm">No accounts found. Add your first account to get started.</p>
+          <div className="min-w-[240px] h-[160px] flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-muted p-4 text-center text-muted-foreground">
+            <p className="text-sm mb-2">No accounts found</p>
+            <Link href="/accounts/new">
+              <Button variant="outline" size="sm">Add First Account</Button>
+            </Link>
           </div>
         )}
-
-        {/* Navigation to Account Management */}
-        <div className="pt-3 border-t">
-          <Link href="/accounts" passHref>
-            <Button variant="outline" size="sm" className="w-full">
-              <Settings className="h-4 w-4 mr-2" />
-              Manage Accounts
-            </Button>
-          </Link>
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

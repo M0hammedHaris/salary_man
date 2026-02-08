@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SalaryMan - Savings Goals</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3c83f6",
+                        "secondary": "#6366f1",
+                        "accent-pink": "#f472b6",
+                        "accent-yellow": "#fbbf24",
+                        "accent-green": "#34d399",
+                        "background-light": "#f8fafc",
+                        "background-dark": "#0f172a",
+                        "card-light": "#ffffff",
+                        "card-dark": "#1e293b",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "2xl": "2rem",
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 antialiased min-h-screen flex flex-col transition-colors duration-200">
+<!-- Main Container -->
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<!-- Header / Navigation -->
+<header class="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-card-dark/80 backdrop-blur-md px-6 py-4">
+<div class="mx-auto flex max-w-7xl items-center justify-between">
+<!-- Logo -->
+<div class="flex items-center gap-3">
+<div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-secondary text-white shadow-lg shadow-primary/30">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+</div>
+<h2 class="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">SalaryMan</h2>
+</div>
+<!-- Nav Links (Desktop) -->
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary text-sm font-semibold transition-colors" href="#">Dashboard</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary text-sm font-semibold transition-colors" href="#">Transactions</a>
+<a class="text-primary text-sm font-bold bg-primary/10 px-3 py-1 rounded-full transition-colors" href="#">Goals</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary text-sm font-semibold transition-colors" href="#">Budgets</a>
+</nav>
+<!-- User Actions -->
+<div class="flex items-center gap-4">
+<button class="hidden sm:flex items-center gap-2 rounded-xl bg-slate-100 dark:bg-slate-800 px-4 py-2 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined text-[20px]">person</span>
+<span>Profile</span>
+</button>
+<div class="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700 bg-cover bg-center ring-2 ring-white dark:ring-slate-800 shadow-sm" data-alt="User profile photo showing a smiling woman" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAzKpLIOfQyxvsnVeYVXJLzEQt6WmMwUsrTK0a7pPmid3n28R9ngXehjnK496fWY4gpEQpOCmjUNQ-n6c0mZ5jtw9APKdrcfM0ZwdISy7dP_dxk2uJCkrw9PJqqYijHfk_Epagge4VFFyurwREDcgqEUE8VxlfcQ5vgTs_oR_NCrbRXX1n0UEypUm1bCPR-HM10pPdPPasvIxamJ2cbZIcz4PwqORQuulH5o90UMissmNDLYLIxrOP-JjWbefa-Q2AWwXwH9frY3c8');"></div>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 px-4 py-8 md:px-8 lg:px-12">
+<div class="mx-auto max-w-7xl flex flex-col gap-8">
+<!-- Page Header + Stats -->
+<section class="flex flex-col gap-6">
+<div class="flex flex-col gap-2">
+<h1 class="text-4xl md:text-5xl font-black tracking-tight text-slate-900 dark:text-white">
+                            Savings Goals <span class="text-primary">.</span>
+</h1>
+<p class="text-lg text-slate-500 dark:text-slate-400 font-medium">Track your dreams and financial milestones with style.</p>
+</div>
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Stat Card 1 -->
+<div class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-900 p-6 shadow-sm border border-blue-100 dark:border-slate-700 transition-all hover:shadow-md">
+<div class="absolute right-0 top-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-blue-500/10 blur-2xl transition-all group-hover:bg-blue-500/20"></div>
+<div class="relative flex flex-col gap-3">
+<div class="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+<span class="material-symbols-outlined">savings</span>
+<span class="text-sm font-bold uppercase tracking-wider">Total Saved</span>
+</div>
+<p class="text-4xl font-black text-slate-900 dark:text-white tracking-tight">$18,450</p>
+<div class="w-full bg-blue-200 dark:bg-slate-700 rounded-full h-1.5 mt-1 overflow-hidden">
+<div class="bg-blue-500 h-1.5 rounded-full w-[65%]"></div>
+</div>
+</div>
+</div>
+<!-- Stat Card 2 -->
+<div class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-slate-800 dark:to-slate-900 p-6 shadow-sm border border-emerald-100 dark:border-slate-700 transition-all hover:shadow-md">
+<div class="absolute right-0 top-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-emerald-500/10 blur-2xl transition-all group-hover:bg-emerald-500/20"></div>
+<div class="relative flex flex-col gap-3">
+<div class="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+<span class="material-symbols-outlined">target</span>
+<span class="text-sm font-bold uppercase tracking-wider">Active Goals</span>
+</div>
+<p class="text-4xl font-black text-slate-900 dark:text-white tracking-tight">4</p>
+<p class="text-sm text-slate-500 dark:text-slate-400 font-medium">Keep pushing forward!</p>
+</div>
+</div>
+<!-- Stat Card 3 -->
+<div class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-50 to-fuchsia-50 dark:from-slate-800 dark:to-slate-900 p-6 shadow-sm border border-purple-100 dark:border-slate-700 transition-all hover:shadow-md">
+<div class="absolute right-0 top-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-purple-500/10 blur-2xl transition-all group-hover:bg-purple-500/20"></div>
+<div class="relative flex flex-col gap-3">
+<div class="flex items-center gap-2 text-purple-600 dark:text-purple-400">
+<span class="material-symbols-outlined">celebration</span>
+<span class="text-sm font-bold uppercase tracking-wider">Completed</span>
+</div>
+<p class="text-4xl font-black text-slate-900 dark:text-white tracking-tight">2</p>
+<p class="text-sm text-slate-500 dark:text-slate-400 font-medium">Great job on your progress.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Actions Bar -->
+<div class="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white dark:bg-card-dark p-2 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+<div class="flex items-center gap-2 pl-2 w-full sm:w-auto overflow-x-auto">
+<button class="flex items-center gap-1 px-3 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors font-medium text-sm whitespace-nowrap">
+<span class="material-symbols-outlined text-[20px]">sort</span>
+<span>Sort by Date</span>
+</button>
+<button class="flex items-center gap-1 px-3 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors font-medium text-sm whitespace-nowrap">
+<span class="material-symbols-outlined text-[20px]">filter_list</span>
+<span>Filter</span>
+</button>
+</div>
+<button class="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg shadow-primary/25 active:scale-95">
+<span class="material-symbols-outlined">add</span>
+<span>Add New Goal</span>
+</button>
+</div>
+<!-- Goals Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Goal Card 1: Emergency Fund (Pastel Blue) -->
+<div class="group relative flex flex-col gap-5 rounded-3xl bg-white dark:bg-card-dark p-6 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+<div class="absolute inset-0 bg-gradient-to-b from-blue-50/50 to-transparent dark:from-blue-900/10 rounded-3xl pointer-events-none"></div>
+<div class="relative flex justify-between items-start">
+<div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 text-3xl">
+                                ☔️
+                            </div>
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+<div class="relative flex flex-col gap-1">
+<h3 class="text-xl font-bold text-slate-900 dark:text-white leading-tight">Emergency Fund</h3>
+<p class="text-sm font-medium text-slate-500 dark:text-slate-400">Target: Dec 2024</p>
+</div>
+<div class="relative flex flex-col gap-2 mt-auto">
+<div class="flex justify-between items-end">
+<span class="text-2xl font-black text-slate-900 dark:text-white">$6,500</span>
+<span class="text-sm font-semibold text-slate-400">of $10,000</span>
+</div>
+<div class="h-3 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+<div class="h-full bg-blue-500 rounded-full w-[65%] transition-all duration-1000 ease-out group-hover:brightness-110"></div>
+</div>
+<div class="flex justify-between text-xs font-semibold text-blue-600 dark:text-blue-400 mt-1">
+<span>65% Saved</span>
+<span>35% Left</span>
+</div>
+</div>
+</div>
+<!-- Goal Card 2: Japan Trip (Pastel Pink) -->
+<div class="group relative flex flex-col gap-5 rounded-3xl bg-white dark:bg-card-dark p-6 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+<div class="absolute inset-0 bg-gradient-to-b from-pink-50/50 to-transparent dark:from-pink-900/10 rounded-3xl pointer-events-none"></div>
+<div class="relative flex justify-between items-start">
+<div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-pink-100 dark:bg-pink-900 text-pink-600 dark:text-pink-300 text-3xl">
+                                🍣
+                            </div>
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+<div class="relative flex flex-col gap-1">
+<h3 class="text-xl font-bold text-slate-900 dark:text-white leading-tight">Trip to Japan</h3>
+<p class="text-sm font-medium text-slate-500 dark:text-slate-400">Target: Jun 2025</p>
+</div>
+<div class="relative flex flex-col gap-2 mt-auto">
+<div class="flex justify-between items-end">
+<span class="text-2xl font-black text-slate-900 dark:text-white">$1,500</span>
+<span class="text-sm font-semibold text-slate-400">of $5,000</span>
+</div>
+<div class="h-3 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+<div class="h-full bg-pink-500 rounded-full w-[30%] transition-all duration-1000 ease-out group-hover:brightness-110"></div>
+</div>
+<div class="flex justify-between text-xs font-semibold text-pink-600 dark:text-pink-400 mt-1">
+<span>30% Saved</span>
+<span>70% Left</span>
+</div>
+</div>
+</div>
+<!-- Goal Card 3: Wedding Fund (Pastel Purple) -->
+<div class="group relative flex flex-col gap-5 rounded-3xl bg-white dark:bg-card-dark p-6 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+<div class="absolute inset-0 bg-gradient-to-b from-purple-50/50 to-transparent dark:from-purple-900/10 rounded-3xl pointer-events-none"></div>
+<div class="relative flex justify-between items-start">
+<div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300 text-3xl">
+                                💍
+                            </div>
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+<div class="relative flex flex-col gap-1">
+<h3 class="text-xl font-bold text-slate-900 dark:text-white leading-tight">Wedding Fund</h3>
+<p class="text-sm font-medium text-slate-500 dark:text-slate-400">Target: Aug 2025</p>
+</div>
+<div class="relative flex flex-col gap-2 mt-auto">
+<div class="flex justify-between items-end">
+<span class="text-2xl font-black text-slate-900 dark:text-white">$8,000</span>
+<span class="text-sm font-semibold text-slate-400">of $20,000</span>
+</div>
+<div class="h-3 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+<div class="h-full bg-purple-500 rounded-full w-[40%] transition-all duration-1000 ease-out group-hover:brightness-110"></div>
+</div>
+<div class="flex justify-between text-xs font-semibold text-purple-600 dark:text-purple-400 mt-1">
+<span>40% Saved</span>
+<span>60% Left</span>
+</div>
+</div>
+</div>
+<!-- Goal Card 4: New Car (Pastel Orange) -->
+<div class="group relative flex flex-col gap-5 rounded-3xl bg-white dark:bg-card-dark p-6 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+<div class="absolute inset-0 bg-gradient-to-b from-orange-50/50 to-transparent dark:from-orange-900/10 rounded-3xl pointer-events-none"></div>
+<div class="relative flex justify-between items-start">
+<div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300 text-3xl">
+                                🚗
+                            </div>
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+<div class="relative flex flex-col gap-1">
+<h3 class="text-xl font-bold text-slate-900 dark:text-white leading-tight">New Car</h3>
+<p class="text-sm font-medium text-slate-500 dark:text-slate-400">Target: Dec 2026</p>
+</div>
+<div class="relative flex flex-col gap-2 mt-auto">
+<div class="flex justify-between items-end">
+<span class="text-2xl font-black text-slate-900 dark:text-white">$500</span>
+<span class="text-sm font-semibold text-slate-400">of $15,000</span>
+</div>
+<div class="h-3 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+<div class="h-full bg-orange-500 rounded-full w-[3%] transition-all duration-1000 ease-out group-hover:brightness-110"></div>
+</div>
+<div class="flex justify-between text-xs font-semibold text-orange-600 dark:text-orange-400 mt-1">
+<span>3% Saved</span>
+<span>97% Left</span>
+</div>
+</div>
+</div>
+<!-- Goal Card 5: New Laptop (Completed!) -->
+<div class="group relative flex flex-col gap-5 rounded-3xl bg-gradient-to-br from-green-50 to-teal-50 dark:from-green-900/30 dark:to-teal-900/30 p-6 border-2 border-green-200 dark:border-green-700 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+<div class="absolute right-0 top-0 p-3">
+<span class="inline-flex items-center gap-1 rounded-full bg-green-100 dark:bg-green-800/50 px-3 py-1 text-xs font-bold text-green-700 dark:text-green-300">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+                                Done
+                             </span>
+</div>
+<div class="relative flex justify-between items-start">
+<div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-green-200 dark:bg-green-800 text-green-700 dark:text-green-200 text-3xl shadow-inner">
+                                💻
+                            </div>
+</div>
+<div class="relative flex flex-col gap-1">
+<h3 class="text-xl font-bold text-slate-900 dark:text-white leading-tight">New Laptop</h3>
+<p class="text-sm font-medium text-green-600 dark:text-green-300">Completed on Jan 15</p>
+</div>
+<div class="relative flex flex-col gap-2 mt-auto">
+<div class="flex justify-between items-end">
+<span class="text-2xl font-black text-slate-900 dark:text-white">$2,500</span>
+<span class="text-sm font-semibold text-green-600 dark:text-green-300">of $2,500</span>
+</div>
+<div class="h-3 w-full bg-white dark:bg-slate-700 rounded-full overflow-hidden border border-green-100 dark:border-green-800">
+<div class="h-full bg-green-500 rounded-full w-full"></div>
+</div>
+<div class="flex justify-center text-xs font-bold text-green-700 dark:text-green-300 mt-1">
+<span>🎉 Goal Achieved!</span>
+</div>
+</div>
+</div>
+<!-- Goal Card 6: House Downpayment (Pastel Indigo) -->
+<div class="group relative flex flex-col gap-5 rounded-3xl bg-white dark:bg-card-dark p-6 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+<div class="absolute inset-0 bg-gradient-to-b from-indigo-50/50 to-transparent dark:from-indigo-900/10 rounded-3xl pointer-events-none"></div>
+<div class="relative flex justify-between items-start">
+<div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 text-3xl">
+                                🏠
+                            </div>
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+<div class="relative flex flex-col gap-1">
+<h3 class="text-xl font-bold text-slate-900 dark:text-white leading-tight">House Fund</h3>
+<p class="text-sm font-medium text-slate-500 dark:text-slate-400">Target: Jan 2028</p>
+</div>
+<div class="relative flex flex-col gap-2 mt-auto">
+<div class="flex justify-between items-end">
+<span class="text-2xl font-black text-slate-900 dark:text-white">$250</span>
+<span class="text-sm font-semibold text-slate-400">of $40,000</span>
+</div>
+<div class="h-3 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+<div class="h-full bg-indigo-500 rounded-full w-[1%] transition-all duration-1000 ease-out group-hover:brightness-110"></div>
+</div>
+<div class="flex justify-between text-xs font-semibold text-indigo-600 dark:text-indigo-400 mt-1">
+<span>1% Saved</span>
+<span>Long way to go!</span>
+</div>
+</div>
+</div>
+<!-- Add New Goal Empty State Card -->
+<button class="group flex flex-col items-center justify-center gap-4 rounded-3xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-card-dark/30 p-6 hover:border-primary hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all duration-300 min-h-[250px]">
+<div class="flex h-16 w-16 items-center justify-center rounded-full bg-white dark:bg-slate-800 text-slate-400 group-hover:text-primary group-hover:scale-110 transition-all shadow-sm">
+<span class="material-symbols-outlined text-3xl">add</span>
+</div>
+<div class="text-center">
+<h3 class="text-lg font-bold text-slate-600 dark:text-slate-300 group-hover:text-primary">Create New Goal</h3>
+<p class="text-sm font-medium text-slate-400 max-w-[200px] mx-auto mt-1">Start saving for your next big dream today.</p>
+</div>
+</button>
+</div>
+</div>
+</main>
+</div>
+</body></html>

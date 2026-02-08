@@ -1,18 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { format } from 'date-fns';
-import { ArrowUpIcon, ArrowDownIcon, MoreHorizontal, Eye, Edit } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { format, isToday, isYesterday, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,26 +11,28 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { 
+import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
+
 } from '@/components/ui/dialog';
 import { TransactionEditForm } from './transaction-edit-form';
 import { TransactionDeleteMenuItem } from './transaction-delete-dialog';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { type Transaction } from '@/lib/types/transaction';
-import { type Account } from '@/lib/types/account';
+import { type AccountResponse } from '@/lib/types/account';
 import { type Category } from '@/lib/types/category';
 import { cn } from '@/lib/utils';
 import { useModalManager } from '@/lib/hooks/use-modal-manager';
+import { useTransactions } from '@/lib/hooks/use-transactions';
+import { useAccounts } from '@/lib/hooks/use-accounts';
+import { useCategories } from '@/lib/hooks/use-categories';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface TransactionListProps {
   accountId?: string;
   categoryId?: string;
+  type?: 'income' | 'expense' | 'all';
   limit?: number;
   onEdit?: (transaction: Transaction) => void;
   onDelete?: (transaction: Transaction) => void;
@@ -49,104 +41,70 @@ interface TransactionListProps {
 }
 
 interface EnrichedTransaction extends Transaction {
-  account?: Account;
+  account?: AccountResponse;
   category?: Category;
 }
 
 export function TransactionList({
   accountId,
   categoryId,
+  type = 'all',
   limit = 50,
   onEdit,
-  onDelete,
   onView,
   className
 }: TransactionListProps) {
-  const [transactions, setTransactions] = useState<EnrichedTransaction[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
-  
-  // Use modal manager to handle pointer events cleanup
+  const queryClient = useQueryClient();
+
   const { restorePointerEvents } = useModalManager(!!editingTransaction);
-  
-  // Create lookup maps for enriched data
-  const [accounts, setAccounts] = useState<Record<string, Account>>({});
-  const [categories, setCategories] = useState<Record<string, Category>>({});
 
-  // Load transactions with filters
-  const loadTransactions = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
+  // Use React Query hooks for cached data fetching
+  const {
+    data: transactionsData,
+    isLoading: isLoadingTransactions,
+    error: transactionsError,
+    refetch: refetchTransactions
+  } = useTransactions({ accountId, categoryId, type, limit });
 
-      // Build query parameters
-      const params = new URLSearchParams();
-      if (accountId) params.set('accountId', accountId);
-      if (categoryId) params.set('categoryId', categoryId);
-      params.set('limit', limit.toString());
+  const { data: accounts = [] } = useAccounts();
+  const { data: categories = [] } = useCategories();
 
-      // Load transactions, accounts, and categories in parallel
-      const [transactionsResponse, accountsResponse, categoriesResponse] = await Promise.all([
-        fetch(`/api/transactions?${params}`),
-        fetch('/api/accounts'),
-        fetch('/api/categories')
-      ]);
+  // Build lookup maps for enriching transactions
+  const accountsMap = useMemo(() => {
+    const map: Record<string, AccountResponse> = {};
+    accounts.forEach((account) => {
+      map[account.id] = account;
+    });
+    return map;
+  }, [accounts]);
 
-      if (!transactionsResponse.ok) {
-        throw new Error('Failed to load transactions');
-      }
+  const categoriesMap = useMemo(() => {
+    const map: Record<string, Category> = {};
+    categories.forEach((category) => {
+      map[category.id] = category;
+    });
+    return map;
+  }, [categories]);
 
-      const [transactionsData, accountsData, categoriesData] = await Promise.all([
-        transactionsResponse.json(),
-        accountsResponse.ok ? accountsResponse.json() : { accounts: [] },
-        categoriesResponse.ok ? categoriesResponse.json() : { categories: [] }
-      ]);
+  // Enrich transactions with account and category data
+  const transactions: EnrichedTransaction[] = useMemo(() => {
+    const rawTransactions = transactionsData?.transactions || [];
+    return rawTransactions.map((transaction: Transaction) => ({
+      ...transaction,
+      account: accountsMap[transaction.accountId],
+      category: categoriesMap[transaction.categoryId],
+    }));
+  }, [transactionsData, accountsMap, categoriesMap]);
 
-      // Create lookup maps for accounts and categories
-      const accountsMap: Record<string, Account> = {};
-      const categoriesMap: Record<string, Category> = {};
-
-      accountsData.accounts?.forEach((account: Account) => {
-        accountsMap[account.id] = account;
-      });
-
-      categoriesData.categories?.forEach((category: Category) => {
-        categoriesMap[category.id] = category;
-      });
-
-      setAccounts(accountsMap);
-      setCategories(categoriesMap);
-
-      // Enrich transactions with account and category data
-      const enrichedTransactions: EnrichedTransaction[] = transactionsData.transactions.map(
-        (transaction: Transaction) => ({
-          ...transaction,
-          account: accountsMap[transaction.accountId],
-          category: categoriesMap[transaction.categoryId],
-        })
-      );
-
-      setTransactions(enrichedTransactions);
-    } catch (error) {
-      console.error('Error loading transactions:', error);
-      setError(error instanceof Error ? error.message : 'Failed to load transactions');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [accountId, categoryId, limit]);
-
-  useEffect(() => {
-    loadTransactions();
-  }, [loadTransactions]);
+  const isLoading = isLoadingTransactions;
+  const error = transactionsError instanceof Error ? transactionsError.message : null;
 
   const handleEditSuccess = () => {
     setEditingTransaction(null);
     restorePointerEvents();
-    // Small delay to ensure modal cleanup before reloading
-    setTimeout(() => {
-      loadTransactions();
-    }, 100);
+    // React Query will auto-invalidate via the mutation hooks
+    queryClient.invalidateQueries({ queryKey: ['transactions'] });
   };
 
   const handleEditCancel = () => {
@@ -155,7 +113,39 @@ export function TransactionList({
   };
 
   const handleDeleteSuccess = () => {
-    loadTransactions();
+    // React Query will auto-invalidate via the mutation hooks
+    queryClient.invalidateQueries({ queryKey: ['transactions'] });
+  };
+
+  const groupedTransactions = useMemo(() => {
+    const groups: Record<string, EnrichedTransaction[]> = {};
+
+    transactions.forEach((transaction) => {
+      const dateVal = transaction.transactionDate as unknown;
+      let dateStr = '';
+
+      if (dateVal instanceof Date) {
+        dateStr = dateVal.toISOString().split('T')[0];
+      } else if (typeof dateVal === 'string') {
+        dateStr = dateVal.split('T')[0];
+      }
+
+      if (dateStr) {
+        if (!groups[dateStr]) {
+          groups[dateStr] = [];
+        }
+        groups[dateStr].push(transaction);
+      }
+    });
+
+    return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
+  }, [transactions]);
+
+  const formatDateLabel = (dateStr: string) => {
+    const date = parseISO(dateStr);
+    if (isToday(date)) return "Today";
+    if (isYesterday(date)) return "Yesterday";
+    return format(date, 'EEEE, d MMMM');
   };
 
   const formatAmount = (amount: string): string => {
@@ -163,6 +153,8 @@ export function TransactionList({
     const formatter = new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     });
     return formatter.format(Math.abs(numAmount));
   };
@@ -171,211 +163,179 @@ export function TransactionList({
     return parseFloat(amount) > 0;
   };
 
-  const getTransactionIcon = (amount: string) => {
-    return isIncome(amount) ? (
-      <ArrowUpIcon className="h-4 w-4 text-green-600" />
-    ) : (
-      <ArrowDownIcon className="h-4 w-4 text-red-600" />
-    );
-  };
-
-  const getAmountColor = (amount: string) => {
-    return isIncome(amount) ? 'text-green-600' : 'text-red-600';
-  };
-
-  // Suppress unused parameter warnings for optional callbacks
-  void onDelete;
-  void accounts;
-  void categories;
-
   if (isLoading) {
     return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle>Transactions</CardTitle>
-          <CardDescription>Your recent financial transactions</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex items-center space-x-4">
-                <Skeleton className="h-10 w-10 rounded-full" />
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-[200px]" />
-                  <Skeleton className="h-4 w-[100px]" />
+      <div className={cn("space-y-10", className)}>
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="space-y-6">
+            <Skeleton className="h-6 w-32 rounded-full bg-slate-100 dark:bg-slate-800" />
+            <div className="space-y-4">
+              {Array.from({ length: 2 }).map((_, j) => (
+                <div key={j} className="flex items-center gap-4 p-5 bg-white dark:bg-slate-900 rounded-[32px] border border-slate-100 dark:border-slate-800">
+                  <Skeleton className="h-14 w-14 rounded-2xl" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-5 w-48" />
+                    <Skeleton className="h-4 w-32" />
+                  </div>
+                  <Skeleton className="h-7 w-24 rounded-lg" />
                 </div>
-                <Skeleton className="h-4 w-[80px] ml-auto" />
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        ))}
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle>Transactions</CardTitle>
-          <CardDescription>Your recent financial transactions</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8">
-            <p className="text-destructive">{error}</p>
-            <Button 
-              variant="outline" 
-              onClick={() => loadTransactions()}
-              className="mt-4"
-            >
-              Try Again
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className={cn("flex flex-col items-center justify-center py-24 bg-white dark:bg-slate-900 rounded-[40px] border border-slate-100 dark:border-slate-800 shadow-sm", className)}>
+        <div className="w-20 h-20 rounded-3xl bg-rose-50 text-rose-500 flex items-center justify-center mb-6">
+          <span className="material-symbols-outlined text-4xl">error</span>
+        </div>
+        <h3 className="text-2xl font-black mb-2 tracking-tight">Something went wrong</h3>
+        <p className="text-muted-foreground mb-8 font-medium text-center max-w-sm">{error}</p>
+        <Button
+          variant="outline"
+          onClick={() => refetchTransactions()}
+          className="h-12 px-8 rounded-2xl font-black uppercase tracking-widest border-2 hover:bg-slate-50 transition-all"
+        >
+          Try Again
+        </Button>
+      </div>
     );
   }
 
   if (transactions.length === 0) {
     return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle>Transactions</CardTitle>
-          <CardDescription>Your recent financial transactions</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8">
-            <div className="text-muted-foreground mb-4">
-              <ArrowUpIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            </div>
-            <h3 className="text-lg font-medium mb-2">No transactions found</h3>
-            <p className="text-muted-foreground">
-              {accountId || categoryId 
-                ? "No transactions match your current filters."
-                : "Start by adding your first transaction to track your finances."
-              }
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className={cn("flex flex-col items-center justify-center py-32 bg-white dark:bg-slate-900 rounded-[48px] border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden", className)}>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32" />
+        <div className="w-24 h-24 rounded-[36px] bg-slate-50 dark:bg-slate-800 flex items-center justify-center mb-8 relative z-10">
+          <span className="material-symbols-outlined text-muted-foreground text-5xl">receipt_long</span>
+        </div>
+        <h3 className="text-3xl font-black mb-3 tracking-tight relative z-10">No transactions yet</h3>
+        <p className="text-slate-500 max-w-xs text-center font-medium leading-relaxed relative z-10">
+          Your financial story begins here. Add your first transaction to start tracking.
+        </p>
+      </div>
     );
   }
 
   return (
-    <>
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Transactions</span>
-            <Badge variant="secondary">{transactions.length} transactions</Badge>
-          </CardTitle>
-          <CardDescription>Your recent financial transactions</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Type</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Account</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead className="w-[50px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {transactions.map((transaction) => (
-                <TableRow key={transaction.id} className="cursor-pointer">
-                  <TableCell className="w-[50px]">
-                    {getTransactionIcon(transaction.amount)}
-                  </TableCell>
-                  <TableCell className="max-w-[200px]">
-                    <div className="flex flex-col">
-                      <span className="font-medium truncate">{transaction.description}</span>
-                      {transaction.isRecurring && (
-                        <Badge variant="outline" className="text-xs w-fit">
-                          Recurring
-                        </Badge>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-muted-foreground">
-                      {transaction.account?.name || 'Unknown Account'}
+    <div className={cn("space-y-8", className)}>
+      {groupedTransactions.map(([date, transactions]) => (
+        <div key={date} className="space-y-4">
+          <div className="flex items-center gap-4 px-2">
+            <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">
+              {formatDateLabel(date)}
+            </h3>
+            <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
+          </div>
+          <div className="grid gap-3">
+            {transactions.map((transaction) => (
+              <div
+                key={transaction.id}
+                className="group flex items-center gap-4 p-4 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-[28px] border border-slate-100 dark:border-slate-800 transition-all cursor-pointer relative overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98]"
+              >
+                {/* Category Icon */}
+                <div
+                  className="w-12 h-12 rounded-[18px] flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-110"
+                  style={{ backgroundColor: `${transaction.category?.color}15` }}
+                >
+                  <span
+                    className="material-symbols-outlined text-xl"
+                    style={{ color: transaction.category?.color || '#94a3b8' }}
+                  >
+                    {transaction.category?.icon || 'payments'}
+                  </span>
+                </div>
+
+                {/* Details */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <h4 className="font-black text-slate-900 dark:text-white truncate text-sm">{transaction.description}</h4>
+                    {transaction.isRecurring && (
+                      <div className="w-4 h-4 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-[10px] text-primary font-bold">sync</span>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-500 font-black uppercase tracking-wider flex items-center gap-2">
+                    {transaction.account?.name}
+                    <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
+                    {transaction.category?.name}
+                  </p>
+                </div>
+
+                {/* Amount */}
+                <div className="text-right flex flex-col items-end gap-0.5">
+                  <span className={cn(
+                    "text-lg font-black tracking-tight",
+                    isIncome(transaction.amount) ? "text-emerald-500" : "text-slate-900 dark:text-white"
+                  )}>
+                    {isIncome(transaction.amount) ? "+" : "-"}{formatAmount(transaction.amount)}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] text-slate-400 font-black uppercase tracking-wider">
+                      {format(new Date(transaction.transactionDate), 'hh:mm a')}
                     </span>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {transaction.category && (
-                        <>
-                          <div 
-                            className="w-3 h-3 rounded-full" 
-                            style={{ backgroundColor: transaction.category.color }}
-                          />
-                          <span className="text-sm">{transaction.category.name}</span>
-                        </>
-                      )}
-                      {!transaction.category && (
-                        <span className="text-muted-foreground text-sm">No Category</span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-muted-foreground text-sm">
-                      {format(new Date(transaction.transactionDate), 'MMM d, yyyy')}
-                    </span>
-                  </TableCell>
-                  <TableCell className={cn("text-right font-medium", getAmountColor(transaction.amount))}>
-                    {formatAmount(transaction.amount)}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        {onView && (
-                          <DropdownMenuItem onClick={() => onView(transaction)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            View Details
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem onClick={() => {
-                          if (onEdit) {
-                            onEdit(transaction);
-                          } else {
-                            setEditingTransaction(transaction);
-                          }
-                        }}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit
+                    {transaction.receiptUrl && (
+                      <span className="material-symbols-outlined text-[12px] text-slate-300">attach_file</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Dropdown Menu (only visible on hover or mobile) */}
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="w-10 h-10 rounded-xl hover:bg-slate-200/50">
+                        <span className="material-symbols-outlined text-slate-400">more_vert</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="rounded-2xl p-1.5 border-slate-100 dark:border-slate-800 shadow-2xl min-w-[160px]">
+                      <DropdownMenuLabel className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                        Transaction
+                      </DropdownMenuLabel>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          if (onEdit) onEdit(transaction);
+                          else setEditingTransaction(transaction);
+                        }}
+                        className="rounded-xl font-bold flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-slate-50"
+                      >
+                        <span className="material-symbols-outlined text-[20px] text-slate-400">edit_square</span>
+                        Edit
+                      </DropdownMenuItem>
+                      {onView && (
+                        <DropdownMenuItem
+                          onClick={() => onView(transaction)}
+                          className="rounded-xl font-bold flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-slate-50"
+                        >
+                          <span className="material-symbols-outlined text-[20px] text-slate-400">visibility</span>
+                          Details
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <TransactionDeleteMenuItem
-                          transaction={transaction}
-                          accountName={transaction.account?.name}
-                          categoryName={transaction.category?.name}
-                          onSuccess={handleDeleteSuccess}
-                        />
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                      )}
+                      <DropdownMenuSeparator className="my-1.5 bg-slate-50 dark:bg-slate-800" />
+                      <TransactionDeleteMenuItem
+                        transaction={transaction}
+                        accountName={transaction.account?.name}
+                        categoryName={transaction.category?.name}
+                        onSuccess={handleDeleteSuccess}
+                      />
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
 
       {/* Edit Transaction Dialog */}
-      <Dialog 
+      <Dialog
         key={editingTransaction?.id || 'edit-dialog'}
-        open={!!editingTransaction} 
+        open={!!editingTransaction}
         onOpenChange={(open) => {
           if (!open) {
             setEditingTransaction(null);
@@ -384,24 +344,20 @@ export function TransactionList({
         }}
         modal={true}
       >
-        <DialogContent className="sm:max-w-3xl lg:max-w-4xl max-h-[90vh]">
-          <DialogHeader>
-            <DialogTitle>Edit Transaction</DialogTitle>
-            <DialogDescription>
-              Update the details of this transaction
-            </DialogDescription>
-          </DialogHeader>
-          {editingTransaction && (
-            <TransactionEditForm
-              key={editingTransaction.id}
-              transaction={editingTransaction}
-              onSuccess={handleEditSuccess}
-              onCancel={handleEditCancel}
-              isModal={true}
-            />
-          )}
+        <DialogContent className="max-w-[95vw] sm:max-w-4xl lg:max-w-6xl max-h-[90vh] overflow-visible border-none p-0 rounded-[48px] shadow-2xl bg-transparent">
+          <div className="scrollbar-hide overflow-visible">
+            {editingTransaction && (
+              <TransactionEditForm
+                key={editingTransaction.id}
+                transaction={editingTransaction}
+                onSuccess={handleEditSuccess}
+                onCancel={handleEditCancel}
+                isModal={true}
+              />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }

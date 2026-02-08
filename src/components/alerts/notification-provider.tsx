@@ -70,31 +70,40 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
       }
     }
 
-    // Load user preferences from local storage or API
+    // Load preferences from localStorage immediately (fast)
+    const saved = localStorage.getItem('notification-preferences');
+    if (saved) {
+      try {
+        setPreferences(JSON.parse(saved));
+      } catch (error) {
+        console.error('Failed to parse saved preferences:', error);
+      }
+    }
+
+    // Lazy load from API in background (don't block render)
     loadPreferences();
   }, []);
 
   const loadPreferences = async () => {
     try {
-      // Try to load from API first
+      // Load from API in background, update if different from localStorage
       const response = await fetch('/api/user/notification-preferences');
       if (response.ok) {
         const data = await response.json();
-        setPreferences(data.preferences);
-      } else {
-        // Fallback to localStorage
-        const saved = localStorage.getItem('notification-preferences');
-        if (saved) {
-          setPreferences(JSON.parse(saved));
-        }
+        const newPrefs = data.preferences;
+        
+        // Only update if different from current state
+        setPreferences(prev => {
+          if (JSON.stringify(prev) !== JSON.stringify(newPrefs)) {
+            localStorage.setItem('notification-preferences', JSON.stringify(newPrefs));
+            return newPrefs;
+          }
+          return prev;
+        });
       }
     } catch (error) {
       console.error('Failed to load notification preferences:', error);
-      // Use localStorage as fallback
-      const saved = localStorage.getItem('notification-preferences');
-      if (saved) {
-        setPreferences(JSON.parse(saved));
-      }
+      // Silent fail - we already have localStorage data
     }
   };
 

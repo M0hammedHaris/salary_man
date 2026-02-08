@@ -1,5 +1,9 @@
-"use client";
 
+import {
+  getRecurringPayments,
+  getRecurringPaymentAnalysis,
+  getMissedPayments
+} from '@/lib/actions/recurring-payments';
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useUser } from '@clerk/nextjs';
@@ -39,43 +43,28 @@ export function RecurringPaymentCenter({ className: _className }: RecurringPayme
   const [showAmounts, setShowAmounts] = useState(true);
 
   // Fetch recurring payments
-  const { data: payments, isLoading, error, refetch } = useQuery<RecurringPaymentWithPatterns[]>({
+  const { data: paymentsData, isLoading, error, refetch } = useQuery({
     queryKey: ['recurring-payments'],
-    queryFn: async () => {
-      const response = await fetch('/api/recurring-payments');
-      if (!response.ok) {
-        throw new Error('Failed to fetch recurring payments');
-      }
-      return response.json();
-    },
+    queryFn: async () => getRecurringPayments(),
     enabled: !!user,
   });
+  const payments = paymentsData?.recurringPayments as RecurringPaymentWithPatterns[] | undefined;
 
   // Fetch cost analysis
-  const { data: costAnalysis } = useQuery<CostAnalysis>({
+  const { data: costAnalysisData } = useQuery({
     queryKey: ['recurring-payments-analysis'],
-    queryFn: async () => {
-      const response = await fetch('/api/recurring-payments/analysis');
-      if (!response.ok) {
-        throw new Error('Failed to fetch cost analysis');
-      }
-      return response.json();
-    },
+    queryFn: async () => getRecurringPaymentAnalysis(),
     enabled: !!user,
   });
+  const costAnalysis = costAnalysisData?.costAnalysis as CostAnalysis | undefined;
 
   // Fetch missed payments
-  const { data: missedPayments } = useQuery<MissedPaymentAlert[]>({
+  const { data: missedPaymentsData } = useQuery({
     queryKey: ['missed-payments'],
-    queryFn: async () => {
-      const response = await fetch('/api/recurring-payments/missed');
-      if (!response.ok) {
-        throw new Error('Failed to fetch missed payments');
-      }
-      return response.json();
-    },
+    queryFn: async () => getMissedPayments(),
     enabled: !!user,
   });
+  const missedPayments = missedPaymentsData?.missedPayments as MissedPaymentAlert[] | undefined;
 
   if (isLoading) {
     return (
@@ -270,7 +259,7 @@ export function RecurringPaymentCenter({ className: _className }: RecurringPayme
                             <span>Every {payment.frequency}</span>
                             <Separator orientation="vertical" className="h-4" />
                             <span>
-                              Next: {payment.nextDueDate 
+                              Next: {payment.nextDueDate
                                 ? new Date(payment.nextDueDate).toLocaleDateString()
                                 : 'Not scheduled'
                               }

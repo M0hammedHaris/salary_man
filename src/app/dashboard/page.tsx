@@ -3,12 +3,12 @@ import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { BreadcrumbNavigation } from '@/components/layout/breadcrumb-navigation';
 import { getDashboardData } from '@/lib/services/dashboard';
+import { NetWorthCard } from '@/components/dashboard/net-worth-card';
 import { FinancialHealthScore } from '@/components/dashboard/financial-health-score';
 import { AccountBalanceSummary } from '@/components/dashboard/account-balance-summary';
 import { CreditCardUtilization } from '@/components/dashboard/credit-card-utilization';
 import { RecentTransactions } from '@/components/dashboard/recent-transactions';
 import { AlertNotificationPanel } from '@/components/dashboard/alert-notification-panel';
-import { QuickActionFloatingButton } from '@/components/dashboard/quick-action-floating-button';
 import { DashboardSkeleton } from '@/components/dashboard/dashboard-skeleton';
 import { UpcomingBills } from '@/components/bills/upcoming-bills';
 import { RecurringPaymentInsights } from '@/components/dashboard/recurring-payment-insights';
@@ -21,60 +21,54 @@ async function DashboardContent({ userId }: { userId: string }) {
     const dashboardData = await getDashboardData(userId);
 
     return (
-      <div className="min-h-screen bg-background">
-        <main className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-8 lg:px-8">
-          <BreadcrumbNavigation className="mb-4 sm:mb-6" />
-          
-          {/* Mobile: Single column, Desktop: 3-column grid layout */}
-          <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
-            
-            {/* Left Column - Primary Metrics */}
-            <div className="lg:col-span-2 space-y-4 sm:space-y-6">
-              {/* Financial Health Score */}
-              <FinancialHealthScore
-                score={dashboardData.financialHealthScore.score}
-                trend={dashboardData.financialHealthScore.trend}
-                explanation={dashboardData.financialHealthScore.explanation}
+      <div className="bg-background min-h-screen">
+        <main className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">
+
+          {/* Dashboard Grid - Optimized Layout */}
+          <div className="space-y-6">
+
+            {/* Top Row - Net Worth & Credit Utilization */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Net Worth Card */}
+              <NetWorthCard
+                totalNetWorth={dashboardData.accountSummary.totalBalance}
+                changePercentage={0} // TODO: Calculate from historical data
               />
 
-              {/* Account Balance Summary */}
-              <AccountBalanceSummary
-                totalBalance={dashboardData.accountSummary.totalBalance}
-                checkingBalance={dashboardData.accountSummary.checkingBalance}
-                savingsBalance={dashboardData.accountSummary.savingsBalance}
-                creditCardBalance={dashboardData.accountSummary.creditCardBalance}
-                accounts={dashboardData.accountSummary.accounts}
-              />
-
-              {/* Recent Transactions */}
-              <RecentTransactions transactions={dashboardData.recentTransactions} />
+              {/* Credit Card Utilization */}
+              <CreditCardUtilization creditCards={dashboardData.creditCardUtilization} />
             </div>
 
-            {/* Right Column - Secondary Metrics & Alerts */}
-            <div className="space-y-4 sm:space-y-6">
+            {/* Second Row - Upcoming Bills & Recurring Payments */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Upcoming Bills */}
+              <UpcomingBills />
+
+              {/* Recurring Payment Insights */}
+              <RecurringPaymentInsights userId={userId} />
+            </div>
+
+            {/* Account Balance Summary */}
+            <AccountBalanceSummary
+              accounts={dashboardData.accountSummary.accounts}
+            />
+
+            {/* Recent Transactions */}
+            <RecentTransactions transactions={dashboardData.recentTransactions} />
+
+            {/* Bottom Row - Quick Access Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Analytics Quick Access */}
               <AnalyticsQuickAccess />
 
               {/* Savings Goals Quick Access */}
               <SavingsQuickAccess />
-
-              {/* Recurring Payment Insights */}
-              <RecurringPaymentInsights userId={userId} />
-
-              {/* Upcoming Bills */}
-              <UpcomingBills />
-
-              {/* Credit Card Utilization */}
-              <CreditCardUtilization creditCards={dashboardData.creditCardUtilization} />
-
-              {/* Alert Notification Panel */}
-              <AlertNotificationPanel alerts={dashboardData.alerts} />
             </div>
+
+            {/* Alert Notification Panel */}
+            <AlertNotificationPanel alerts={dashboardData.alerts} />
           </div>
         </main>
-
-        {/* Quick Action Floating Button */}
-        <QuickActionFloatingButton />
       </div>
     );
   } catch (error) {

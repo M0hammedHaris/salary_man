@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
     const queryParams = {
       accountId: searchParams.get('accountId') || undefined,
       categoryId: searchParams.get('categoryId') || undefined,
+      type: searchParams.get('type') || undefined,
       startDate: searchParams.get('startDate') || undefined,
       endDate: searchParams.get('endDate') || undefined,
       limit: searchParams.get('limit') || undefined,
@@ -35,6 +36,7 @@ export async function GET(request: NextRequest) {
     const filters = {
       accountId: validatedQuery.accountId,
       categoryId: validatedQuery.categoryId,
+      type: validatedQuery.type,
       startDate: validatedQuery.startDate ? new Date(validatedQuery.startDate) : undefined,
       endDate: validatedQuery.endDate ? new Date(validatedQuery.endDate) : undefined,
       limit: validatedQuery.limit,

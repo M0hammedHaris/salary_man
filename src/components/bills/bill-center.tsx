@@ -7,11 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -20,6 +20,8 @@ import { BillReminderSettings } from './bill-reminder-settings';
 import { PaymentConfirmation } from './payment-confirmation';
 import { displayCurrency } from '@/lib/utils/currency';
 import { formatDistanceToNow, isAfter, isBefore, addDays } from 'date-fns';
+import { getUserBills, deleteBill } from '@/lib/actions/bills';
+import { getBillDashboardSummary } from '@/lib/actions/dashboard';
 
 interface Bill {
   id: string;
@@ -40,17 +42,6 @@ interface Bill {
   };
 }
 
-interface BillDashboard {
-  upcomingBills: number;
-  overdueBills: number;
-  totalAmountDue: string;
-  nextBillDue?: {
-    name: string;
-    amount: string;
-    dueDate: string;
-    daysUntilDue: number;
-  };
-}
 
 export function BillCenter() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -63,21 +54,21 @@ export function BillCenter() {
   const { data: bills, isLoading: billsLoading, error: billsError, refetch: refetchBills } = useQuery({
     queryKey: ['bills'],
     queryFn: async () => {
-      const response = await fetch('/api/bills');
-      if (!response.ok) throw new Error('Failed to fetch bills');
-      return response.json() as Promise<Bill[]>;
+      const { bills } = await getUserBills();
+      // Ensure dates are strings or Date objects as expected by the interface
+      return bills as unknown as Bill[];
     },
   });
 
   // Fetch dashboard summary
-  const { data: dashboard, isLoading: dashboardLoading } = useQuery({
+  const { data: dashboardData, isLoading: dashboardLoading } = useQuery({
     queryKey: ['bills-dashboard'],
     queryFn: async () => {
-      const response = await fetch('/api/bills/dashboard');
-      if (!response.ok) throw new Error('Failed to fetch dashboard');
-      return response.json() as Promise<BillDashboard>;
+      return await getBillDashboardSummary();
     },
   });
+
+  const dashboard = dashboardData?.summary;
 
   const handleEditBill = (bill: Bill) => {
     setEditingBill(bill);
@@ -86,12 +77,7 @@ export function BillCenter() {
 
   const handleDeleteBill = async (billId: string) => {
     try {
-      const response = await fetch(`/api/bills/${billId}`, {
-        method: 'DELETE',
-      });
-      
-      if (!response.ok) throw new Error('Failed to delete bill');
-      
+      await deleteBill(billId);
       refetchBills();
     } catch (error) {
       console.error('Error deleting bill:', error);
@@ -106,11 +92,11 @@ export function BillCenter() {
     if (bill.status === 'overdue' || isBefore(dueDate, today)) {
       return { variant: 'destructive' as const, label: 'Overdue' };
     }
-    
+
     if (isBefore(dueDate, threeDaysFromNow)) {
       return { variant: 'secondary' as const, label: 'Due Soon' };
     }
-    
+
     return { variant: 'outline' as const, label: 'Scheduled' };
   };
 
@@ -214,8 +200,8 @@ export function BillCenter() {
               <>
                 <div className="text-lg font-semibold">{dashboard.nextBillDue.name}</div>
                 <p className="text-xs text-muted-foreground">
-                  {dashboard.nextBillDue.daysUntilDue === 0 
-                    ? 'Due today' 
+                  {dashboard.nextBillDue.daysUntilDue === 0
+                    ? 'Due today'
                     : `${dashboard.nextBillDue.daysUntilDue} days`}
                 </p>
               </>
@@ -228,7 +214,7 @@ export function BillCenter() {
 
       {/* Bills Management */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList>
+        <TabsList className="justify-start w-full overflow-x-auto">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
           <TabsTrigger value="overdue">Overdue</TabsTrigger>
@@ -302,7 +288,7 @@ export function BillCenter() {
         </TabsContent>
 
         <TabsContent value="upcoming" className="space-y-4">
-          <BillsList 
+          <BillsList
             bills={upcomingBills}
             title="Upcoming Bills"
             emptyMessage="No bills due in the next 7 days"
@@ -315,7 +301,7 @@ export function BillCenter() {
         </TabsContent>
 
         <TabsContent value="overdue" className="space-y-4">
-          <BillsList 
+          <BillsList
             bills={overdueBills}
             title="Overdue Bills"
             emptyMessage="No overdue bills"
@@ -328,7 +314,7 @@ export function BillCenter() {
         </TabsContent>
 
         <TabsContent value="all" className="space-y-4">
-          <BillsList 
+          <BillsList
             bills={bills || []}
             title="All Bills"
             emptyMessage="No bills found. Add your first bill to get started."
@@ -402,15 +388,15 @@ interface BillsListProps {
   loading: boolean;
 }
 
-function BillsList({ 
-  bills, 
-  title, 
-  emptyMessage, 
-  onEdit, 
-  onDelete, 
-  onMarkPaid, 
+function BillsList({
+  bills,
+  title,
+  emptyMessage,
+  onEdit,
+  onDelete,
+  onMarkPaid,
   onSettings,
-  loading 
+  loading
 }: BillsListProps) {
   const getBillStatus = (bill: Bill) => {
     const dueDate = new Date(bill.nextDueDate);
@@ -420,11 +406,11 @@ function BillsList({
     if (bill.status === 'overdue' || isBefore(dueDate, today)) {
       return { variant: 'destructive' as const, label: 'Overdue' };
     }
-    
+
     if (isBefore(dueDate, threeDaysFromNow)) {
       return { variant: 'secondary' as const, label: 'Due Soon' };
     }
-    
+
     return { variant: 'outline' as const, label: 'Scheduled' };
   };
 
@@ -509,7 +495,7 @@ function BillsList({
                   <DropdownMenuItem onClick={() => onSettings(bill.id)}>
                     Reminder Settings
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={() => onDelete(bill.id)}
                     className="text-destructive"
                   >

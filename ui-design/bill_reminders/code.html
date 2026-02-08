@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Bill Reminders - SalaryMan</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3c83f6",
+                        "background-light": "#f8f9fc",
+                        "background-dark": "#101722",
+                        "pastel-blue": "#e3f2fd",
+                        "pastel-green": "#e8f5e9",
+                        "pastel-yellow": "#fffde7",
+                        "pastel-red": "#ffebee",
+                        "pastel-purple": "#f3e5f5",
+                        "text-dark": "#0d131c",
+                        "text-muted": "#49699c",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "2xl": "2rem", "full": "9999px"},
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'glow': '0 0 15px rgba(60, 131, 246, 0.15)'
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen flex flex-col font-display text-text-dark dark:text-white transition-colors duration-200">
+<!-- Top Navigation -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#e7ecf4] dark:border-gray-800 bg-white dark:bg-[#151f2e] px-10 py-4 sticky top-0 z-50 shadow-sm">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-4 text-primary">
+<div class="size-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-2xl">account_balance_wallet</span>
+</div>
+<h2 class="text-text-dark dark:text-white text-xl font-extrabold leading-tight tracking-[-0.015em]">SalaryMan</h2>
+</div>
+<label class="hidden md:flex flex-col min-w-40 !h-10 max-w-64 group">
+<div class="flex w-full flex-1 items-stretch rounded-xl h-full border border-transparent focus-within:border-primary/50 transition-colors">
+<div class="text-text-muted flex border-none bg-background-light dark:bg-gray-800 items-center justify-center pl-4 rounded-l-xl border-r-0">
+<span class="material-symbols-outlined text-xl">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-text-dark dark:text-white focus:outline-0 focus:ring-0 border-none bg-background-light dark:bg-gray-800 focus:border-none h-full placeholder:text-text-muted px-4 rounded-l-none border-l-0 pl-2 text-sm font-medium leading-normal" placeholder="Search bills, providers..." value=""/>
+</div>
+</label>
+</div>
+<div class="flex flex-1 justify-end gap-8">
+<nav class="hidden lg:flex items-center gap-9">
+<a class="text-text-muted hover:text-primary transition-colors text-sm font-bold leading-normal" href="#">Dashboard</a>
+<a class="text-text-muted hover:text-primary transition-colors text-sm font-bold leading-normal" href="#">Budget</a>
+<a class="text-primary text-sm font-bold leading-normal" href="#">Bills</a>
+<a class="text-text-muted hover:text-primary transition-colors text-sm font-bold leading-normal" href="#">Goals</a>
+</nav>
+<div class="flex gap-3">
+<button class="flex items-center justify-center overflow-hidden rounded-xl h-10 w-10 bg-background-light dark:bg-gray-800 text-text-dark dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+<span class="material-symbols-outlined text-xl">notifications</span>
+</button>
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 bg-primary text-white hover:bg-blue-600 transition-all text-sm font-bold leading-normal shadow-lg shadow-blue-500/20">
+<span class="truncate">Profile</span>
+</button>
+</div>
+</div>
+</header>
+<main class="flex-1 layout-container flex flex-col px-4 md:px-10 py-8 w-full max-w-[1440px] mx-auto">
+<!-- Header & Stats -->
+<div class="flex flex-col lg:flex-row gap-8 mb-10">
+<!-- Title & Add Button -->
+<div class="flex-1 flex flex-col gap-6 justify-center">
+<div class="flex flex-col gap-2">
+<h1 class="text-text-dark dark:text-white text-4xl md:text-5xl font-black leading-tight tracking-tight">Bill Reminders</h1>
+<p class="text-text-muted text-lg font-medium">Manage your upcoming payments and track your monthly spending.</p>
+</div>
+<div class="flex flex-wrap gap-4 mt-2">
+<button class="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl font-bold shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-0.5 transition-all">
+<span class="material-symbols-outlined">add</span>
+                        Add New Bill
+                    </button>
+<button class="flex items-center gap-2 px-6 py-3 bg-white dark:bg-gray-800 border border-[#e7ecf4] dark:border-gray-700 text-text-dark dark:text-white rounded-xl font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
+<span class="material-symbols-outlined">download</span>
+                        Export Report
+                    </button>
+</div>
+</div>
+<!-- Summary Stats Cards -->
+<div class="flex flex-wrap lg:flex-nowrap gap-4 lg:w-auto w-full">
+<!-- Total Due Card -->
+<div class="flex-1 min-w-[200px] p-6 rounded-2xl bg-white dark:bg-[#1a2634] border border-blue-100 dark:border-gray-800 shadow-soft relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-6xl text-primary">payments</span>
+</div>
+<p class="text-text-muted text-sm font-bold uppercase tracking-wider mb-2">Total Due This Week</p>
+<p class="text-text-dark dark:text-white text-3xl font-black tracking-tight">$1,240.50</p>
+<div class="mt-4 flex items-center gap-1 text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-lg w-fit text-xs font-bold">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+                        +12% vs last week
+                    </div>
+</div>
+<!-- Pending Bills Card -->
+<div class="flex-1 min-w-[200px] p-6 rounded-2xl bg-white dark:bg-[#1a2634] border border-orange-100 dark:border-gray-800 shadow-soft relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-6xl text-orange-500">pending_actions</span>
+</div>
+<p class="text-text-muted text-sm font-bold uppercase tracking-wider mb-2">Pending Bills</p>
+<p class="text-text-dark dark:text-white text-3xl font-black tracking-tight">3</p>
+<div class="mt-4 flex items-center gap-1 text-orange-600 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-lg w-fit text-xs font-bold">
+<span class="material-symbols-outlined text-sm">warning</span>
+                        2 Overdue
+                    </div>
+</div>
+<!-- Paid Card -->
+<div class="flex-1 min-w-[200px] p-6 rounded-2xl bg-white dark:bg-[#1a2634] border border-green-100 dark:border-gray-800 shadow-soft relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-6xl text-green-500">check_circle</span>
+</div>
+<p class="text-text-muted text-sm font-bold uppercase tracking-wider mb-2">Paid This Month</p>
+<p class="text-text-dark dark:text-white text-3xl font-black tracking-tight">$2,100.00</p>
+<div class="mt-4 flex items-center gap-1 text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-lg w-fit text-xs font-bold">
+<span class="material-symbols-outlined text-sm">thumb_up</span>
+                        On track
+                    </div>
+</div>
+</div>
+</div>
+<div class="flex flex-col xl:flex-row gap-8">
+<!-- Left Column: Calendar & Filters -->
+<div class="w-full xl:w-80 flex flex-col gap-6 shrink-0">
+<!-- Mini Calendar Widget -->
+<div class="bg-white dark:bg-[#151f2e] rounded-2xl p-6 shadow-soft border border-gray-100 dark:border-gray-800">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-bold text-lg dark:text-white">October 2023</h3>
+<div class="flex gap-1">
+<button class="size-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-text-dark dark:text-white transition-colors">
+<span class="material-symbols-outlined text-lg">chevron_left</span>
+</button>
+<button class="size-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-text-dark dark:text-white transition-colors">
+<span class="material-symbols-outlined text-lg">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- 7 Day Strip (Vertical on mobile, horizontal/grid here) -->
+<div class="grid grid-cols-7 gap-1 mb-2">
+<div class="text-center text-xs font-bold text-text-muted py-2">S</div>
+<div class="text-center text-xs font-bold text-text-muted py-2">M</div>
+<div class="text-center text-xs font-bold text-text-muted py-2">T</div>
+<div class="text-center text-xs font-bold text-text-muted py-2">W</div>
+<div class="text-center text-xs font-bold text-text-muted py-2">T</div>
+<div class="text-center text-xs font-bold text-text-muted py-2">F</div>
+<div class="text-center text-xs font-bold text-text-muted py-2">S</div>
+</div>
+<div class="grid grid-cols-7 gap-1">
+<!-- Example Calendar Days -->
+<button class="aspect-square flex flex-col items-center justify-center rounded-xl text-sm font-medium text-text-muted hover:bg-gray-50 dark:hover:bg-gray-800">22</button>
+<button class="aspect-square flex flex-col items-center justify-center rounded-xl text-sm font-medium text-text-muted hover:bg-gray-50 dark:hover:bg-gray-800 relative">
+                            23
+                            <span class="absolute bottom-1.5 size-1 rounded-full bg-green-500"></span>
+</button>
+<button class="aspect-square flex flex-col items-center justify-center rounded-xl text-sm font-bold bg-primary text-white shadow-lg shadow-blue-500/30">
+                            24
+                        </button>
+<button class="aspect-square flex flex-col items-center justify-center rounded-xl text-sm font-medium text-text-dark dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 relative">
+                            25
+                            <span class="absolute bottom-1.5 size-1 rounded-full bg-red-500"></span>
+</button>
+<button class="aspect-square flex flex-col items-center justify-center rounded-xl text-sm font-medium text-text-dark dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800">26</button>
+<button class="aspect-square flex flex-col items-center justify-center rounded-xl text-sm font-medium text-text-dark dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 relative">
+                            27
+                            <span class="absolute bottom-1.5 size-1 rounded-full bg-orange-400"></span>
+</button>
+<button class="aspect-square flex flex-col items-center justify-center rounded-xl text-sm font-medium text-text-dark dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800">28</button>
+</div>
+<div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-center gap-4 text-xs font-medium text-text-muted">
+<div class="flex items-center gap-1.5"><span class="size-2 rounded-full bg-red-500"></span>Overdue</div>
+<div class="flex items-center gap-1.5"><span class="size-2 rounded-full bg-orange-400"></span>Pending</div>
+<div class="flex items-center gap-1.5"><span class="size-2 rounded-full bg-green-500"></span>Paid</div>
+</div>
+</div>
+<!-- Filters -->
+<div class="flex flex-col gap-3">
+<p class="text-sm font-bold text-text-muted uppercase tracking-wider ml-1">Status</p>
+<div class="bg-white dark:bg-[#151f2e] p-2 rounded-xl shadow-soft border border-gray-100 dark:border-gray-800 flex flex-col gap-1">
+<button class="flex items-center justify-between w-full px-4 py-2.5 rounded-lg bg-primary/10 text-primary font-bold text-sm">
+<span class="flex items-center gap-2"><span class="material-symbols-outlined text-[18px]">apps</span> All Bills</span>
+<span class="bg-primary text-white text-[10px] px-1.5 py-0.5 rounded-md">8</span>
+</button>
+<button class="flex items-center justify-between w-full px-4 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-text-muted hover:text-text-dark dark:hover:text-white transition-colors font-medium text-sm">
+<span class="flex items-center gap-2"><span class="material-symbols-outlined text-[18px]">schedule</span> Upcoming</span>
+<span class="bg-gray-100 dark:bg-gray-700 text-text-muted text-[10px] px-1.5 py-0.5 rounded-md">3</span>
+</button>
+<button class="flex items-center justify-between w-full px-4 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-text-muted hover:text-text-dark dark:hover:text-white transition-colors font-medium text-sm">
+<span class="flex items-center gap-2"><span class="material-symbols-outlined text-[18px]">error</span> Overdue</span>
+<span class="bg-red-100 text-red-600 text-[10px] px-1.5 py-0.5 rounded-md">2</span>
+</button>
+<button class="flex items-center justify-between w-full px-4 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-text-muted hover:text-text-dark dark:hover:text-white transition-colors font-medium text-sm">
+<span class="flex items-center gap-2"><span class="material-symbols-outlined text-[18px]">check_circle</span> Paid</span>
+<span class="bg-green-100 text-green-600 text-[10px] px-1.5 py-0.5 rounded-md">3</span>
+</button>
+</div>
+</div>
+<!-- Categories -->
+<div class="flex flex-col gap-3">
+<p class="text-sm font-bold text-text-muted uppercase tracking-wider ml-1">Categories</p>
+<div class="flex flex-wrap gap-2">
+<button class="px-3 py-1.5 rounded-lg bg-white dark:bg-[#151f2e] border border-gray-200 dark:border-gray-700 text-text-dark dark:text-white text-xs font-bold hover:border-primary hover:text-primary transition-colors">Utilities</button>
+<button class="px-3 py-1.5 rounded-lg bg-white dark:bg-[#151f2e] border border-gray-200 dark:border-gray-700 text-text-dark dark:text-white text-xs font-bold hover:border-primary hover:text-primary transition-colors">Rent</button>
+<button class="px-3 py-1.5 rounded-lg bg-white dark:bg-[#151f2e] border border-gray-200 dark:border-gray-700 text-text-dark dark:text-white text-xs font-bold hover:border-primary hover:text-primary transition-colors">Streaming</button>
+<button class="px-3 py-1.5 rounded-lg bg-white dark:bg-[#151f2e] border border-gray-200 dark:border-gray-700 text-text-dark dark:text-white text-xs font-bold hover:border-primary hover:text-primary transition-colors">Internet</button>
+<button class="px-3 py-1.5 rounded-lg bg-white dark:bg-[#151f2e] border border-gray-200 dark:border-gray-700 text-text-dark dark:text-white text-xs font-bold hover:border-primary hover:text-primary transition-colors">Insurance</button>
+</div>
+</div>
+</div>
+<!-- Main Content: Bill Cards Grid -->
+<div class="flex-1">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-xl font-bold text-text-dark dark:text-white">Upcoming &amp; Overdue</h3>
+<div class="flex items-center gap-2 text-sm text-text-muted">
+<span>Sort by:</span>
+<select class="bg-transparent font-bold text-text-dark dark:text-white border-none focus:ring-0 p-0 pr-6 cursor-pointer">
+<option>Due Date (Soonest)</option>
+<option>Amount (Highest)</option>
+<option>Status</option>
+</select>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+<!-- Card 1: Overdue -->
+<div class="group relative bg-white dark:bg-[#1a2634] rounded-2xl p-5 shadow-soft hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border-l-4 border-l-red-500 overflow-hidden">
+<div class="absolute top-0 right-0 p-3">
+<div class="flex items-center gap-1 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide">
+<span class="material-symbols-outlined text-sm">priority_high</span> Overdue
+                            </div>
+</div>
+<div class="flex items-start gap-4 mb-4 mt-2">
+<div class="size-12 rounded-xl bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center text-orange-600 text-xl font-bold">
+<span class="material-symbols-outlined">wifi</span>
+</div>
+<div>
+<h4 class="font-bold text-text-dark dark:text-white text-lg leading-tight">Internet</h4>
+<p class="text-text-muted text-xs font-medium mt-0.5">Comcast Xfinity</p>
+</div>
+</div>
+<div class="flex items-end justify-between mt-6">
+<div>
+<p class="text-text-muted text-xs font-medium mb-1">Amount Due</p>
+<p class="text-2xl font-black text-text-dark dark:text-white">$89.00</p>
+</div>
+<div class="text-right">
+<p class="text-red-500 text-xs font-bold">Due Oct 20</p>
+<p class="text-text-muted text-[10px]">4 days ago</p>
+</div>
+</div>
+<button class="w-full mt-5 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold transition-colors">
+                            Pay Now
+                        </button>
+</div>
+<!-- Card 2: Pending (Due Soon) -->
+<div class="group relative bg-white dark:bg-[#1a2634] rounded-2xl p-5 shadow-soft hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border-l-4 border-l-yellow-400 overflow-hidden">
+<div class="absolute top-0 right-0 p-3">
+<div class="flex items-center gap-1 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide">
+<span class="material-symbols-outlined text-sm">schedule</span> Pending
+                            </div>
+</div>
+<div class="flex items-start gap-4 mb-4 mt-2">
+<div class="size-12 rounded-xl bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 text-xl font-bold">
+<span class="material-symbols-outlined">bolt</span>
+</div>
+<div>
+<h4 class="font-bold text-text-dark dark:text-white text-lg leading-tight">Electric Co.</h4>
+<p class="text-text-muted text-xs font-medium mt-0.5">Monthly Utility</p>
+</div>
+</div>
+<div class="flex items-end justify-between mt-6">
+<div>
+<p class="text-text-muted text-xs font-medium mb-1">Amount Due</p>
+<p class="text-2xl font-black text-text-dark dark:text-white">$145.00</p>
+</div>
+<div class="text-right">
+<p class="text-yellow-600 dark:text-yellow-400 text-xs font-bold">Due in 2 days</p>
+<p class="text-text-muted text-[10px]">Oct 26</p>
+</div>
+</div>
+<div class="flex gap-2 mt-5">
+<button class="flex-1 py-2.5 rounded-xl bg-background-light dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-text-dark dark:text-white text-sm font-bold transition-colors">Snooze</button>
+<button class="flex-1 py-2.5 rounded-xl bg-primary hover:bg-blue-600 text-white text-sm font-bold transition-colors">Pay</button>
+</div>
+</div>
+<!-- Card 3: Pending (Subscription) -->
+<div class="group relative bg-white dark:bg-[#1a2634] rounded-2xl p-5 shadow-soft hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border-l-4 border-l-yellow-400 overflow-hidden">
+<div class="absolute top-0 right-0 p-3">
+<div class="flex items-center gap-1 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide">
+<span class="material-symbols-outlined text-sm">schedule</span> Pending
+                            </div>
+</div>
+<div class="flex items-start gap-4 mb-4 mt-2">
+<div class="size-12 rounded-xl bg-green-100 dark:bg-green-900/50 flex items-center justify-center text-green-600 text-xl font-bold">
+<span class="material-symbols-outlined">music_note</span>
+</div>
+<div>
+<h4 class="font-bold text-text-dark dark:text-white text-lg leading-tight">Spotify</h4>
+<p class="text-text-muted text-xs font-medium mt-0.5">Family Plan</p>
+</div>
+</div>
+<div class="flex items-end justify-between mt-6">
+<div>
+<p class="text-text-muted text-xs font-medium mb-1">Amount Due</p>
+<p class="text-2xl font-black text-text-dark dark:text-white">$16.99</p>
+</div>
+<div class="text-right">
+<p class="text-yellow-600 dark:text-yellow-400 text-xs font-bold">Due Tomorrow</p>
+<p class="text-text-muted text-[10px]">Oct 25</p>
+</div>
+</div>
+<div class="flex gap-2 mt-5">
+<button class="flex-1 py-2.5 rounded-xl bg-background-light dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-text-dark dark:text-white text-sm font-bold transition-colors">Edit</button>
+<button class="flex-1 py-2.5 rounded-xl bg-primary hover:bg-blue-600 text-white text-sm font-bold transition-colors">Pay</button>
+</div>
+</div>
+<!-- Card 4: Paid (Rent) -->
+<div class="group relative bg-white dark:bg-[#1a2634] rounded-2xl p-5 shadow-soft hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border-l-4 border-l-green-500 overflow-hidden opacity-80 hover:opacity-100">
+<div class="absolute top-0 right-0 p-3">
+<div class="flex items-center gap-1 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide">
+<span class="material-symbols-outlined text-sm">check_circle</span> Paid
+                            </div>
+</div>
+<div class="flex items-start gap-4 mb-4 mt-2">
+<div class="size-12 rounded-xl bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center text-purple-600 text-xl font-bold">
+<span class="material-symbols-outlined">home</span>
+</div>
+<div>
+<h4 class="font-bold text-text-dark dark:text-white text-lg leading-tight">Rent</h4>
+<p class="text-text-muted text-xs font-medium mt-0.5">Oct Installment</p>
+</div>
+</div>
+<div class="flex items-end justify-between mt-6">
+<div>
+<p class="text-text-muted text-xs font-medium mb-1">Amount Paid</p>
+<p class="text-2xl font-black text-text-dark dark:text-white">$2,000.00</p>
+</div>
+<div class="text-right">
+<p class="text-green-600 dark:text-green-400 text-xs font-bold">Paid on Oct 01</p>
+<p class="text-text-muted text-[10px]">Via Bank Transfer</p>
+</div>
+</div>
+<button class="w-full mt-5 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-text-muted text-sm font-bold cursor-default">
+                           Receipt Available
+                        </button>
+</div>
+<!-- Card 5: Upcoming (Netflix) -->
+<div class="group relative bg-white dark:bg-[#1a2634] rounded-2xl p-5 shadow-soft hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border-l-4 border-l-gray-300 dark:border-l-gray-600 overflow-hidden">
+<div class="absolute top-0 right-0 p-3">
+<div class="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 text-text-muted px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide">
+<span class="material-symbols-outlined text-sm">event</span> Upcoming
+                            </div>
+</div>
+<div class="flex items-start gap-4 mb-4 mt-2">
+<div class="size-12 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 text-xl font-bold">
+<span class="material-symbols-outlined">movie</span>
+</div>
+<div>
+<h4 class="font-bold text-text-dark dark:text-white text-lg leading-tight">Netflix</h4>
+<p class="text-text-muted text-xs font-medium mt-0.5">Standard Plan</p>
+</div>
+</div>
+<div class="flex items-end justify-between mt-6">
+<div>
+<p class="text-text-muted text-xs font-medium mb-1">Amount Due</p>
+<p class="text-2xl font-black text-text-dark dark:text-white">$15.49</p>
+</div>
+<div class="text-right">
+<p class="text-text-dark dark:text-white text-xs font-bold">Due Oct 30</p>
+<p class="text-text-muted text-[10px]">Auto-pay on</p>
+</div>
+</div>
+<div class="flex gap-2 mt-5">
+<button class="w-full py-2.5 rounded-xl bg-background-light dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-text-dark dark:text-white text-sm font-bold transition-colors">Manage Auto-pay</button>
+</div>
+</div>
+<!-- Add New Card Slot -->
+<div class="group relative flex flex-col items-center justify-center bg-transparent border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-5 hover:border-primary hover:bg-primary/5 cursor-pointer transition-all min-h-[260px]">
+<div class="size-16 rounded-full bg-gray-100 dark:bg-gray-800 group-hover:bg-white flex items-center justify-center text-gray-400 group-hover:text-primary transition-colors mb-4">
+<span class="material-symbols-outlined text-3xl">add</span>
+</div>
+<h4 class="font-bold text-text-muted group-hover:text-primary text-lg transition-colors">Add New Bill</h4>
+<p class="text-xs text-center text-gray-400 px-8 mt-2">Track a new subscription or utility payment.</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

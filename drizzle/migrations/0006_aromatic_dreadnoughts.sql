@@ -1,4 +1,8 @@
-CREATE TYPE "public"."goal_status" AS ENUM('active', 'paused', 'completed', 'cancelled');--> statement-breakpoint
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'goal_status') THEN
+        CREATE TYPE "public"."goal_status" AS ENUM('active', 'paused', 'completed', 'cancelled');
+    END IF;
+END $$;
 CREATE TABLE "goal_milestones" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"goal_id" uuid NOT NULL,

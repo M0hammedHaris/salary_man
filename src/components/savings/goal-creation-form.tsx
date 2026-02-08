@@ -5,6 +5,9 @@ import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { createSavingsGoal } from '@/lib/actions/savings-goals';
+import { getUserAccounts } from '@/lib/actions/accounts';
+import { getUserCategories } from '@/lib/actions/categories';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -18,7 +21,7 @@ interface Account {
   id: string;
   name: string;
   type: string;
-  balance: number;
+  balance: number | string;
 }
 
 interface Category {
@@ -54,19 +57,17 @@ export function GoalCreationForm({ onSuccess }: GoalCreationFormProps) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [accountsRes, categoriesRes] = await Promise.all([
-          fetch('/api/accounts'),
-          fetch('/api/categories'),
+        const [accountsData, categoriesData] = await Promise.all([
+          getUserAccounts(),
+          getUserCategories(),
         ]);
 
-        if (accountsRes.ok) {
-          const accountsData = await accountsRes.json();
-          setAccounts(accountsData.accounts || []);
+        if (accountsData.success && accountsData.data) {
+          setAccounts(accountsData.data.accounts as Account[]);
         }
 
-        if (categoriesRes.ok) {
-          const categoriesData = await categoriesRes.json();
-          setCategories(categoriesData.categories || []);
+        if (categoriesData.success && categoriesData.data) {
+          setCategories(categoriesData.data.categories as Category[]);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -105,33 +106,22 @@ export function GoalCreationForm({ onSuccess }: GoalCreationFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setIsLoading(true);
     try {
-      const response = await fetch('/api/savings-goals', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          description: formData.description || undefined,
-          targetAmount: parseFloat(formData.targetAmount),
-          targetDate: formData.targetDate,
-          accountId: formData.accountId,
-          categoryId: formData.categoryId || undefined,
-          priority: parseInt(formData.priority),
-        }),
+      await createSavingsGoal({
+        name: formData.name,
+        description: formData.description || undefined,
+        targetAmount: parseFloat(formData.targetAmount),
+        targetDate: formData.targetDate,
+        accountId: formData.accountId,
+        categoryId: formData.categoryId || undefined,
+        priority: parseInt(formData.priority),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create goal');
-      }
 
       toast.success('Savings goal created successfully!');
       onSuccess();
@@ -247,8 +237,8 @@ export function GoalCreationForm({ onSuccess }: GoalCreationFormProps) {
       {/* Account Selection */}
       <div className="space-y-2">
         <Label htmlFor="accountId">Savings Account</Label>
-        <Select 
-          value={formData.accountId} 
+        <Select
+          value={formData.accountId}
           onValueChange={(value) => setFormData({ ...formData, accountId: value })}
         >
           <SelectTrigger className={errors.accountId ? 'border-destructive' : ''}>
@@ -257,7 +247,7 @@ export function GoalCreationForm({ onSuccess }: GoalCreationFormProps) {
           <SelectContent>
             {accounts.map((account) => (
               <SelectItem key={account.id} value={account.id}>
-                {account.name} - ₹{account.balance.toLocaleString()}
+                {account.name} - ₹{Number(account.balance).toLocaleString()}
               </SelectItem>
             ))}
           </SelectContent>
@@ -273,8 +263,8 @@ export function GoalCreationForm({ onSuccess }: GoalCreationFormProps) {
       {/* Category Selection */}
       <div className="space-y-2">
         <Label htmlFor="categoryId">Category (Optional)</Label>
-        <Select 
-          value={formData.categoryId} 
+        <Select
+          value={formData.categoryId}
           onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
         >
           <SelectTrigger>
@@ -284,8 +274,8 @@ export function GoalCreationForm({ onSuccess }: GoalCreationFormProps) {
             {categories.map((category) => (
               <SelectItem key={category.id} value={category.id}>
                 <div className="flex items-center gap-2">
-                  <div 
-                    className="w-3 h-3 rounded-full" 
+                  <div
+                    className="w-3 h-3 rounded-full"
                     style={{ backgroundColor: category.color }}
                   />
                   {category.name}

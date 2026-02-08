@@ -41,20 +41,32 @@ export function AccountSelectionField<T extends FieldValues>({
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem>
-          <FormLabel>{label}</FormLabel>
+        <FormItem className="space-y-2">
+          <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground ml-1">
+            {label}
+          </FormLabel>
           <Select onValueChange={field.onChange} value={field.value}>
             <FormControl>
-              <SelectTrigger>
-                <SelectValue placeholder={placeholder} />
+              <SelectTrigger className="h-14 rounded-2xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 transition-all focus:ring-primary/20 shadow-sm group">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center group-hover:bg-slate-100 transition-all">
+                    <span className="material-symbols-outlined text-slate-400 text-[20px]">account_balance_wallet</span>
+                  </div>
+                  <SelectValue placeholder={placeholder} />
+                </div>
               </SelectTrigger>
             </FormControl>
-            <SelectContent className="z-[60]">
+            <SelectContent className="z-[60] rounded-2xl p-1.5 border-slate-100 dark:border-slate-800 shadow-xl">
               {accounts.map((account) => (
-                <SelectItem key={account.id} value={account.id}>
-                  <div className="flex items-center justify-between w-full">
-                    <span>{account.name}</span>
-                    <span className="text-muted-foreground text-sm ml-2">
+                <SelectItem key={account.id} value={account.id} className="rounded-xl font-bold px-3 py-2.5 cursor-pointer">
+                  <div className="flex items-center justify-between w-full gap-8">
+                    <div className="flex flex-col">
+                      <span className="text-foreground">{account.name}</span>
+                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-black">
+                        {account.type}
+                      </span>
+                    </div>
+                    <span className="text-primary font-black">
                       {displayCurrency(account.balance)}
                     </span>
                   </div>
@@ -62,8 +74,8 @@ export function AccountSelectionField<T extends FieldValues>({
               ))}
             </SelectContent>
           </Select>
-          <FormDescription>{description}</FormDescription>
-          <FormMessage />
+          <FormDescription className="text-xs font-medium ml-1">{description}</FormDescription>
+          <FormMessage className="ml-1 font-bold text-xs" />
         </FormItem>
       )}
     />

@@ -1,29 +1,32 @@
 "use client";
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { 
+import { cn } from '@/lib/utils';
+import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
 } from '@/components/ui/dialog';
-import { BreadcrumbNavigation } from '@/components/layout/breadcrumb-navigation';
 import { AccountCreateForm } from '@/components/accounts/account-create-form';
 import { AccountEditForm } from '@/components/accounts/account-edit-form';
 import { AccountList } from '@/components/accounts/account-list';
-import { type AccountResponse } from '@/lib/types/account';
-import { Plus, ArrowLeft, Wallet } from 'lucide-react';
+import { AccountType, type AccountResponse } from '@/lib/types/account';
 
-type ViewMode = 'list' | 'create' | 'edit';
+
+
+const filterOptions = [
+  { label: 'All', value: 'all', icon: 'apps' },
+  { label: 'Bank', value: AccountType.CHECKING, icon: 'payments' },
+  { label: 'Savings', value: AccountType.SAVINGS, icon: 'savings' },
+  { label: 'Credit', value: AccountType.CREDIT_CARD, icon: 'credit_card' },
+  { label: 'Investment', value: AccountType.INVESTMENT, icon: 'monitoring' },
+  { label: 'Other', value: AccountType.OTHER, icon: 'account_balance' },
+];
 
 export default function AccountsPage() {
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedAccount, setSelectedAccount] = useState<AccountResponse | null>(null);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [activeFilter, setActiveFilter] = useState('all');
 
   const handleCreateAccount = () => {
     setIsCreateDialogOpen(true);
@@ -34,19 +37,15 @@ export default function AccountsPage() {
     setIsEditDialogOpen(true);
   };
 
-  const handleDeleteAccount = () => {
-    // The AccountDeleteDialog handles the deletion logic internally
-  };
-
   const handleCreateSuccess = () => {
     setIsCreateDialogOpen(false);
-    setRefreshTrigger(prev => prev + 1);
+    // TanStack Query will automatically refetch via invalidation
   };
 
   const handleEditSuccess = () => {
     setIsEditDialogOpen(false);
     setSelectedAccount(null);
-    setRefreshTrigger(prev => prev + 1);
+    // TanStack Query will automatically refetch via invalidation
   };
 
   const handleCancelCreate = () => {
@@ -58,152 +57,98 @@ export default function AccountsPage() {
     setSelectedAccount(null);
   };
 
-  // Page content based on view mode
-  const renderContent = () => {
-    switch (viewMode) {
-      case 'create':
-        return (
-          <div className="space-y-6">
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setViewMode('list')}
-                className="p-0 h-auto"
-              >
-                <ArrowLeft className="mr-1 h-4 w-4" />
-                Back to Accounts
-              </Button>
-            </div>
-            
-            <AccountCreateForm
-              onSuccess={() => {
-                setViewMode('list');
-                setRefreshTrigger(prev => prev + 1);
-              }}
-              onCancel={() => setViewMode('list')}
-            />
-          </div>
-        );
-        
-      case 'edit':
-        return selectedAccount ? (
-          <div className="space-y-6">
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setViewMode('list');
-                  setSelectedAccount(null);
-                }}
-                className="p-0 h-auto"
-              >
-                <ArrowLeft className="mr-1 h-4 w-4" />
-                Back to Accounts
-              </Button>
-            </div>
-            
-            <AccountEditForm
-              account={selectedAccount}
-              onSuccess={() => {
-                setViewMode('list');
-                setSelectedAccount(null);
-                setRefreshTrigger(prev => prev + 1);
-              }}
-              onCancel={() => {
-                setViewMode('list');
-                setSelectedAccount(null);
-              }}
-            />
-          </div>
-        ) : null;
-        
-      default:
-        return (
-          <AccountList
-            onEditAccount={handleEditAccount}
-            onDeleteAccount={handleDeleteAccount}
-            onCreateAccount={handleCreateAccount}
-            refreshTrigger={refreshTrigger}
-            onAccountDeleted={() => setRefreshTrigger(prev => prev + 1)}
-          />
-        );
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        {/* Page Header - Only show on list view */}
-        {viewMode === 'list' && (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-                <Wallet className="h-8 w-8 text-primary" />
-                Account Management
-              </h1>
-              <p className="text-muted-foreground">
-                Manage your bank accounts, credit cards, and other financial accounts
-              </p>
-              
-              {/* Breadcrumb for navigation */}
-              <BreadcrumbNavigation />
-            </div>
+    <div className="flex-1 overflow-y-auto bg-[#f8f9fc] dark:bg-slate-950">
+      {/* Background Decor */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-400/5 rounded-full blur-[120px]" />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 relative z-10">
+        {/* Page Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">
+              Accounts
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 font-semibold text-sm max-w-lg leading-relaxed">
+              Manage your financial portfolio and bank connections in one premium space.
+            </p>
           </div>
-        )}
+
+          <button
+            onClick={handleCreateAccount}
+            className="flex items-center justify-center gap-2 px-6 py-2 bg-primary text-white rounded-[18px] font-black text-sm hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/25 group hover:shadow-2xl hover:shadow-primary/30"
+          >
+            <div className="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center group-hover:rotate-90 transition-transform">
+              <span className="material-symbols-outlined font-bold text-[18px]">add</span>
+            </div>
+            Add Account
+          </button>
+        </div>
+
+        {/* Horizontal Filters */}
+        <div className="flex items-center gap-3 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+          {filterOptions.map((filter) => (
+            <button
+              key={filter.value}
+              onClick={() => setActiveFilter(filter.value)}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-[16px] font-black text-xs whitespace-nowrap transition-all shrink-0 border",
+                activeFilter === filter.value
+                  ? "bg-white dark:bg-slate-900 border-primary text-primary shadow-sm shadow-primary/10"
+                  : "bg-white/50 dark:bg-slate-900/50 border-transparent text-slate-500 hover:bg-white dark:hover:bg-slate-900 hover:border-slate-200 dark:hover:border-slate-800"
+              )}
+            >
+              <span className={cn(
+                "material-symbols-outlined text-[18px]",
+                activeFilter === filter.value ? "text-primary" : "text-slate-400"
+              )}>
+                {filter.icon}
+              </span>
+              {filter.label}
+            </button>
+          ))}
+        </div>
 
         {/* Main Content */}
-        <main>
-          {renderContent()}
+        <main className="pb-12">
+          <AccountList
+            onEditAccount={handleEditAccount}
+            onCreateAccount={handleCreateAccount}
+            activeFilter={activeFilter}
+          />
         </main>
 
         {/* Create Account Dialog */}
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogContent className="sm:max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Plus className="h-5 w-5" />
-                Create New Account
-              </DialogTitle>
-              <DialogDescription>
-                Add a new bank account to track your finances
-              </DialogDescription>
-            </DialogHeader>
-            <AccountCreateForm
-              onSuccess={handleCreateSuccess}
-              onCancel={handleCancelCreate}
-              isModal={true}
-            />
+          <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-visible border-none p-0 rounded-[48px] shadow-2xl bg-transparent">
+            <div className="scrollbar-hide overflow-visible">
+              <AccountCreateForm
+                onSuccess={handleCreateSuccess}
+                onCancel={handleCancelCreate}
+                isModal={true}
+              />
+            </div>
           </DialogContent>
         </Dialog>
 
         {/* Edit Account Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="sm:max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Plus className="h-5 w-5" />
-                Edit Account
-              </DialogTitle>
-              <DialogDescription>
-                Update your account details. Note that balance cannot be changed directly.
-              </DialogDescription>
-            </DialogHeader>
-            {selectedAccount && (
-              <AccountEditForm
-                account={selectedAccount}
-                onSuccess={handleEditSuccess}
-                onCancel={handleCancelEdit}
-                isModal={true}
-              />
-            )}
+          <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-visible border-none p-0 rounded-[48px] shadow-2xl bg-transparent">
+            <div className="scrollbar-hide overflow-visible">
+              {selectedAccount && (
+                <AccountEditForm
+                  account={selectedAccount}
+                  onSuccess={handleEditSuccess}
+                  onCancel={handleCancelEdit}
+                  isModal={true}
+                />
+              )}
+            </div>
           </DialogContent>
         </Dialog>
-
-        {/* Delete Account Dialogs are handled within AccountList via AccountDeleteDialog */}
       </div>
     </div>
   );

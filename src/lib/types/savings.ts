@@ -18,6 +18,7 @@ export const updateGoalSchema = z.object({
   targetDate: z.date().min(new Date()).optional(),
   categoryId: z.string().uuid().optional(),
   priority: z.number().int().min(1).max(10).optional(),
+  currentAmount: z.number().min(0).optional(),
   status: z.enum(['active', 'paused', 'completed', 'cancelled']).optional(),
 });
 

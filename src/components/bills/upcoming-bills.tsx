@@ -2,19 +2,17 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { format, isToday, isTomorrow, isWithinInterval, addDays } from 'date-fns';
-import { Calendar, Clock, AlertTriangle, DollarSign, Bell } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Skeleton } from '@/components/ui/skeleton';
+import { getUserBills } from '@/lib/actions/bills';
+import { format, isToday, isTomorrow, addDays } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils/decimal';
+import Link from 'next/link';
 
 interface Bill {
   id: string;
   name: string;
   amount: string;
-  nextDueDate: string;
+  nextDueDate: string | Date;
   reminderDays: string;
   account: {
     id: string;
@@ -34,235 +32,116 @@ interface UpcomingBillsProps {
   className?: string;
 }
 
-export function UpcomingBills({ onPayBill, onSetupReminder, className }: UpcomingBillsProps) {
-  const [timeFilter, setTimeFilter] = useState<'today' | 'week' | 'month'>('week');
+export function UpcomingBills({ onPayBill: _onPayBill, onSetupReminder: _onSetupReminder, className }: UpcomingBillsProps) {
+  const [timeFilter] = useState<'today' | 'week' | 'month'>('week');
 
-  // Fetch upcoming bills
   const { data: billsResponse, isLoading, error } = useQuery({
     queryKey: ['bills', 'upcoming', timeFilter],
     queryFn: async () => {
-      // The API doesn't support 'upcoming' parameter, so we fetch all bills and filter client-side
-      const response = await fetch('/api/bills');
-      if (!response.ok) {
-        throw new Error('Failed to fetch upcoming bills');
-      }
-      return response.json();
+      const response = await getUserBills();
+      return response;
     },
-    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+    refetchInterval: 60 * 60 * 1000,
   });
 
-  // Extract bills array from the response
   const bills = billsResponse?.bills || [];
 
   const filterBillsByTime = (bills: Bill[]) => {
-    const now = new Date();
     const today = new Date();
-    const endDate = timeFilter === 'today' ? today : 
-                   timeFilter === 'week' ? addDays(today, 7) : 
-                   addDays(today, 30);
+    today.setHours(0, 0, 0, 0);
+    const endDate = timeFilter === 'today' ? addDays(today, 1) :
+      timeFilter === 'week' ? addDays(today, 7) :
+        addDays(today, 30);
 
     return bills.filter(bill => {
-      const dueDate = new Date(bill.nextDueDate); // Updated to use nextDueDate
-      return isWithinInterval(dueDate, { start: now, end: endDate });
+      const dueDate = new Date(bill.nextDueDate);
+      return dueDate >= today && dueDate <= endDate;
     });
   };
 
-  const getBillUrgency = (nextDueDate: string) => {
-    const due = new Date(nextDueDate); // Updated parameter name
-    
-    if (isToday(due)) return 'today';
-    if (isTomorrow(due)) return 'tomorrow';
-    
-    const daysUntilDue = Math.ceil((due.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-    
-    if (daysUntilDue <= 3) return 'urgent';
-    if (daysUntilDue <= 7) return 'soon';
-    return 'upcoming';
+  const getUrgencyStyles = (nextDueDate: string | Date) => {
+    const due = new Date(nextDueDate);
+    if (isToday(due)) return 'text-rose-500 bg-rose-50 dark:bg-rose-500/10';
+    if (isTomorrow(due)) return 'text-amber-500 bg-amber-50 dark:bg-amber-500/10';
+    return 'text-slate-500 bg-slate-50 dark:bg-slate-500/10';
   };
 
-  const getUrgencyColor = (urgency: string) => {
-    switch (urgency) {
-      case 'today': return 'destructive';
-      case 'tomorrow': return 'destructive';
-      case 'urgent': return 'destructive';
-      case 'soon': return 'default';
-      default: return 'secondary';
-    }
+  const getUrgencyText = (nextDueDate: string | Date) => {
+    const due = new Date(nextDueDate);
+    if (isToday(due)) return 'Today';
+    if (isTomorrow(due)) return 'Tomorrow';
+    return format(due, 'MMM dd');
   };
 
-  const getUrgencyText = (urgency: string, nextDueDate: string) => {
-    const due = new Date(nextDueDate); // Updated parameter name
-    
-    switch (urgency) {
-      case 'today': return 'Due Today';
-      case 'tomorrow': return 'Due Tomorrow';
-      case 'urgent': return `Due ${format(due, 'MMM dd')}`;
-      case 'soon': return `Due ${format(due, 'MMM dd')}`;
-      default: return format(due, 'MMM dd, yyyy');
-    }
-  };
-
-  const upcomingBills = bills ? filterBillsByTime(bills) : [];
-  const totalAmount = upcomingBills.reduce((sum, bill) => sum + Number(bill.amount), 0);
-
-  if (error) {
-    return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Calendar className="h-5 w-5 mr-2" />
-            Upcoming Bills
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Alert>
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              Failed to load upcoming bills. Please try again.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
-    );
-  }
+  const upcomingBills = filterBillsByTime(bills).sort((a, b) =>
+    new Date(a.nextDueDate).getTime() - new Date(b.nextDueDate).getTime()
+  ).slice(0, 3);
 
   return (
-    <Card className={className}>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center">
-            <Calendar className="h-5 w-5 mr-2" />
-            Upcoming Bills
-          </CardTitle>
-          
-          {/* Time Filter */}
-          <div className="flex space-x-1">
-            {(['today', 'week', 'month'] as const).map((filter) => (
-              <Button
-                key={filter}
-                variant={timeFilter === filter ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setTimeFilter(filter)}
-                className="text-xs"
-              >
-                {filter === 'today' ? 'Today' : 
-                 filter === 'week' ? '7 Days' : '30 Days'}
-              </Button>
-            ))}
-          </div>
-        </div>
-        
-        {/* Summary */}
-        {!isLoading && upcomingBills.length > 0 && (
-          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-            <span>{upcomingBills.length} bills</span>
-            <span className="flex items-center">
-              <DollarSign className="h-3 w-3 mr-1" />
-              ₹{totalAmount.toFixed(2)} total
-            </span>
-          </div>
-        )}
-      </CardHeader>
-      
-      <CardContent>
+    <div className={cn("space-y-4", className)}>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Upcoming Bills</h3>
+        <Link href="/bills" className="text-sm font-medium text-primary hover:underline">
+          View All
+        </Link>
+      </div>
+
+      <div className="rounded-3xl bg-white dark:bg-slate-900 border border-border overflow-hidden shadow-sm">
         {isLoading ? (
-          <div className="space-y-3">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="flex items-center space-x-3">
-                <Skeleton className="h-10 w-10 rounded" />
-                <div className="flex-1 space-y-1">
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-1/2" />
+          <div className="p-8 space-y-4">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="flex gap-4 items-center">
+                <div className="h-10 w-10 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-24 bg-slate-100 dark:bg-slate-800 animate-pulse rounded" />
+                  <div className="h-3 w-16 bg-slate-100 dark:bg-slate-800 animate-pulse rounded" />
                 </div>
-                <Skeleton className="h-6 w-16" />
               </div>
             ))}
           </div>
+        ) : error ? (
+          <div className="p-8 text-center text-rose-500">
+            <span className="material-symbols-outlined text-4xl mb-2">error</span>
+            <p className="text-sm font-medium">Failed to load bills</p>
+          </div>
         ) : upcomingBills.length === 0 ? (
-          <div className="text-center py-8">
-            <Calendar className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-            <p className="text-sm text-muted-foreground">
-              No bills due in the {timeFilter === 'today' ? 'next day' : 
-                                  timeFilter === 'week' ? 'next 7 days' : 
-                                  'next 30 days'}
-            </p>
+          <div className="p-8 text-center text-slate-500">
+            <span className="material-symbols-outlined text-4xl mb-2 opacity-20">event_busy</span>
+            <p className="text-sm font-medium">No upcoming bills</p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {upcomingBills.map((bill) => {
-              const urgency = getBillUrgency(bill.nextDueDate); // Updated to use nextDueDate
-              const urgencyColor = getUrgencyColor(urgency);
-              const urgencyText = getUrgencyText(urgency, bill.nextDueDate); // Updated to use nextDueDate
-              
-              return (
-                <div key={bill.id} className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
-                  {/* Bill Icon/Category */}
-                  <div className="flex-shrink-0">
-                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Clock className="h-5 w-5 text-primary" />
-                    </div>
+          <div className="divide-y divide-border">
+            {upcomingBills.map((bill) => (
+              <div key={bill.id} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center bg-violet-50 dark:bg-violet-500/10 text-violet-500">
+                    <span className="material-symbols-outlined text-[24px]">payments</span>
                   </div>
-                  
-                  {/* Bill Details */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-2">
-                      <h4 className="font-medium truncate">{bill.name}</h4>
-                      <Badge variant={urgencyColor} className="text-xs">
-                        {urgencyText}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <span className="text-sm text-muted-foreground">
-                        {bill.category?.name || 'Bill Payment'}
-                      </span>
-                      <span className="text-xs text-muted-foreground">•</span>
-                      <span className="text-sm text-muted-foreground">
-                        {bill.account.name}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  {/* Amount and Actions */}
-                  <div className="flex-shrink-0 text-right">
-                    <p className="font-semibold">₹{Number(bill.amount).toFixed(2)}</p>
-                    <div className="flex space-x-1 mt-1">
-                      {onPayBill && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onPayBill(bill.id)}
-                          className="text-xs h-6"
-                        >
-                          Pay
-                        </Button>
-                      )}
-                      {onSetupReminder && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => onSetupReminder(bill.id)}
-                          className="text-xs h-6 w-6 p-0"
-                        >
-                          <Bell className="h-3 w-3" />
-                        </Button>
-                      )}
-                    </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[120px]">
+                      {bill.name}
+                    </h4>
+                    <span className={cn(
+                      "inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold mt-1",
+                      getUrgencyStyles(bill.nextDueDate)
+                    )}>
+                      {getUrgencyText(bill.nextDueDate)}
+                    </span>
                   </div>
                 </div>
-              );
-            })}
+                <div className="text-right">
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">
+                    {formatCurrency(Number(bill.amount))}
+                  </p>
+                  <p className="text-xs font-medium text-slate-400">
+                    {bill.account.name}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
         )}
-        
-        {/* View All Bills Link */}
-        {!isLoading && upcomingBills.length > 0 && (
-          <div className="mt-4 pt-3 border-t">
-            <Button variant="ghost" className="w-full text-sm" asChild>
-              <a href="/bills">View All Bills</a>
-            </Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

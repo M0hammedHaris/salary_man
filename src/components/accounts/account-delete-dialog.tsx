@@ -12,15 +12,29 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { 
-  type AccountResponse, 
-  AccountType, 
-  accountTypeLabels, 
-  accountTypeIcons 
+import { cn } from '@/lib/utils';
+import {
+  type AccountResponse,
+  AccountType,
+  accountTypeLabels
 } from '@/lib/types/account';
-import { Trash2, AlertTriangle, Loader2 } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils/decimal';
+
+const accountTypeMaterialIcons: Record<AccountType, string> = {
+  [AccountType.CHECKING]: 'payments',
+  [AccountType.SAVINGS]: 'savings',
+  [AccountType.INVESTMENT]: 'monitoring',
+  [AccountType.CREDIT_CARD]: 'credit_card',
+  [AccountType.OTHER]: 'account_balance'
+};
+
+const accountTypeColors: Record<AccountType, { bg: string, text: string, icon: string, border: string, bgDark: string }> = {
+  [AccountType.CHECKING]: { bg: 'bg-blue-50', text: 'text-blue-700', icon: 'text-blue-500', border: 'border-blue-100', bgDark: 'dark:bg-blue-900/20' },
+  [AccountType.SAVINGS]: { bg: 'bg-emerald-50', text: 'text-emerald-700', icon: 'text-emerald-500', border: 'border-emerald-100', bgDark: 'dark:bg-emerald-900/20' },
+  [AccountType.INVESTMENT]: { bg: 'bg-purple-50', text: 'text-purple-700', icon: 'text-purple-500', border: 'border-purple-100', bgDark: 'dark:bg-purple-900/20' },
+  [AccountType.CREDIT_CARD]: { bg: 'bg-rose-50', text: 'text-rose-700', icon: 'text-rose-500', border: 'border-rose-100', bgDark: 'dark:bg-rose-900/20' },
+  [AccountType.OTHER]: { bg: 'bg-amber-50', text: 'text-amber-700', icon: 'text-amber-500', border: 'border-amber-100', bgDark: 'dark:bg-amber-900/20' },
+};
 
 interface AccountDeleteDialogProps {
   account: AccountResponse;
@@ -34,31 +48,18 @@ export function AccountDeleteDialog({ account, onSuccess, children }: AccountDel
   const [hasTransactions, setHasTransactions] = useState<boolean | null>(null);
   const [checkingTransactions, setCheckingTransactions] = useState(false);
 
-  const formatCurrency = (amount: string): string => {
-    const num = parseFloat(amount);
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 2,
-    }).format(num);
-  };
-
   const checkTransactionDependency = async () => {
     setCheckingTransactions(true);
     try {
-      // For now, we'll simulate checking transactions
-      // In a real app, this would be an API call to check if the account has transactions
       const response = await fetch(`/api/accounts/${account.id}/transactions`);
       if (response.ok) {
         const data = await response.json();
         setHasTransactions(data.hasTransactions || false);
       } else {
-        // If the endpoint doesn't exist, assume no transactions for now
         setHasTransactions(false);
       }
     } catch (error) {
       console.error('Error checking transactions:', error);
-      // Assume no transactions if we can't check
       setHasTransactions(false);
     } finally {
       setCheckingTransactions(false);
@@ -67,7 +68,7 @@ export function AccountDeleteDialog({ account, onSuccess, children }: AccountDel
 
   const handleDelete = async () => {
     setIsDeleting(true);
-    
+
     try {
       const response = await fetch(`/api/accounts/${account.id}`, {
         method: 'DELETE',
@@ -95,126 +96,101 @@ export function AccountDeleteDialog({ account, onSuccess, children }: AccountDel
     }
   };
 
+  const colors = accountTypeColors[account.type as AccountType] || accountTypeColors[AccountType.OTHER];
+  const balanceNum = parseFloat(account.balance);
+
   return (
     <AlertDialog open={isOpen} onOpenChange={handleOpenChange}>
       <AlertDialogTrigger asChild>
         {children || (
-          <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-            <Trash2 className="mr-1 h-3 w-3" />
+          <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-rose-500 font-bold hover:bg-rose-50 dark:hover:bg-rose-900/10 transition-all text-sm">
+            <span className="material-symbols-outlined text-[18px]">delete</span>
             Delete
-          </Button>
+          </button>
         )}
       </AlertDialogTrigger>
-      <AlertDialogContent className="sm:max-w-[500px]">
-        <AlertDialogHeader>
-          <AlertDialogTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-destructive" />
-            Delete Account
-          </AlertDialogTitle>
-          <AlertDialogDescription asChild>
-            <div className="space-y-4">
-              <p>
-                You are about to permanently delete the following account:
-              </p>
-              
-              {/* Account Details */}
-              <div className="p-4 bg-muted rounded-lg space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-foreground">{account.name}</h4>
-                  <span className="text-2xl">{accountTypeIcons[account.type as AccountType]}</span>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">
-                    {accountTypeLabels[account.type as AccountType]}
-                  </Badge>
-                </div>
-                
-                <div>
-                  <p className="text-sm text-muted-foreground">Current Balance</p>
-                  <p className="text-lg font-semibold text-foreground">
-                    {formatCurrency(account.balance)}
+      <AlertDialogContent className="sm:max-w-[480px] p-0 overflow-hidden border-none rounded-[32px] shadow-2xl">
+        <div className="p-8 space-y-6">
+          <AlertDialogHeader className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-900/20 flex items-center justify-center">
+                <span className="material-symbols-outlined text-rose-500 text-2xl">warning</span>
+              </div>
+              <AlertDialogTitle className="text-2xl font-black tracking-tight">Delete Account</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-muted-foreground font-medium text-base">
+              You are about to permanently delete this account. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="p-6 rounded-3xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col">
+                <span className={cn(
+                  "inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider mb-1 border w-fit",
+                  colors.bg, colors.text, colors.border, colors.bgDark
+                )}>
+                  {accountTypeLabels[account.type as AccountType]}
+                </span>
+                <span className="text-lg font-bold text-foreground leading-tight">{account.name}</span>
+              </div>
+              <div className={cn(
+                "w-10 h-10 rounded-2xl flex items-center justify-center",
+                colors.bg, colors.bgDark
+              )}>
+                <span className={cn("material-symbols-outlined text-[20px]", colors.icon)}>
+                  {accountTypeMaterialIcons[account.type as AccountType]}
+                </span>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-slate-200/50 dark:border-slate-800/50">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Current Balance</p>
+              <p className="text-xl font-black text-foreground">{formatCurrency(balanceNum)}</p>
+            </div>
+          </div>
+
+          {checkingTransactions && (
+            <div className="flex items-center gap-3 p-4 bg-primary/5 text-primary rounded-2xl animate-pulse">
+              <span className="material-symbols-outlined animate-spin">refresh</span>
+              <span className="text-sm font-bold">Checking account history...</span>
+            </div>
+          )}
+
+          {hasTransactions === true && (
+            <div className="p-4 bg-amber-50 dark:bg-amber-900/10 text-amber-700 dark:text-amber-400 rounded-2xl border border-amber-100 dark:border-amber-900/20">
+              <div className="flex items-start gap-3">
+                <span className="material-symbols-outlined text-[20px] mt-0.5">info</span>
+                <div className="text-sm">
+                  <p className="font-black mb-1">History Detected</p>
+                  <p className="font-medium opacity-90">
+                    This account has recorded transactions. Deleting it will also remove all associated history.
                   </p>
                 </div>
-                
-                {account.creditLimit && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Credit Limit</p>
-                    <p className="text-sm font-medium text-foreground">
-                      {formatCurrency(account.creditLimit)}
-                    </p>
-                  </div>
-                )}
               </div>
-
-              {/* Transaction Dependency Check */}
-              {checkingTransactions && (
-                <div className="flex items-center gap-2 p-3 bg-blue-50 text-blue-700 rounded-lg">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span className="text-sm">Checking for associated transactions...</span>
-                </div>
-              )}
-              
-              {hasTransactions === true && (
-                <div className="p-3 bg-destructive/10 text-destructive rounded-lg">
-                  <div className="flex items-start gap-2">
-                    <AlertTriangle className="h-4 w-4 mt-0.5" />
-                    <div className="text-sm">
-                      <p className="font-medium">Cannot delete this account</p>
-                      <p className="mt-1">
-                        This account has transaction history and cannot be deleted. 
-                        Consider deactivating it instead to preserve your financial records.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {hasTransactions === false && (
-                <div className="space-y-2">
-                  <div className="p-3 bg-yellow-50 text-yellow-700 rounded-lg">
-                    <div className="flex items-start gap-2">
-                      <AlertTriangle className="h-4 w-4 mt-0.5" />
-                      <div className="text-sm">
-                        <p className="font-medium">This action cannot be undone</p>
-                        <p className="mt-1">
-                          The account and all associated data will be permanently removed 
-                          from your records.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>
-            Cancel
+          )}
+        </div>
+
+        <AlertDialogFooter className="p-6 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 gap-3 sm:gap-4 flex-col sm:flex-row">
+          <AlertDialogCancel className="h-12 border-none bg-white dark:bg-slate-800 text-foreground font-bold rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-all flex-1 m-0">
+            Keep Account
           </AlertDialogCancel>
-          
+
           {hasTransactions === true ? (
-            <Button variant="outline" onClick={() => setIsOpen(false)}>
-              Keep Account
-            </Button>
+            <AlertDialogCancel className="h-12 border-none bg-primary text-white font-bold rounded-2xl hover:opacity-90 transition-all flex-1 m-0 shadow-lg shadow-primary/20">
+              Go Back
+            </AlertDialogCancel>
           ) : (
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting || checkingTransactions || hasTransactions === null}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="h-12 bg-rose-500 text-white font-bold rounded-2xl hover:bg-rose-600 active:scale-[0.98] transition-all flex-1 m-0 shadow-lg shadow-rose-500/20 border-none"
             >
               {isDeleting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
-                </>
+                <span className="material-symbols-outlined animate-spin">refresh</span>
               ) : (
-                <>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete Account
-                </>
+                "Yes, Delete"
               )}
             </AlertDialogAction>
           )}

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Manrope } from "next/font/google";
 import { ClerkProvider } from '@clerk/nextjs'
 import { ConditionalNavigationHeader } from '@/components/layout/conditional-navigation-header';
 import { ConditionalMainWrapper } from '@/components/layout/conditional-main-wrapper';
@@ -14,11 +14,23 @@ import "./globals.css";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: 'swap', // Optimize font loading
+  preload: true,
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: 'swap',
+  preload: false, // Lazy load mono font
+});
+
+const manrope = Manrope({
+  variable: "--font-manrope",
+  subsets: ["latin"],
+  weight: ['400', '600', '700', '800'], // Reduce font weights loaded
+  display: 'swap',
+  preload: true,
 });
 
 export const metadata: Metadata = {
@@ -57,8 +69,18 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
+        <head>
+          {/* Preconnect to Google Fonts for faster loading */}
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+          {/* Material Symbols font - critical for icons */}
+          <link 
+            href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" 
+            rel="stylesheet"
+          />
+        </head>
         <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          className={`${geistSans.variable} ${geistMono.variable} ${manrope.variable} antialiased font-sans`}
         >
           <Providers>
             <NotificationProvider>
@@ -68,8 +90,8 @@ export default function RootLayout({
                 <ConditionalMainWrapper>
                   {children}
                 </ConditionalMainWrapper>
-                <Toaster 
-                  position="top-right" 
+                <Toaster
+                  position="top-right"
                   toastOptions={{
                     duration: 5000,
                     className: 'border shadow-lg',

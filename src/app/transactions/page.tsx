@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
-import { BreadcrumbNavigation } from '@/components/layout/breadcrumb-navigation';
+
 import { TransactionManagementClient } from './transaction-management-client';
 import { TransactionPageSkeleton } from './transaction-page-skeleton';
 
@@ -12,21 +12,19 @@ export const metadata: Metadata = {
 
 export default function TransactionsPage() {
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <BreadcrumbNavigation className="mb-6" />
-      
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Transaction Management</h1>
-          <p className="text-muted-foreground">
-            Track your income and expenses, categorize transactions, and monitor your financial health.
-          </p>
+    <div className="flex-1 overflow-y-auto bg-slate-50/50 dark:bg-slate-950">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-black text-foreground tracking-tight">Transactions</h1>
+            <p className="text-muted-foreground font-medium text-sm">Track and manage your financial activity across all accounts.</p>
+          </div>
         </div>
-      </div>
 
-      <Suspense fallback={<TransactionPageSkeleton />}>
-        <TransactionManagementClient />
-      </Suspense>
+        <Suspense fallback={<TransactionPageSkeleton />}>
+          <TransactionManagementClient />
+        </Suspense>
+      </div>
     </div>
   );
 }

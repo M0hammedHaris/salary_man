@@ -1,13 +1,16 @@
 import { z } from 'zod';
 
 // Account type enum to match database schema
-export enum AccountType {
-  CHECKING = 'checking',
-  SAVINGS = 'savings',
-  INVESTMENT = 'investment',
-  CREDIT_CARD = 'credit_card',
-  OTHER = 'other'
-}
+// Account type enum to match database schema
+export const AccountType = {
+  CHECKING: 'checking',
+  SAVINGS: 'savings',
+  INVESTMENT: 'investment',
+  CREDIT_CARD: 'credit_card',
+  OTHER: 'other'
+} as const;
+
+export type AccountType = typeof AccountType[keyof typeof AccountType];
 
 // Account interface for TypeScript
 export interface Account {
@@ -16,7 +19,8 @@ export interface Account {
   name: string;
   type: AccountType;
   balance: string; // Decimal as string for precision
-  creditLimit?: string; // Optional for credit cards
+  creditLimit: string | null; // Optional for credit cards
+  description?: string | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -24,18 +28,39 @@ export interface Account {
 
 // Request/Response schemas using Zod for validation
 export const createAccountSchema = z.object({
-  name: z.string().min(1, 'Account name is required').max(100, 'Name too long'),
+  name: z.string()
+    .min(1, 'Account name is required')
+    .max(100, 'Name too long')
+    .transform(str => str.trim()),
   type: z.enum(['checking', 'savings', 'investment', 'credit_card', 'other']),
-  balance: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Invalid balance format').transform((val: string) => val),
-  creditLimit: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Invalid credit limit format').optional(),
-  description: z.string().max(500, 'Description too long').optional(),
+  balance: z.string()
+    .regex(/^\d+(\.\d{1,2})?$/, 'Invalid balance format')
+    .transform((val: string) => val.trim()),
+  creditLimit: z.string()
+    .regex(/^\d+(\.\d{1,2})?$/, 'Invalid credit limit format')
+    .transform(str => str.trim())
+    .optional(),
+  description: z.string()
+    .max(500, 'Description too long')
+    .transform(str => str.trim())
+    .optional(),
 });
 
 export const updateAccountSchema = z.object({
-  name: z.string().min(1, 'Account name is required').max(100, 'Name too long').optional(),
+  name: z.string()
+    .min(1, 'Account name is required')
+    .max(100, 'Name too long')
+    .transform(str => str.trim())
+    .optional(),
   type: z.enum(['checking', 'savings', 'investment', 'credit_card', 'other']).optional(),
-  creditLimit: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Invalid credit limit format').optional(),
-  description: z.string().max(500, 'Description too long').optional(),
+  creditLimit: z.string()
+    .regex(/^\d+(\.\d{1,2})?$/, 'Invalid credit limit format')
+    .transform(str => str.trim())
+    .optional(),
+  description: z.string()
+    .max(500, 'Description too long')
+    .transform(str => str.trim())
+    .optional(),
   // Note: balance is intentionally excluded from updates to protect historical data
 });
 
@@ -46,6 +71,7 @@ export const accountResponseSchema = z.object({
   type: z.enum(['checking', 'savings', 'investment', 'credit_card', 'other']),
   balance: z.string(),
   creditLimit: z.string().optional(),
+  description: z.string().optional(),
   isActive: z.boolean(),
   createdAt: z.string(),
   updatedAt: z.string(),

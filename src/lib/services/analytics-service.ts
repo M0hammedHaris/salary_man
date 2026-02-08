@@ -1,6 +1,7 @@
 import { eq, and, sql, desc, asc, gte, lte, inArray } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { transactions, accounts, categories } from '@/lib/db/schema';
+import Decimal from 'decimal.js';
 import type {
   AnalyticsOverview,
   CashFlowData,
@@ -58,26 +59,28 @@ export class AnalyticsService {
         .where(and(...transactionConditions))
         .groupBy(categories.type);
 
-      // Calculate income and expenses
-      let totalIncome = 0;
-      let totalExpenses = 0;
+      // Calculate income and expenses using Decimal for precision
+      let totalIncome = new Decimal(0);
+      let totalExpenses = new Decimal(0);
       let transactionCount = 0;
-      let totalTransactionValue = 0;
+      let totalTransactionValue = new Decimal(0);
 
       transactionSummary.forEach(summary => {
-        const amount = parseFloat(summary.totalAmount || '0');
+        const amount = new Decimal(summary.totalAmount || '0');
         transactionCount += summary.count;
-        totalTransactionValue += Math.abs(amount);
+        totalTransactionValue = totalTransactionValue.plus(amount.abs());
 
         if (summary.categoryType === 'income') {
-          totalIncome += amount;
+          totalIncome = totalIncome.plus(amount);
         } else if (summary.categoryType === 'expense') {
-          totalExpenses += Math.abs(amount); // Expenses are stored as positive values
+          totalExpenses = totalExpenses.plus(amount.abs());
         }
       });
 
-      const netCashFlow = totalIncome - totalExpenses;
-      const averageTransactionValue = transactionCount > 0 ? totalTransactionValue / transactionCount : 0;
+      const netCashFlow = totalIncome.minus(totalExpenses);
+      const averageTransactionValue = transactionCount > 0 
+        ? totalTransactionValue.div(transactionCount).toNumber() 
+        : 0;
 
       // Get account balances for assets and liabilities calculation
       const accountConditions = [eq(accounts.userId, userId), eq(accounts.isActive, true)];
@@ -87,10 +90,10 @@ export class AnalyticsService {
       }
 
       if (accountTypes && accountTypes.length > 0) {
-        // Filter by account types with proper type casting
-        const validAccountTypes = accountTypes.filter(type => 
+        // Filter by account types with proper type guard
+        const validAccountTypes = accountTypes.filter((type): type is 'checking' | 'savings' | 'investment' | 'credit_card' | 'other' => 
           ['checking', 'savings', 'investment', 'credit_card', 'other'].includes(type)
-        ) as Array<'checking' | 'savings' | 'investment' | 'credit_card' | 'other'>;
+        );
         if (validAccountTypes.length > 0) {
           accountConditions.push(inArray(accounts.type, validAccountTypes));
         }
@@ -104,31 +107,31 @@ export class AnalyticsService {
         .from(accounts)
         .where(and(...accountConditions));
 
-      let totalAssets = 0;
-      let totalLiabilities = 0;
+      let totalAssets = new Decimal(0);
+      let totalLiabilities = new Decimal(0);
       const accountCount = accountBalances.length;
 
       accountBalances.forEach(account => {
-        const balance = parseFloat(account.balance);
+        const balance = new Decimal(account.balance);
         
         if (account.type === 'credit_card') {
           // Credit card balances are liabilities
-          totalLiabilities += Math.abs(balance);
+          totalLiabilities = totalLiabilities.plus(balance.abs());
         } else {
           // Other account types are assets
-          totalAssets += balance;
+          totalAssets = totalAssets.plus(balance);
         }
       });
 
-      const netWorth = totalAssets - totalLiabilities;
+      const netWorth = totalAssets.minus(totalLiabilities);
 
       return {
-        totalIncome,
-        totalExpenses,
-        netCashFlow,
-        totalAssets,
-        totalLiabilities,
-        netWorth,
+        totalIncome: totalIncome.toNumber(),
+        totalExpenses: totalExpenses.toNumber(),
+        netCashFlow: netCashFlow.toNumber(),
+        totalAssets: totalAssets.toNumber(),
+        totalLiabilities: totalLiabilities.toNumber(),
+        netWorth: netWorth.toNumber(),
         transactionCount,
         accountCount,
         averageTransactionValue,
@@ -204,25 +207,25 @@ export class AnalyticsService {
           t.date >= startDate && t.date <= endDate
         );
 
-        let income = 0;
-        let expense = 0;
+        let income = new Decimal(0);
+        let expense = new Decimal(0);
 
         periodTransactions.forEach(t => {
-          const amount = parseFloat(t.amount);
+          const amount = new Decimal(t.amount);
           if (t.categoryType === 'income') {
-            income += amount;
+            income = income.plus(amount);
           } else if (t.categoryType === 'expense') {
-            expense += Math.abs(amount);
+            expense = expense.plus(amount.abs());
           }
         });
 
-        const netFlow = income - expense;
+        const netFlow = income.minus(expense);
 
         return {
           date: formatDateForGrouping(intervalDate, grouping),
-          income,
-          expense,
-          netFlow,
+          income: income.toNumber(),
+          expense: expense.toNumber(),
+          netFlow: netFlow.toNumber(),
         };
       });
     } catch (error) {
@@ -267,20 +270,22 @@ export class AnalyticsService {
         .groupBy(categories.id, categories.name, categories.color)
         .orderBy(desc(sql`SUM(ABS(${transactions.amount}))`));
 
-      // Calculate total spending for percentage calculation
+      // Calculate total spending for percentage calculation using Decimal
       const totalSpending = spendingData.reduce((sum, category) => 
-        sum + parseFloat(category.totalAmount || '0'), 0
+        sum.plus(new Decimal(category.totalAmount || '0')), new Decimal(0)
       );
 
       return spendingData.map(category => {
-        const amount = parseFloat(category.totalAmount || '0');
-        const percentage = totalSpending > 0 ? (amount / totalSpending) * 100 : 0;
+        const amount = new Decimal(category.totalAmount || '0');
+        const percentage = totalSpending.greaterThan(0) 
+          ? amount.div(totalSpending).mul(100).toNumber() 
+          : 0;
 
         return {
           categoryId: category.categoryId,
           categoryName: category.categoryName,
           categoryColor: category.categoryColor,
-          amount,
+          amount: amount.toNumber(),
           percentage,
           transactionCount: category.transactionCount,
         };
@@ -292,7 +297,7 @@ export class AnalyticsService {
   }
 
   /**
-   * Get account balance trends over time
+   * Get account balance trends over time (optimized to avoid N+1 queries)
    */
   static async getAccountTrends(
     userId: string,
@@ -320,32 +325,45 @@ export class AnalyticsService {
         .from(accounts)
         .where(and(...accountConditions));
 
+      // Fetch ALL transactions for ALL accounts in one query (avoid N+1)
+      const allTransactions = await db
+        .select({
+          accountId: transactions.accountId,
+          amount: transactions.amount,
+          date: transactions.transactionDate,
+        })
+        .from(transactions)
+        .where(and(
+          eq(transactions.userId, userId),
+          inArray(transactions.accountId, accountList.map(a => a.id)),
+          lte(transactions.transactionDate, dateRange.endDate)
+        ))
+        .orderBy(asc(transactions.transactionDate));
+
+      // Group transactions by account
+      const transactionsByAccount = new Map<string, typeof allTransactions>();
+      allTransactions.forEach(t => {
+        if (!transactionsByAccount.has(t.accountId)) {
+          transactionsByAccount.set(t.accountId, []);
+        }
+        transactionsByAccount.get(t.accountId)!.push(t);
+      });
+
       const accountTrends: AccountTrend[] = [];
 
       for (const account of accountList) {
-        // Get transactions for this account within the date range
-        const accountTransactions = await db
-          .select({
-            amount: transactions.amount,
-            date: transactions.transactionDate,
-          })
-          .from(transactions)
-          .where(and(
-            eq(transactions.userId, userId),
-            eq(transactions.accountId, account.id),
-            lte(transactions.transactionDate, dateRange.endDate)
-          ))
-          .orderBy(asc(transactions.transactionDate));
+        const accountTransactions = transactionsByAccount.get(account.id) || [];
 
         if (accountTransactions.length === 0) {
           // No transactions, use current balance
+          const currentBalance = new Decimal(account.currentBalance);
           accountTrends.push({
             accountId: account.id,
             accountName: account.name,
             accountType: account.type,
             data: [{
               date: formatDateForGrouping(dateRange.endDate, grouping),
-              balance: parseFloat(account.currentBalance),
+              balance: currentBalance.toNumber(),
             }],
             growth: 0,
             growthAmount: 0,
@@ -353,10 +371,10 @@ export class AnalyticsService {
           continue;
         }
 
-        // Calculate running balance over time
+        // Calculate running balance over time using Decimal
         const numericTransactions = accountTransactions.map(t => ({
           date: t.date,
-          amount: parseFloat(t.amount),
+          amount: new Decimal(t.amount).toNumber(), // Convert for calculateRunningBalance
         }));
         const balanceHistory = calculateRunningBalance(numericTransactions, 0);
         
@@ -373,11 +391,13 @@ export class AnalyticsService {
           };
         });
 
-        // Calculate growth metrics
-        const startBalance = trendData[0]?.balance || 0;
-        const endBalance = trendData[trendData.length - 1]?.balance || 0;
-        const growthAmount = endBalance - startBalance;
-        const growth = startBalance !== 0 ? (growthAmount / Math.abs(startBalance)) * 100 : 0;
+        // Calculate growth metrics using Decimal
+        const startBalance = new Decimal(trendData[0]?.balance || 0);
+        const endBalance = new Decimal(trendData[trendData.length - 1]?.balance || 0);
+        const growthAmount = endBalance.minus(startBalance);
+        const growth = startBalance.abs().greaterThan(0) 
+          ? growthAmount.div(startBalance.abs()).mul(100).toNumber() 
+          : 0;
 
         accountTrends.push({
           accountId: account.id,
@@ -385,7 +405,7 @@ export class AnalyticsService {
           accountType: account.type,
           data: trendData,
           growth,
-          growthAmount,
+          growthAmount: growthAmount.toNumber(),
         });
       }
 
@@ -429,13 +449,14 @@ export class AnalyticsService {
       const utilizationData: CreditUtilization[] = [];
 
       for (const account of creditCardAccounts) {
-        if (!account.creditLimit || parseFloat(account.creditLimit) === 0) {
+        const creditLimitDecimal = new Decimal(account.creditLimit || '0');
+        if (creditLimitDecimal.isZero()) {
           continue; // Skip accounts without credit limits
         }
 
-        const currentBalance = parseFloat(account.balance);
-        const creditLimit = parseFloat(account.creditLimit);
-        const utilizationRate = (Math.abs(currentBalance) / creditLimit) * 100;
+        const currentBalance = new Decimal(account.balance);
+        const creditLimit = creditLimitDecimal;
+        const utilizationRate = currentBalance.abs().div(creditLimit).mul(100).toNumber();
 
         // Get historical transaction data for trend analysis
         const recentTransactions = await db
@@ -455,12 +476,12 @@ export class AnalyticsService {
         // Calculate running utilization over the period
         const numericRecentTransactions = recentTransactions.map(t => ({
           date: t.date,
-          amount: parseFloat(t.amount),
+          amount: new Decimal(t.amount).toNumber(),
         }));
         const balanceHistory = calculateRunningBalance(numericRecentTransactions, 0);
         const utilizationHistory = balanceHistory.map(entry => ({
           date: entry.date,
-          utilization: (Math.abs(entry.balance) / creditLimit) * 100,
+          utilization: new Decimal(Math.abs(entry.balance)).div(creditLimit).mul(100).toNumber(),
         }));
 
         // Calculate average and peak utilization
@@ -487,8 +508,8 @@ export class AnalyticsService {
         utilizationData.push({
           accountId: account.id,
           accountName: account.name,
-          currentBalance: Math.abs(currentBalance),
-          creditLimit,
+          currentBalance: currentBalance.abs().toNumber(),
+          creditLimit: creditLimit.toNumber(),
           utilizationRate,
           averageUtilization,
           peakUtilization,
@@ -505,7 +526,7 @@ export class AnalyticsService {
   }
 
   /**
-   * Get net worth history over time
+   * Get net worth history over time (optimized to avoid N+1 queries)
    */
   static async getNetWorthHistory(
     userId: string,
@@ -526,43 +547,60 @@ export class AnalyticsService {
         .from(accounts)
         .where(and(eq(accounts.userId, userId), eq(accounts.isActive, true)));
 
+      // Fetch ALL transactions for ALL accounts in one query
+      const allTransactions = await db
+        .select({
+          accountId: transactions.accountId,
+          amount: transactions.amount,
+          date: transactions.transactionDate,
+        })
+        .from(transactions)
+        .where(and(
+          eq(transactions.userId, userId),
+          inArray(transactions.accountId, userAccounts.map(a => a.id)),
+          lte(transactions.transactionDate, dateRange.endDate)
+        ))
+        .orderBy(asc(transactions.transactionDate));
+
+      // Group transactions by account
+      const transactionsByAccount = new Map<string, typeof allTransactions>();
+      allTransactions.forEach(t => {
+        if (!transactionsByAccount.has(t.accountId)) {
+          transactionsByAccount.set(t.accountId, []);
+        }
+        transactionsByAccount.get(t.accountId)!.push(t);
+      });
+
       const netWorthHistory: NetWorthData[] = [];
 
       for (const intervalDate of intervals) {
-        let assets = 0;
-        let liabilities = 0;
+        let assets = new Decimal(0);
+        let liabilities = new Decimal(0);
 
         for (const account of userAccounts) {
           // Get account balance at this point in time
-          const transactionsUpToDate = await db
-            .select({
-              amount: transactions.amount,
-            })
-            .from(transactions)
-            .where(and(
-              eq(transactions.userId, userId),
-              eq(transactions.accountId, account.id),
-              lte(transactions.transactionDate, intervalDate)
-            ));
+          const accountTransactions = transactionsByAccount.get(account.id) || [];
+          const transactionsUpToDate = accountTransactions.filter(t => t.date <= intervalDate);
 
           const accountBalance = transactionsUpToDate.reduce(
-            (sum, t) => sum + parseFloat(t.amount), 0
+            (sum, t) => sum.plus(new Decimal(t.amount)), 
+            new Decimal(0)
           );
 
           if (account.type === 'credit_card') {
-            liabilities += Math.abs(accountBalance);
+            liabilities = liabilities.plus(accountBalance.abs());
           } else {
-            assets += accountBalance;
+            assets = assets.plus(accountBalance);
           }
         }
 
-        const netWorth = assets - liabilities;
+        const netWorth = assets.minus(liabilities);
 
         netWorthHistory.push({
           date: formatDateForGrouping(intervalDate, grouping),
-          assets,
-          liabilities,
-          netWorth,
+          assets: assets.toNumber(),
+          liabilities: liabilities.toNumber(),
+          netWorth: netWorth.toNumber(),
         });
       }
 
