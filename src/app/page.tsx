@@ -1,9 +1,10 @@
 import { auth } from '@clerk/nextjs/server';
 import { SignInButton, SignUpButton } from '@clerk/nextjs';
 import { redirect } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default async function Home() {
   const { userId } = await auth();
@@ -96,14 +97,17 @@ export default async function Home() {
                 <div className="absolute -bottom-10 -left-10 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse [animation-delay:2s]"></div>
 
                 {/* Main Image Container */}
-                <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-primary/10 border border-white/50 bg-white dark:bg-background p-2">
-                  <img
+                <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-primary/10 border border-white/50 bg-white dark:bg-background p-2 aspect-[4/3]">
+                  <Image
                     alt="Dashboard Preview"
-                    className="w-full h-auto rounded-xl object-cover aspect-[4/3]"
+                    className="rounded-xl object-cover"
                     src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop"
+                    fill
+                    priority
+                    sizes="(max-width: 768px) 100vw, 50vw"
                   />
                   {/* Floating UI overlay from design */}
-                  <div className="absolute bottom-6 left-6 right-6 bg-white/95 dark:bg-background/95 backdrop-blur-md p-4 rounded-xl border border-border shadow-lg flex items-center justify-between">
+                  <div className="absolute bottom-6 left-6 right-6 bg-white/95 dark:bg-background/95 backdrop-blur-md p-4 rounded-xl border border-border shadow-lg flex items-center justify-between z-10">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
                         <span className="material-symbols-outlined">trending_up</span>

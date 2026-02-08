@@ -2,7 +2,7 @@
 
 import { type Control, type FieldValues, type Path } from 'react-hook-form';
 import { format } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {

@@ -10,7 +10,7 @@ interface FinancialHealthScoreProps {
   explanation?: string;
 }
 
-export function FinancialHealthScore({ score, trend, explanation }: FinancialHealthScoreProps) {
+export function FinancialHealthScore({ score, trend: _trend, explanation }: FinancialHealthScoreProps) {
   const getScoreLabel = (score: number) => {
     if (score >= 80) return 'Excellent';
     if (score >= 60) return 'Good';

@@ -4,9 +4,6 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Zap,
-  Split,
-  Copy,
   BookOpen,
   X,
   Loader2,
@@ -79,8 +76,7 @@ export function TransactionCreateForm({
   const [showSplitMode, setShowSplitMode] = useState(false);
   const [splitEntries, setSplitEntries] = useState<SplitEntry[]>([]);
   const [showTemplates, setShowTemplates] = useState(false);
-  const [showBulkMode, setShowBulkMode] = useState(false);
-  const [bulkEntries, setBulkEntries] = useState<CreateTransactionRequest[]>([]);
+
 
   const { formData, isLoading } = useFormData();
 
@@ -159,28 +155,7 @@ export function TransactionCreateForm({
     localStorage.setItem("transactionTemplates", JSON.stringify(updated));
   };
 
-  const addBulkEntry = () => setBulkEntries(p => [...p, { accountId: "", amount: "", description: "", categoryId: "", transactionDate: new Date().toISOString() }]);
-  const removeBulkEntry = (idx: number) => setBulkEntries(p => p.filter((_, i) => i !== idx));
-  const updateBulkEntry = (idx: number, f: keyof CreateTransactionRequest, v: string) => {
-    setBulkEntries(p => p.map((e, i) => i === idx ? { ...e, [f]: v } : e));
-  };
 
-  const submitBulkEntries = async () => {
-    setIsSubmitting(true);
-    try {
-      if (bulkEntries.some(e => !e.accountId || !e.amount || !e.description || !e.categoryId)) {
-        throw new Error("All entries must be complete");
-      }
-      await Promise.all(bulkEntries.map(e => fetch("/api/transactions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(e) })));
-      setBulkEntries([]);
-      setShowBulkMode(false);
-      onSuccess?.();
-    } catch (e) {
-      form.setError("root", { message: e instanceof Error ? e.message : "Failed" });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const onSubmit = async (data: CreateTransactionRequest) => {
     setIsSubmitting(true);

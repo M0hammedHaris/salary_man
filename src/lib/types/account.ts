@@ -20,7 +20,7 @@ export interface Account {
   type: AccountType;
   balance: string; // Decimal as string for precision
   creditLimit: string | null; // Optional for credit cards
-  description: string | null;
+  description?: string | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

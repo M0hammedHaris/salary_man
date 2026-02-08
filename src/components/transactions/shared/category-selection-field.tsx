@@ -1,7 +1,7 @@
 'use client';
 
 import { type Control, type FieldValues, type Path } from 'react-hook-form';
-import { Zap } from 'lucide-react';
+
 import {
   FormControl,
   FormDescription,

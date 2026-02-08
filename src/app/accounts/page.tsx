@@ -5,16 +5,13 @@ import { cn } from '@/lib/utils';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
 } from '@/components/ui/dialog';
 import { AccountCreateForm } from '@/components/accounts/account-create-form';
 import { AccountEditForm } from '@/components/accounts/account-edit-form';
 import { AccountList } from '@/components/accounts/account-list';
 import { AccountType, type AccountResponse } from '@/lib/types/account';
 
-type ViewMode = 'list' | 'create' | 'edit';
+
 
 const filterOptions = [
   { label: 'All', value: 'all', icon: 'apps' },

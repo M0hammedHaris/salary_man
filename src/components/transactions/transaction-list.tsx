@@ -14,9 +14,7 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
+
 } from '@/components/ui/dialog';
 import { TransactionEditForm } from './transaction-edit-form';
 import { TransactionDeleteMenuItem } from './transaction-delete-dialog';
@@ -47,7 +45,6 @@ export function TransactionList({
   categoryId,
   limit = 50,
   onEdit,
-  onDelete,
   onView,
   className
 }: TransactionListProps) {
@@ -57,8 +54,7 @@ export function TransactionList({
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   const { restorePointerEvents } = useModalManager(!!editingTransaction);
-  const [accounts, setAccounts] = useState<Record<string, Account>>({});
-  const [categories, setCategories] = useState<Record<string, Category>>({});
+
 
   const loadTransactions = useCallback(async () => {
     try {
@@ -96,9 +92,6 @@ export function TransactionList({
       categoriesData.categories?.forEach((category: Category) => {
         categoriesMap[category.id] = category;
       });
-
-      setAccounts(accountsMap);
-      setCategories(categoriesMap);
 
       const enrichedTransactions: EnrichedTransaction[] = (transactionsData.transactions || []).map(
         (transaction: Transaction) => ({

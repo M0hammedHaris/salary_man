@@ -2,8 +2,7 @@
 
 import React from "react";
 import { UserButton, useUser } from "@clerk/nextjs";
-import { Bell, Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
+
 
 export function TopHeader() {
     const { user } = useUser();
@@ -22,7 +21,7 @@ export function TopHeader() {
                     {getGreeting()}, {user?.firstName || "User"}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                    Here's your financial overview for today.
+                    Here&apos;s your financial overview for today.
                 </p>
             </div>
 

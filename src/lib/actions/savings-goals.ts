@@ -1,7 +1,7 @@
 'use server';
 
 import { auth } from '@clerk/nextjs/server';
-import { z, ZodError } from 'zod';
+import { ZodError } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { savingsService } from '@/lib/services/savings-service';
 import { createGoalSchema, updateGoalSchema, type CreateGoalRequest, type UpdateGoalRequest } from '@/lib/types/savings';
@@ -54,8 +54,8 @@ export async function createSavingsGoal(data: CreateGoalRequest) {
     } catch (error) {
         console.error('Error in createSavingsGoal:', error);
         if (error instanceof ZodError) {
-            const validationError = error as any;
-            throw new Error(`Validation failed: ${validationError.errors.map((e: any) => e.message).join(', ')}`);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            throw new Error(`Validation failed: ${(error as ZodError<any>).issues.map((e) => e.message).join(', ')}`);
         }
         throw error;
     }

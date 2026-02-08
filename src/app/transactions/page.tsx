@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
-import { BreadcrumbNavigation } from '@/components/layout/breadcrumb-navigation';
+
 import { TransactionManagementClient } from './transaction-management-client';
 import { TransactionPageSkeleton } from './transaction-page-skeleton';
 

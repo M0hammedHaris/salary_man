@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getUserBills } from '@/lib/actions/bills';
-import { format, isToday, isTomorrow, isWithinInterval, addDays } from 'date-fns';
+import { format, isToday, isTomorrow, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils/decimal';
 import Link from 'next/link';
@@ -32,8 +32,8 @@ interface UpcomingBillsProps {
   className?: string;
 }
 
-export function UpcomingBills({ onPayBill, onSetupReminder, className }: UpcomingBillsProps) {
-  const [timeFilter, setTimeFilter] = useState<'today' | 'week' | 'month'>('week');
+export function UpcomingBills({ onPayBill: _onPayBill, onSetupReminder: _onSetupReminder, className }: UpcomingBillsProps) {
+  const [timeFilter] = useState<'today' | 'week' | 'month'>('week');
 
   const { data: billsResponse, isLoading, error } = useQuery({
     queryKey: ['bills', 'upcoming', timeFilter],

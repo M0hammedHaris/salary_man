@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { Settings, Bell, Lock, Shield, User, Smartphone, Monitor } from 'lucide-react';
+import { Bell, Lock, User, Monitor } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
