@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getUserAccounts, createAccount } from '@/lib/actions/accounts';
+import { createCachedResponse, CACHE_DURATIONS } from '@/lib/utils/api-cache';
 
 export async function GET() {
     try {
         const result = await getUserAccounts();
-        return NextResponse.json(result);
+        return createCachedResponse(result, CACHE_DURATIONS.ACCOUNTS);
     } catch (error) {
         console.error('Error fetching accounts:', error);
         return NextResponse.json(

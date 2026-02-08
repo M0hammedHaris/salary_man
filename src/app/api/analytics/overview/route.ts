@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { AnalyticsService } from '@/lib/services/analytics-service';
+import { createCachedResponse, CACHE_DURATIONS } from '@/lib/utils/api-cache';
 import { z } from 'zod';
 import type { AnalyticsOverviewRequest } from '@/lib/types/analytics';
 
@@ -52,7 +53,7 @@ export async function GET(request: NextRequest) {
 
     const overview = await AnalyticsService.getOverview(userId, filters);
     
-    return NextResponse.json({ overview });
+    return createCachedResponse({ overview }, CACHE_DURATIONS.ANALYTICS);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

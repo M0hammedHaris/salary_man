@@ -73,13 +73,30 @@ export function RealTimeNotificationProvider({ children }: RealTimeNotificationP
   }, [subscribers]);
 
   useEffect(() => {
-    refreshUnreadCount();
+    // Load cached count from localStorage immediately (non-blocking)
+    const cachedCount = localStorage.getItem('notification-unread-count');
+    if (cachedCount) {
+      setUnreadCount(parseInt(cachedCount, 10) || 0);
+    }
+
+    // Fetch fresh count in background after a short delay (don't block initial render)
+    const initialFetchTimeout = setTimeout(() => {
+      refreshUnreadCount();
+    }, 500);
     
-    // Set up polling for real-time updates
-    const interval = setInterval(refreshUnreadCount, 30000); // Poll every 30 seconds
+    // Set up polling for real-time updates (increased to 60s to reduce load)
+    const interval = setInterval(refreshUnreadCount, 60000); // Poll every 60 seconds
     
-    return () => clearInterval(interval);
+    return () => {
+      clearTimeout(initialFetchTimeout);
+      clearInterval(interval);
+    };
   }, [refreshUnreadCount]);
+
+  // Cache unread count to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('notification-unread-count', unreadCount.toString());
+  }, [unreadCount]);
 
   const subscribe = (callback: (update: NotificationUpdate) => void) => {
     setSubscribers(prev => new Set([...prev, callback]));

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils/decimal';
 import Decimal from 'decimal.js';
 import { AccountDeleteDialog } from '@/components/accounts/account-delete-dialog';
+import { useAccounts } from '@/lib/hooks/use-accounts';
 import {
   AccountType,
   type AccountResponse,
@@ -31,7 +31,7 @@ interface AccountListProps {
   onEditAccount?: (account: AccountResponse) => void;
   onDeleteAccount?: (account: AccountResponse) => void;
   onCreateAccount?: () => void;
-  refreshTrigger?: number;
+  refreshTrigger?: number; // Deprecated: kept for backward compatibility
   onAccountDeleted?: () => void;
   activeFilter?: string;
 }
@@ -39,37 +39,11 @@ interface AccountListProps {
 export function AccountList({
   onEditAccount,
   onCreateAccount,
-  refreshTrigger = 0,
   onAccountDeleted,
   activeFilter = 'all'
 }: AccountListProps) {
-  const [accounts, setAccounts] = useState<AccountResponse[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchAccounts = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const response = await fetch('/api/accounts');
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch accounts');
-      }
-
-      const data = await response.json();
-      setAccounts(data.accounts || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load accounts');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAccounts();
-  }, [refreshTrigger]);
+  // Use custom hook with TanStack Query for efficient caching
+  const { data: accounts = [], isLoading, error, refetch } = useAccounts();
 
   const filteredAccounts = activeFilter === 'all'
     ? accounts
@@ -93,9 +67,11 @@ export function AccountList({
           <span className="material-symbols-outlined text-rose-500 text-4xl">warning</span>
         </div>
         <h3 className="text-3xl font-black mb-3 tracking-tight relative z-10">Something went wrong</h3>
-        <p className="text-slate-500 max-w-xs text-center font-medium leading-relaxed mb-10 relative z-10">{error}</p>
+        <p className="text-slate-500 max-w-xs text-center font-medium leading-relaxed mb-10 relative z-10">
+          {error instanceof Error ? error.message : 'Failed to load accounts'}
+        </p>
         <button
-          onClick={fetchAccounts}
+          onClick={() => refetch()}
           className="px-10 py-4 bg-slate-900 dark:bg-white dark:text-slate-900 text-white rounded-2xl font-black transition-all hover:scale-105 active:scale-95 relative z-10"
         >
           Try Again

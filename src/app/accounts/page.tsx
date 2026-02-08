@@ -23,7 +23,6 @@ const filterOptions = [
 ];
 
 export default function AccountsPage() {
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [selectedAccount, setSelectedAccount] = useState<AccountResponse | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -40,13 +39,13 @@ export default function AccountsPage() {
 
   const handleCreateSuccess = () => {
     setIsCreateDialogOpen(false);
-    setRefreshTrigger(prev => prev + 1);
+    // TanStack Query will automatically refetch via invalidation
   };
 
   const handleEditSuccess = () => {
     setIsEditDialogOpen(false);
     setSelectedAccount(null);
-    setRefreshTrigger(prev => prev + 1);
+    // TanStack Query will automatically refetch via invalidation
   };
 
   const handleCancelCreate = () => {
@@ -118,8 +117,6 @@ export default function AccountsPage() {
           <AccountList
             onEditAccount={handleEditAccount}
             onCreateAccount={handleCreateAccount}
-            refreshTrigger={refreshTrigger}
-            onAccountDeleted={() => setRefreshTrigger(prev => prev + 1)}
             activeFilter={activeFilter}
           />
         </main>

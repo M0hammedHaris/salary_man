@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { AnalyticsService } from '@/lib/services/analytics-service';
+import { createCachedResponse, CACHE_DURATIONS } from '@/lib/utils/api-cache';
 import { z } from 'zod';
 import type { SpendingBreakdownRequest } from '@/lib/types/analytics';
 
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
       validatedQuery.includeSubcategories
     );
     
-    return NextResponse.json({ spendingBreakdown });
+    return createCachedResponse({ spendingBreakdown }, CACHE_DURATIONS.ANALYTICS);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

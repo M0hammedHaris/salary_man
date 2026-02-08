@@ -14,17 +14,23 @@ import "./globals.css";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: 'swap', // Optimize font loading
+  preload: true,
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: 'swap',
+  preload: false, // Lazy load mono font
 });
 
 const manrope = Manrope({
   variable: "--font-manrope",
   subsets: ["latin"],
-  weight: ['200', '300', '400', '500', '600', '700', '800'],
+  weight: ['400', '600', '700', '800'], // Reduce font weights loaded
+  display: 'swap',
+  preload: true,
 });
 
 export const metadata: Metadata = {
@@ -64,7 +70,14 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <head>
-          <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+          {/* Preconnect to Google Fonts for faster loading */}
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+          {/* Material Symbols font - critical for icons */}
+          <link 
+            href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" 
+            rel="stylesheet"
+          />
         </head>
         <body
           className={`${geistSans.variable} ${geistMono.variable} ${manrope.variable} antialiased font-sans`}
