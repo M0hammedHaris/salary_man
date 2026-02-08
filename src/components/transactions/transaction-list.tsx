@@ -81,18 +81,21 @@ export function TransactionList({
 
       const [transactionsData, accountsData, categoriesData] = await Promise.all([
         transactionsResponse.json(),
-        accountsResponse.ok ? accountsResponse.json() : { accounts: [] },
-        categoriesResponse.ok ? categoriesResponse.json() : { categories: [] }
+        accountsResponse.ok ? accountsResponse.json() : { success: false, data: { accounts: [] } },
+        categoriesResponse.ok ? categoriesResponse.json() : { success: false, data: { categories: [] } }
       ]);
 
       const accountsMap: Record<string, Account> = {};
       const categoriesMap: Record<string, Category> = {};
 
-      accountsData.accounts?.forEach((account: Account) => {
+      // Handle both standardized ActionResponse and direct array response
+      const accountsList = accountsData.data?.accounts || accountsData.accounts || [];
+      accountsList.forEach((account: Account) => {
         accountsMap[account.id] = account;
       });
 
-      categoriesData.categories?.forEach((category: Category) => {
+      const categoriesList = categoriesData.data?.categories || categoriesData.categories || [];
+      categoriesList.forEach((category: Category) => {
         categoriesMap[category.id] = category;
       });
 

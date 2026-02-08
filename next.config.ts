@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   outputFileTracingRoot: __dirname,
-  
+
   // Performance optimizations
   experimental: {
     // Enable optimized package imports for faster builds
@@ -17,16 +17,7 @@ const nextConfig: NextConfig = {
       '@radix-ui/react-tabs',
       'recharts',
       'date-fns',
-    ],
-    // Turbopack for faster dev server (Next.js 15+)
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
-      },
-    },
+    ]
   },
 
   // Compiler optimizations
@@ -94,9 +85,18 @@ const nextConfig: NextConfig = {
 
   // Enable static optimization
   reactStrictMode: true,
-  
+
   // Reduce build output
   productionBrowserSourceMaps: false,
+
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
+      },
+    }
+  }
 };
 
 export default nextConfig;

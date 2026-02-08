@@ -52,13 +52,15 @@ export function TransactionManagementClient() {
         ]);
 
         if (accountsResponse.ok) {
-          const data = await accountsResponse.json();
-          setAccounts(data.accounts || []);
+          const result = await accountsResponse.json();
+          // Access accounts from result.data.accounts since it follows ActionResponse pattern
+          setAccounts(result.data?.accounts || result.accounts || []);
         }
 
         if (categoriesResponse.ok) {
-          const data = await categoriesResponse.json();
-          setCategories(data.categories || []);
+          const result = await categoriesResponse.json();
+          // Access categories from result.data.categories
+          setCategories(result.data?.categories || result.categories || []);
         }
       } catch (error) {
         console.error("Failed to load filter data:", error);
@@ -86,8 +88,84 @@ export function TransactionManagementClient() {
   return (
     <div className="space-y-6">
       {/* Action Bar & Filters */}
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
+        {/* Filters on the left */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Account Select (Redesigned) */}
+          <Select
+            value={filters.accountId || "all"}
+            onValueChange={(value) =>
+              setFilters(prev => ({
+                ...prev,
+                accountId: value === "all" ? undefined : value
+              }))
+            }
+            disabled={isLoadingFilters}
+          >
+            <SelectTrigger className="w-[180px] h-11 rounded-xl border-slate-200 dark:border-slate-800 font-bold px-4">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-slate-400 text-[18px]">account_balance_wallet</span>
+                <SelectValue placeholder="Account" />
+              </div>
+            </SelectTrigger>
+            <SelectContent className="rounded-2xl p-1">
+              <SelectItem value="all" className="rounded-xl font-medium">All Accounts</SelectItem>
+              {accounts.map((account) => (
+                <SelectItem key={account.id} value={account.id} className="rounded-xl font-medium">
+                  {account.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Time Range Select (Redesigned) */}
+          <Select
+            value={filters.timeRange || "all"}
+            onValueChange={(value) =>
+              setFilters(prev => ({
+                ...prev,
+                timeRange: value === "all" ? undefined : (value as 'week' | 'month' | 'quarter' | 'year')
+              }))
+            }
+          >
+            <SelectTrigger className="w-[160px] h-11 rounded-xl border-slate-200 dark:border-slate-800 font-bold px-4">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-slate-400 text-[18px]">calendar_today</span>
+                <SelectValue placeholder="Time Period" />
+              </div>
+            </SelectTrigger>
+            <SelectContent className="rounded-2xl p-1">
+              <SelectItem value="all" className="rounded-xl font-medium">All Time</SelectItem>
+              <SelectItem value="week" className="rounded-xl font-medium">Last Week</SelectItem>
+              <SelectItem value="month" className="rounded-xl font-medium">Last Month</SelectItem>
+              <SelectItem value="quarter" className="rounded-xl font-medium">Last Quarter</SelectItem>
+              <SelectItem value="year" className="rounded-xl font-medium">Last Year</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {hasActiveFilters && (
+            <button
+              onClick={clearFilters}
+              className="flex items-center gap-2 h-11 px-4 text-rose-500 font-bold hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-xl transition-all"
+            >
+              Clear Filters
+              <span className="w-5 h-5 bg-rose-500 text-white rounded-full text-[10px] flex items-center justify-center">
+                {[filters.accountId, filters.categoryId, filters.timeRange].filter(Boolean).length}
+              </span>
+            </button>
+          )}
+        </div>
+
+        {/* Action Buttons on the right */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setRefreshKey(prev => prev + 1)}
+            className="flex items-center gap-2 px-5 py-3 bg-white hover:bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-foreground rounded-2xl font-bold transition-all shadow-sm"
+          >
+            <span className="material-symbols-outlined text-muted-foreground">refresh</span>
+            Refresh
+          </button>
+
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <button className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white rounded-2xl font-bold hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-primary/20">
@@ -119,117 +197,6 @@ export function TransactionManagementClient() {
               </div>
             </DialogContent>
           </Dialog>
-
-          <button
-            onClick={() => setRefreshKey(prev => prev + 1)}
-            className="flex items-center gap-2 px-5 py-3 bg-white hover:bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-foreground rounded-2xl font-bold transition-all shadow-sm"
-          >
-            <span className="material-symbols-outlined text-muted-foreground">refresh</span>
-            Refresh
-          </button>
-        </div>
-
-        {/* Filters */}
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-4 overflow-x-auto pb-2 scrollbar-hide">
-            {/* Category Horizontal Filters */}
-            <button
-              onClick={clearFilters}
-              className={cn(
-                "flex items-center gap-2 px-5 py-2.5 rounded-2xl font-bold text-sm whitespace-nowrap transition-all border shrink-0",
-                !hasActiveFilters
-                  ? "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-primary shadow-sm scale-[1.02]"
-                  : "bg-transparent border-transparent text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-900"
-              )}
-            >
-              All Activity
-            </button>
-
-            {categories.slice(0, 10).map((category) => (
-              <button
-                key={category.id}
-                onClick={() => setFilters(prev => ({ ...prev, categoryId: category.id }))}
-                className={cn(
-                  "flex items-center gap-2 px-5 py-2.5 rounded-2xl font-bold text-sm whitespace-nowrap transition-all border shrink-0",
-                  filters.categoryId === category.id
-                    ? "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-primary shadow-sm scale-[1.02]"
-                    : "bg-transparent border-transparent text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-900"
-                )}
-              >
-                <div
-                  className="w-2.5 h-2.5 rounded-full"
-                  style={{ backgroundColor: category.color }}
-                />
-                {category.name}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Account Select (Redesigned) */}
-            <Select
-              value={filters.accountId || "all"}
-              onValueChange={(value) =>
-                setFilters(prev => ({
-                  ...prev,
-                  accountId: value === "all" ? undefined : value
-                }))
-              }
-              disabled={isLoadingFilters}
-            >
-              <SelectTrigger className="w-[180px] h-11 rounded-xl border-slate-200 dark:border-slate-800 font-bold px-4">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-slate-400 text-[18px]">account_balance_wallet</span>
-                  <SelectValue placeholder="Account" />
-                </div>
-              </SelectTrigger>
-              <SelectContent className="rounded-2xl p-1">
-                <SelectItem value="all" className="rounded-xl font-medium">All Accounts</SelectItem>
-                {accounts.map((account) => (
-                  <SelectItem key={account.id} value={account.id} className="rounded-xl font-medium">
-                    {account.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Time Range Select (Redesigned) */}
-            <Select
-              value={filters.timeRange || "all"}
-              onValueChange={(value) =>
-                setFilters(prev => ({
-                  ...prev,
-                  timeRange: value === "all" ? undefined : (value as 'week' | 'month' | 'quarter' | 'year')
-                }))
-              }
-            >
-              <SelectTrigger className="w-[160px] h-11 rounded-xl border-slate-200 dark:border-slate-800 font-bold px-4">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-slate-400 text-[18px]">calendar_today</span>
-                  <SelectValue placeholder="Time Period" />
-                </div>
-              </SelectTrigger>
-              <SelectContent className="rounded-2xl p-1">
-                <SelectItem value="all" className="rounded-xl font-medium">All Time</SelectItem>
-                <SelectItem value="week" className="rounded-xl font-medium">Last Week</SelectItem>
-                <SelectItem value="month" className="rounded-xl font-medium">Last Month</SelectItem>
-                <SelectItem value="quarter" className="rounded-xl font-medium">Last Quarter</SelectItem>
-                <SelectItem value="year" className="rounded-xl font-medium">Last Year</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="flex items-center gap-2 h-11 px-4 text-rose-500 font-bold hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-xl transition-all"
-              >
-                Clear Filters
-                <span className="w-5 h-5 bg-rose-500 text-white rounded-full text-[10px] flex items-center justify-center">
-                  {[filters.accountId, filters.categoryId, filters.timeRange].filter(Boolean).length}
-                </span>
-              </button>
-            )}
-          </div>
         </div>
       </div>
 
