@@ -15,7 +15,7 @@ export function TopHeader() {
     };
 
     return (
-        <header className="flex h-20 items-center justify-between px-8 bg-white/50 backdrop-blur-sm dark:bg-slate-900/50 sticky top-0 z-10 border-b border-border">
+        <header className="flex h-20 items-center justify-between px-8 bg-white/50 backdrop-blur-sm dark:bg-slate-900/50 sticky top-0 z-50 border-b border-border">
             <div className="flex flex-col">
                 <h2 className="text-2xl font-bold tracking-tight text-foreground">
                     {getGreeting()}, {user?.firstName || "User"}

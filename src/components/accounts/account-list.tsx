@@ -114,21 +114,21 @@ export function AccountList({
   return (
     <div className="space-y-12">
       {/* Summary Header */}
-      <div className="relative group overflow-hidden bg-white dark:bg-slate-900 p-10 rounded-[48px] border border-slate-100 dark:border-slate-800 shadow-sm">
+      <div className="relative group overflow-hidden bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-sm">
         <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-[100px] -mr-48 -mt-48 transition-transform group-hover:scale-110 duration-700" />
 
         <div className="flex flex-col items-center md:items-start md:flex-row md:justify-between gap-8 relative z-10">
           <div className="text-center md:text-left space-y-2">
             <p className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Current Portfolio</p>
-            <h2 className="text-6xl font-black text-slate-900 dark:text-white tracking-tighter">
+            <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">
               {formatCurrency(totalBalance.toNumber())}
             </h2>
           </div>
 
           <div className="flex gap-4">
-            <div className="flex flex-col items-center md:items-end justify-center px-6 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Assets</span>
-              <span className="text-lg font-black text-emerald-500">
+            <div className="flex flex-col items-center md:items-end justify-center px-4 py-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Total Assets</span>
+              <span className="text-base font-black text-emerald-500">
                 {formatCurrency(accounts.reduce((sum, acc) => {
                   if (acc.type !== AccountType.CREDIT_CARD) {
                     return sum.plus(new Decimal(acc.balance));
@@ -137,9 +137,9 @@ export function AccountList({
                 }, new Decimal(0)).toNumber())}
               </span>
             </div>
-            <div className="flex flex-col items-center md:items-end justify-center px-6 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Liabilities</span>
-              <span className="text-lg font-black text-rose-500">
+            <div className="flex flex-col items-center md:items-end justify-center px-4 py-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Total Liabilities</span>
+              <span className="text-base font-black text-rose-500">
                 {formatCurrency(accounts.reduce((sum, acc) => {
                   if (acc.type === AccountType.CREDIT_CARD) {
                     return sum.plus(new Decimal(acc.balance));
@@ -167,45 +167,45 @@ export function AccountList({
           return (
             <div
               key={account.id}
-              className="group flex flex-col p-8 rounded-[40px] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-2xl transition-all cursor-default relative overflow-hidden hover:-translate-y-2 active:scale-[0.98]"
+              className="group flex flex-col p-6 rounded-[32px] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all cursor-default relative overflow-hidden hover:-translate-y-1 active:scale-[0.99]"
             >
               {/* Background Accent */}
               <div className={cn("absolute -top-12 -right-12 w-32 h-32 rounded-full opacity-[0.08] group-hover:scale-150 transition-transform duration-700", colors.bg)} />
 
-              <div className="flex items-start justify-between mb-8 relative z-10">
+              <div className="flex items-start justify-between mb-4 relative z-10">
                 <div className="space-y-1">
                   <div className={cn(
-                    "inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border mb-3",
+                    "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border mb-2",
                     colors.bg, colors.text, colors.border, colors.bgDark
                   )}>
                     {accountTypeLabels[account.type as AccountType]}
                   </div>
-                  <h3 className="text-xl font-black text-slate-900 dark:text-white leading-tight truncate max-w-[180px]">
+                  <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight truncate max-w-[150px]">
                     {account.name}
                   </h3>
                 </div>
 
                 <div className={cn(
-                  "w-14 h-14 rounded-[22px] flex items-center justify-center shadow-sm transition-transform group-hover:rotate-12",
+                  "w-12 h-12 rounded-[18px] flex items-center justify-center shadow-sm transition-transform group-hover:rotate-12",
                   colors.bg, colors.bgDark
                 )}>
-                  <span className={cn("material-symbols-outlined text-[28px]", colors.icon)}>
+                  <span className={cn("material-symbols-outlined text-[24px]", colors.icon)}>
                     {accountTypeMaterialIcons[account.type as AccountType]}
                   </span>
                 </div>
               </div>
 
-              <div className="mt-auto space-y-4 relative z-10">
+              <div className="space-y-3 relative z-10">
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-1.5">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-1">
                     {isCreditCard ? 'Current Debt' : 'Available Balance'}
                   </p>
                   <p className={cn(
-                    "text-3xl font-black tracking-tighter",
+                    "text-2xl font-black tracking-tighter",
                     isCreditCard && balanceDecimal.greaterThan(0) ? "text-rose-600 dark:text-rose-400" : "text-slate-900 dark:text-white"
                   )}>
-                    {isCreditCard && balanceDecimal.greaterThan(0) 
-                      ? `-${formatCurrency(balanceDecimal.toNumber())}` 
+                    {isCreditCard && balanceDecimal.greaterThan(0)
+                      ? `-${formatCurrency(balanceDecimal.toNumber())}`
                       : formatCurrency(balanceDecimal.toNumber())}
                   </p>
                 </div>
@@ -234,9 +234,9 @@ export function AccountList({
                   {onEditAccount && (
                     <button
                       onClick={() => onEditAccount(account)}
-                      className="flex-1 flex items-center justify-center gap-2 h-12 rounded-[18px] bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-black text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-all border border-slate-100 dark:border-slate-800"
+                      className="flex-1 flex items-center justify-center gap-2 h-10 rounded-[14px] bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-black text-[10px] hover:bg-slate-100 dark:hover:bg-slate-800 transition-all border border-slate-100 dark:border-slate-800"
                     >
-                      <span className="material-symbols-outlined text-[18px]">edit_square</span>
+                      <span className="material-symbols-outlined text-[16px]">edit_square</span>
                       Edit
                     </button>
                   )}
@@ -247,8 +247,8 @@ export function AccountList({
                       onAccountDeleted?.();
                     }}
                   >
-                    <button className="flex-1 flex items-center justify-center gap-2 h-12 rounded-[18px] bg-rose-50 dark:bg-rose-900/10 text-rose-600 dark:text-rose-400 font-black text-xs hover:bg-rose-100 dark:hover:bg-rose-900/20 transition-all border border-rose-100/50 dark:border-rose-900/20">
-                      <span className="material-symbols-outlined text-[18px]">delete</span>
+                    <button className="flex-1 flex items-center justify-center gap-2 h-10 rounded-[14px] bg-rose-50 dark:bg-rose-900/10 text-rose-600 dark:text-rose-400 font-black text-[10px] hover:bg-rose-100 dark:hover:bg-rose-900/20 transition-all border border-rose-100/50 dark:border-rose-900/20">
+                      <span className="material-symbols-outlined text-[16px]">delete</span>
                       Delete
                     </button>
                   </AccountDeleteDialog>

@@ -17,9 +17,9 @@ export function NetWorthCard({ totalNetWorth, changePercentage = 0 }: NetWorthCa
                 <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
                         <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Total Net Worth</p>
-                        <h3 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                        <h3 className="text-2xl lg:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
                             {formatCurrency(Math.abs(totalNetWorth)).split('.')[0]}
-                            <span className="text-xl lg:text-2xl text-slate-400">.{formatCurrency(totalNetWorth).split('.')[1] || '00'}</span>
+                            <span className="text-lg lg:text-xl text-slate-400">.{formatCurrency(totalNetWorth).split('.')[1] || '00'}</span>
                         </h3>
                     </div>
                     <div className={cn(

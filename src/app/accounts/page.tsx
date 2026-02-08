@@ -65,24 +65,24 @@ export default function AccountsPage() {
         <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-400/5 rounded-full blur-[120px]" />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 relative z-10">
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
           <div className="space-y-2">
-            <h1 className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter">
+            <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">
               Accounts
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 font-semibold text-lg max-w-lg leading-relaxed">
+            <p className="text-slate-500 dark:text-slate-400 font-semibold text-sm max-w-lg leading-relaxed">
               Manage your financial portfolio and bank connections in one premium space.
             </p>
           </div>
 
           <button
             onClick={handleCreateAccount}
-            className="flex items-center justify-center gap-3 px-8 py-4 bg-primary text-white rounded-[24px] font-black text-lg hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/25 group hover:shadow-2xl hover:shadow-primary/30"
+            className="flex items-center justify-center gap-2 px-6 py-2 bg-primary text-white rounded-[18px] font-black text-sm hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/25 group hover:shadow-2xl hover:shadow-primary/30"
           >
-            <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center group-hover:rotate-90 transition-transform">
-              <span className="material-symbols-outlined font-bold">add</span>
+            <div className="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center group-hover:rotate-90 transition-transform">
+              <span className="material-symbols-outlined font-bold text-[18px]">add</span>
             </div>
             Add Account
           </button>
@@ -95,14 +95,14 @@ export default function AccountsPage() {
               key={filter.value}
               onClick={() => setActiveFilter(filter.value)}
               className={cn(
-                "flex items-center gap-2.5 px-6 py-3.5 rounded-[22px] font-black text-sm whitespace-nowrap transition-all shrink-0 border-2",
+                "flex items-center gap-2 px-4 py-2 rounded-[16px] font-black text-xs whitespace-nowrap transition-all shrink-0 border",
                 activeFilter === filter.value
-                  ? "bg-white dark:bg-slate-900 border-primary text-primary shadow-lg shadow-primary/10 scale-105"
+                  ? "bg-white dark:bg-slate-900 border-primary text-primary shadow-sm shadow-primary/10"
                   : "bg-white/50 dark:bg-slate-900/50 border-transparent text-slate-500 hover:bg-white dark:hover:bg-slate-900 hover:border-slate-200 dark:hover:border-slate-800"
               )}
             >
               <span className={cn(
-                "material-symbols-outlined text-[20px]",
+                "material-symbols-outlined text-[18px]",
                 activeFilter === filter.value ? "text-primary" : "text-slate-400"
               )}>
                 {filter.icon}
@@ -113,7 +113,7 @@ export default function AccountsPage() {
         </div>
 
         {/* Main Content */}
-        <main className="pb-24">
+        <main className="pb-12">
           <AccountList
             onEditAccount={handleEditAccount}
             onCreateAccount={handleCreateAccount}

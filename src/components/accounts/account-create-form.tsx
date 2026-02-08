@@ -109,10 +109,10 @@ export function AccountCreateForm({ onSuccess, onCancel, isModal = false }: Acco
                   <div className="relative group">
                     <Input
                       placeholder="e.g. Primary Checking"
-                      className="h-16 px-6 bg-slate-50 border-none rounded-[24px] text-lg font-bold focus-visible:ring-primary focus-visible:ring-offset-0 transition-all group-hover:bg-slate-100"
+                      className="h-12 px-4 bg-slate-50 border-none rounded-[16px] text-base font-bold focus-visible:ring-primary focus-visible:ring-offset-0 transition-all group-hover:bg-slate-100"
                       {...field}
                     />
-                    <div className="absolute inset-x-0 bottom-0 h-1 bg-primary scale-x-0 group-focus-within:scale-x-100 transition-transform rounded-b-[24px]" />
+                    <div className="absolute inset-x-0 bottom-0 h-1 bg-primary scale-x-0 group-focus-within:scale-x-100 transition-transform rounded-b-[16px]" />
                   </div>
                 </FormControl>
                 <FormMessage className="text-[10px] font-bold uppercase tracking-wider text-rose-500 mt-2" />
@@ -129,11 +129,11 @@ export function AccountCreateForm({ onSuccess, onCancel, isModal = false }: Acco
                 <FormLabel className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-3 block">Account Type</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <SelectTrigger className="h-16 px-6 bg-slate-50 border-none rounded-[24px] text-lg font-bold focus:ring-primary focus:ring-offset-0 hover:bg-slate-100 transition-all">
+                    <SelectTrigger className="h-12 px-4 bg-slate-50 border-none rounded-[16px] text-base font-bold focus:ring-primary focus:ring-offset-0 hover:bg-slate-100 transition-all">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent className="rounded-[24px] p-2 border-slate-100 shadow-2xl">
+                  <SelectContent className="rounded-[16px] p-1 border-slate-100 shadow-xl">
                     {Object.values(AccountType).map((type) => (
                       <SelectItem key={type} value={type} className="rounded-xl py-3 focus:bg-primary/5 cursor-pointer">
                         <div className="flex items-center gap-3">
@@ -158,13 +158,13 @@ export function AccountCreateForm({ onSuccess, onCancel, isModal = false }: Acco
                 <FormLabel className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-3 block">Initial Balance</FormLabel>
                 <FormControl>
                   <div className="relative group">
-                    <div className="absolute left-6 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center pointer-events-none">
-                      <span className="text-emerald-500 font-black text-sm">₹</span>
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center pointer-events-none">
+                      <span className="text-emerald-500 font-black text-xs">₹</span>
                     </div>
                     <Input
                       type="text"
                       placeholder="0.00"
-                      className="h-16 pl-16 pr-6 bg-slate-50 border-none rounded-[24px] text-xl font-black text-emerald-600 focus-visible:ring-emerald-500/20 focus-visible:ring-offset-0 transition-all group-hover:bg-slate-100 placeholder:text-emerald-200"
+                      className="h-12 pl-12 pr-4 bg-slate-50 border-none rounded-[16px] text-lg font-black text-emerald-600 focus-visible:ring-emerald-500/20 focus-visible:ring-offset-0 transition-all group-hover:bg-slate-100 placeholder:text-emerald-200"
                       {...field}
                       onChange={(e) => handleBalanceChange(e.target.value, field.onChange)}
                     />
@@ -185,13 +185,13 @@ export function AccountCreateForm({ onSuccess, onCancel, isModal = false }: Acco
                   <FormLabel className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-3 block">Credit Limit (Optional)</FormLabel>
                   <FormControl>
                     <div className="relative group">
-                      <div className="absolute left-6 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-rose-500/10 flex items-center justify-center pointer-events-none">
-                        <span className="text-rose-500 font-black text-sm">₹</span>
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-rose-500/10 flex items-center justify-center pointer-events-none">
+                        <span className="text-rose-500 font-black text-xs">₹</span>
                       </div>
                       <Input
                         type="text"
                         placeholder="50000.00"
-                        className="h-16 pl-16 pr-6 bg-slate-50 border-none rounded-[24px] text-xl font-black text-rose-600 focus-visible:ring-rose-500/20 focus-visible:ring-offset-0 transition-all group-hover:bg-slate-100 placeholder:text-rose-200"
+                        className="h-12 pl-12 pr-4 bg-slate-50 border-none rounded-[16px] text-lg font-black text-rose-600 focus-visible:ring-rose-500/20 focus-visible:ring-offset-0 transition-all group-hover:bg-slate-100 placeholder:text-rose-200"
                         value={field.value || ''}
                         onChange={(e) => handleBalanceChange(e.target.value, field.onChange)}
                       />
@@ -213,7 +213,7 @@ export function AccountCreateForm({ onSuccess, onCancel, isModal = false }: Acco
                 <FormControl>
                   <Textarea
                     placeholder="Add some notes about this account..."
-                    className="min-h-[120px] px-6 py-5 bg-slate-50 border-none rounded-[24px] text-lg font-medium focus-visible:ring-primary focus-visible:ring-offset-0 transition-all hover:bg-slate-100 resize-none"
+                    className="min-h-[100px] px-4 py-3 bg-slate-50 border-none rounded-[16px] text-base font-medium focus-visible:ring-primary focus-visible:ring-offset-0 transition-all hover:bg-slate-100 resize-none"
                     {...field}
                   />
                 </FormControl>
@@ -240,7 +240,7 @@ export function AccountCreateForm({ onSuccess, onCancel, isModal = false }: Acco
               type="button"
               onClick={onCancel}
               disabled={isSubmitting}
-              className="flex-1 flex items-center justify-center h-16 rounded-[24px] bg-slate-100 text-slate-600 font-black text-lg hover:bg-slate-200 active:scale-95 transition-all disabled:opacity-50"
+              className="flex-1 flex items-center justify-center h-12 rounded-[16px] bg-slate-100 text-slate-600 font-black text-base hover:bg-slate-200 active:scale-95 transition-all disabled:opacity-50"
             >
               Cancel
             </button>
@@ -248,7 +248,7 @@ export function AccountCreateForm({ onSuccess, onCancel, isModal = false }: Acco
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex-[2] flex items-center justify-center gap-3 h-16 rounded-[24px] bg-primary text-white font-black text-xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/20 disabled:opacity-50"
+            className="flex-[2] flex items-center justify-center gap-2 h-12 rounded-[16px] bg-primary text-white font-black text-base hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/20 disabled:opacity-50"
           >
             {isSubmitting ? (
               <>
@@ -270,22 +270,22 @@ export function AccountCreateForm({ onSuccess, onCancel, isModal = false }: Acco
   if (isModal) {
     return (
       <div className="bg-white dark:bg-slate-900 rounded-[48px] overflow-hidden shadow-2xl">
-        <div className="relative h-48 bg-slate-900 flex items-center px-10 overflow-hidden">
+        <div className="relative h-24 bg-slate-900 flex items-center px-6 overflow-hidden">
           {/* Abstract background blobs */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl -mr-32 -mt-32" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl -ml-24 -mb-24" />
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-2xl -mr-16 -mt-16" />
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl -ml-12 -mb-12" />
 
-          <div className="relative z-10 flex items-center gap-6">
-            <div className="w-20 h-20 rounded-[30px] bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-2xl">
-              <span className="material-symbols-outlined text-4xl text-white">account_balance_wallet</span>
+          <div className="relative z-10 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-[16px] bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-2xl">
+              <span className="material-symbols-outlined text-2xl text-white">account_balance_wallet</span>
             </div>
             <div>
-              <h2 className="text-3xl font-black text-white tracking-tight">New Account</h2>
-              <p className="text-slate-400 font-bold">Track your assets & liabilities</p>
+              <h2 className="text-xl font-black text-white tracking-tight">New Account</h2>
+              <p className="text-slate-400 font-bold text-xs">Track your assets & liabilities</p>
             </div>
           </div>
         </div>
-        <div className="p-10">
+        <div className="p-6">
           {formContent}
         </div>
       </div>

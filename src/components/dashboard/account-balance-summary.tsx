@@ -52,7 +52,7 @@ export function AccountBalanceSummary({ accounts }: AccountSummaryProps) {
           <div
             key={account.id}
             className={cn(
-              "min-w-[280px] snap-center rounded-2xl bg-gradient-to-br p-6 shadow-sm transition-transform hover:scale-[1.02] border",
+              "min-w-[240px] snap-center rounded-2xl bg-gradient-to-br p-4 shadow-sm transition-transform hover:scale-[1.02] border",
               accountTypeGradients[account.type] || "from-slate-100 to-slate-50 border-slate-200/50 dark:from-slate-900/40 dark:to-slate-800 dark:border-slate-900/30"
             )}
           >
@@ -88,7 +88,7 @@ export function AccountBalanceSummary({ accounts }: AccountSummaryProps) {
         ))}
 
         {accounts.length === 0 && (
-          <div className="min-w-[280px] h-[172px] flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-muted p-6 text-center text-muted-foreground">
+          <div className="min-w-[240px] h-[160px] flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-muted p-4 text-center text-muted-foreground">
             <p className="text-sm mb-2">No accounts found</p>
             <Link href="/accounts/new">
               <Button variant="outline" size="sm">Add First Account</Button>
