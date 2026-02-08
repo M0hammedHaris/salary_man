@@ -33,7 +33,7 @@ async function DashboardContent({ userId }: { userId: string }) {
               {/* Net Worth - Hero Component */}
               <NetWorthCard
                 totalNetWorth={dashboardData.accountSummary.totalBalance}
-                changePercentage={5.2}
+                changePercentage={0} // TODO: Calculate from historical data
               />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -49,14 +49,23 @@ async function DashboardContent({ userId }: { userId: string }) {
                       <span className="material-symbols-outlined">trending_up</span>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-slate-500">Savings Rate</p>
-                      <h4 className="text-2xl font-bold">18.5%</h4>
+                      <p className="text-sm font-medium text-slate-500">Financial Health</p>
+                      <h4 className="text-2xl font-bold">
+                        {dashboardData.financialHealthScore.trend === 'up' ? '↑' : 
+                         dashboardData.financialHealthScore.trend === 'down' ? '↓' : '→'} 
+                        {' '}{dashboardData.financialHealthScore.score}/100
+                      </h4>
                     </div>
                   </div>
                   <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-                    <div className="bg-purple-500 h-full w-[18.5%]"></div>
+                    <div 
+                      className="bg-purple-500 h-full transition-all duration-1000" 
+                      style={{ width: `${dashboardData.financialHealthScore.score}%` }}
+                    ></div>
                   </div>
-                  <p className="mt-4 text-xs text-slate-400">↑ 2.1% from last month</p>
+                  <p className="mt-4 text-xs text-slate-400">
+                    {dashboardData.financialHealthScore.explanation}
+                  </p>
                 </div>
               </div>
 

@@ -18,10 +18,13 @@ export interface Transaction {
 
 // Request/Response schemas using Zod for validation
 export const createTransactionSchema = z.object({
-  accountId: z.string().min(1, 'Account ID is required'),
-  amount: z.string().regex(/^-?\d+(\.\d{1,2})?$/, 'Invalid amount format'),
-  description: z.string().min(1, 'Description is required').max(500, 'Description too long'),
-  categoryId: z.string().min(1, 'Category ID is required'),
+  accountId: z.string().min(1, 'Account ID is required').trim(),
+  amount: z.string().regex(/^-?\d+(\.\d{1,2})?$/, 'Invalid amount format').trim(),
+  description: z.string()
+    .min(1, 'Description is required')
+    .max(500, 'Description too long')
+    .transform(str => str.trim()),
+  categoryId: z.string().min(1, 'Category ID is required').trim(),
   transactionDate: z.string().refine((dateStr) => {
     const date = new Date(dateStr);
     return !isNaN(date.getTime());
@@ -30,10 +33,14 @@ export const createTransactionSchema = z.object({
 });
 
 export const updateTransactionSchema = z.object({
-  accountId: z.string().min(1, 'Account ID is required').optional(),
-  amount: z.string().regex(/^-?\d+(\.\d{1,2})?$/, 'Invalid amount format').optional(),
-  description: z.string().min(1, 'Description is required').max(500, 'Description too long').optional(),
-  categoryId: z.string().min(1, 'Category ID is required').optional(),
+  accountId: z.string().min(1, 'Account ID is required').trim().optional(),
+  amount: z.string().regex(/^-?\d+(\.\d{1,2})?$/, 'Invalid amount format').trim().optional(),
+  description: z.string()
+    .min(1, 'Description is required')
+    .max(500, 'Description too long')
+    .transform(str => str.trim())
+    .optional(),
+  categoryId: z.string().min(1, 'Category ID is required').trim().optional(),
   transactionDate: z.string().refine((dateStr) => {
     const date = new Date(dateStr);
     return !isNaN(date.getTime());

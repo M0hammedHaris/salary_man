@@ -36,10 +36,26 @@ export function useFormData(): UseFormDataReturn {
         getUserCategories(),
       ]);
 
+      // Handle new response format
+      const accounts = accountsResponse.success && accountsResponse.data 
+        ? (accountsResponse.data.accounts as Account[])
+        : [];
+      
+      const categories = categoriesResponse.success && categoriesResponse.data
+        ? (categoriesResponse.data.categories as Category[])
+        : [];
+
       setFormData({
-        accounts: accountsResponse.accounts || [],
-        categories: categoriesResponse.categories || [],
+        accounts,
+        categories,
       });
+
+      // Set error if either request failed
+      if (!accountsResponse.success) {
+        setError(accountsResponse.error);
+      } else if (!categoriesResponse.success) {
+        setError(categoriesResponse.error);
+      }
     } catch (err) {
       console.error('Error loading form data:', err);
       setError(

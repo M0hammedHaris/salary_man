@@ -1,0 +1,14 @@
+{
+  "id": "0007_add_performance_indexes",
+  "prevId": "0006_aromatic_dreadnoughts",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {},
+  "enums": {},
+  "schemas": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  }
+}

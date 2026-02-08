@@ -1,5 +1,6 @@
 import { RecurringPaymentService } from '@/lib/services/recurring-payment-service';
 import { db } from '@/lib/db';
+import Decimal from 'decimal.js';
 import { 
   recurringPayments, 
   categories, 
@@ -136,24 +137,26 @@ export class RecurringPaymentBudgetService {
       )
       .groupBy(categories.id, categories.name);
 
-    // Calculate total for percentage calculation
+    // Calculate total for percentage calculation using Decimal
     const totalAmount = results.reduce((sum, item) => {
-      const monthlyAmount = this.convertToMonthlyAmount(parseFloat(item.amount || '0'), 'monthly');
-      return sum + monthlyAmount;
-    }, 0);
+      const monthlyAmount = this.convertToMonthlyAmount(new Decimal(item.amount || '0'), 'monthly');
+      return sum.plus(monthlyAmount);
+    }, new Decimal(0));
 
     return results.map((item) => {
-      const monthlyAmount = this.convertToMonthlyAmount(parseFloat(item.amount || '0'), 'monthly');
-      const quarterlyAmount = monthlyAmount * 3;
-      const yearlyAmount = monthlyAmount * 12;
-      const percentage = totalAmount > 0 ? (monthlyAmount / totalAmount) * 100 : 0;
+      const monthlyAmount = this.convertToMonthlyAmount(new Decimal(item.amount || '0'), 'monthly');
+      const quarterlyAmount = monthlyAmount.mul(3);
+      const yearlyAmount = monthlyAmount.mul(12);
+      const percentage = totalAmount.greaterThan(0) 
+        ? monthlyAmount.div(totalAmount).mul(100).toNumber() 
+        : 0;
 
       return {
         categoryId: item.categoryId,
         categoryName: item.categoryName,
-        monthlyAmount,
-        quarterlyAmount,
-        yearlyAmount,
+        monthlyAmount: monthlyAmount.toNumber(),
+        quarterlyAmount: quarterlyAmount.toNumber(),
+        yearlyAmount: yearlyAmount.toNumber(),
         percentage,
         paymentCount: parseInt(item.count || '0'),
       };
@@ -190,7 +193,7 @@ export class RecurringPaymentBudgetService {
         )
       );
 
-    const totalIncome = parseFloat(incomeResult?.totalIncome || '0');
+    const totalIncome = new Decimal(incomeResult?.totalIncome || '0');
     
     // Calculate recurring payments total
     const recurringPaymentsList = await RecurringPaymentService.getRecurringPayments(userId, {
@@ -199,18 +202,21 @@ export class RecurringPaymentBudgetService {
     });
 
     const recurringAllocation = recurringPaymentsList.reduce((sum, payment) => {
-      return sum + this.convertToMonthlyAmount(parseFloat(payment.amount), payment.frequency);
-    }, 0);
+      const monthlyAmount = this.convertToMonthlyAmount(new Decimal(payment.amount), payment.frequency);
+      return sum.plus(monthlyAmount);
+    }, new Decimal(0));
 
     // Estimate total budget as 80% of income (conservative approach)
-    const totalBudget = totalIncome * 0.8;
-    const availableSpending = Math.max(0, totalBudget - recurringAllocation);
-    const utilizationPercentage = totalBudget > 0 ? (recurringAllocation / totalBudget) * 100 : 0;
+    const totalBudget = totalIncome.mul(0.8);
+    const availableSpending = Decimal.max(0, totalBudget.minus(recurringAllocation));
+    const utilizationPercentage = totalBudget.greaterThan(0) 
+      ? recurringAllocation.div(totalBudget).mul(100).toNumber() 
+      : 0;
 
     return {
-      totalBudget,
-      recurringAllocation,
-      availableSpending,
+      totalBudget: totalBudget.toNumber(),
+      recurringAllocation: recurringAllocation.toNumber(),
+      availableSpending: availableSpending.toNumber(),
       utilizationPercentage,
     };
   }
@@ -241,27 +247,37 @@ export class RecurringPaymentBudgetService {
     const previousMonthPayments = await this.getRecurringPaymentsForPeriod(userId, previousMonth);
     const previousQuarterPayments = await this.getRecurringPaymentsForPeriod(userId, currentQuarter);
 
-    const currentTotal = currentMonthPayments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
-    const previousTotal = previousMonthPayments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
-    const previousQuarterTotal = previousQuarterPayments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+    const currentTotal = currentMonthPayments.reduce((sum, p) => 
+      sum.plus(new Decimal(p.amount)), new Decimal(0)
+    );
+    const previousTotal = previousMonthPayments.reduce((sum, p) => 
+      sum.plus(new Decimal(p.amount)), new Decimal(0)
+    );
+    const previousQuarterTotal = previousQuarterPayments.reduce((sum, p) => 
+      sum.plus(new Decimal(p.amount)), new Decimal(0)
+    );
 
-    const monthChange = currentTotal - previousTotal;
-    const monthChangePercentage = previousTotal > 0 ? (monthChange / previousTotal) * 100 : 0;
+    const monthChange = currentTotal.minus(previousTotal);
+    const monthChangePercentage = previousTotal.greaterThan(0) 
+      ? monthChange.div(previousTotal).mul(100).toNumber() 
+      : 0;
 
-    const quarterChange = currentTotal - previousQuarterTotal;
-    const quarterChangePercentage = previousQuarterTotal > 0 ? (quarterChange / previousQuarterTotal) * 100 : 0;
+    const quarterChange = currentTotal.minus(previousQuarterTotal);
+    const quarterChangePercentage = previousQuarterTotal.greaterThan(0) 
+      ? quarterChange.div(previousQuarterTotal).mul(100).toNumber() 
+      : 0;
 
     return {
       monthOverMonth: {
-        current: currentTotal,
-        previous: previousTotal,
-        change: monthChange,
+        current: currentTotal.toNumber(),
+        previous: previousTotal.toNumber(),
+        change: monthChange.toNumber(),
         changePercentage: monthChangePercentage,
       },
       quarterOverQuarter: {
-        current: currentTotal,
-        previous: previousQuarterTotal,
-        change: quarterChange,
+        current: currentTotal.toNumber(),
+        previous: previousQuarterTotal.toNumber(),
+        change: quarterChange.toNumber(),
         changePercentage: quarterChangePercentage,
       },
     };
@@ -282,14 +298,15 @@ export class RecurringPaymentBudgetService {
     });
 
     const monthlyTotal = activePayments.reduce((sum, payment) => {
-      return sum + this.convertToMonthlyAmount(parseFloat(payment.amount), payment.frequency);
-    }, 0);
+      const monthlyAmount = this.convertToMonthlyAmount(new Decimal(payment.amount), payment.frequency);
+      return sum.plus(monthlyAmount);
+    }, new Decimal(0));
 
     return {
-      nextMonth: monthlyTotal,
-      next3Months: monthlyTotal * 3,
-      next6Months: monthlyTotal * 6,
-      nextYear: monthlyTotal * 12,
+      nextMonth: monthlyTotal.toNumber(),
+      next3Months: monthlyTotal.mul(3).toNumber(),
+      next6Months: monthlyTotal.mul(6).toNumber(),
+      nextYear: monthlyTotal.mul(12).toNumber(),
     };
   }
 
@@ -337,7 +354,7 @@ export class RecurringPaymentBudgetService {
               paymentId: payment.id,
               paymentName: payment.name,
               suggestion: `Potential duplicate payment detected. Consider canceling if this is the same service as ${payments[0].name}.`,
-              potentialSavings: parseFloat(payment.amount),
+              potentialSavings: new Decimal(payment.amount).toNumber(),
               priority: 'medium',
             });
           }
@@ -346,16 +363,22 @@ export class RecurringPaymentBudgetService {
     });
 
     // Identify expensive subscriptions (top 20% by amount)
-    const sortedPayments = [...activePayments].sort((a, b) => parseFloat(b.amount) - parseFloat(a.amount));
+    const sortedPayments = [...activePayments].sort((a, b) => {
+      const amountA = new Decimal(a.amount);
+      const amountB = new Decimal(b.amount);
+      return amountB.minus(amountA).toNumber();
+    });
     const expensiveThreshold = Math.ceil(sortedPayments.length * 0.2);
     
     sortedPayments.slice(0, expensiveThreshold).forEach(payment => {
+      const amount = new Decimal(payment.amount);
+      const potentialSavings = amount.mul(0.1); // Assume 10% potential savings
       suggestions.push({
         type: 'expensive',
         paymentId: payment.id,
         paymentName: payment.name,
         suggestion: `This is one of your most expensive recurring payments. Consider reviewing if you're getting value for ₹${payment.amount}.`,
-        potentialSavings: parseFloat(payment.amount) * 0.1, // Assume 10% potential savings
+        potentialSavings: potentialSavings.toNumber(),
         priority: 'low',
       });
     });
@@ -377,8 +400,9 @@ export class RecurringPaymentBudgetService {
     });
 
     const monthlyRecurringTotal = activePayments.reduce((sum, payment) => {
-      return sum + this.convertToMonthlyAmount(parseFloat(payment.amount), payment.frequency);
-    }, 0);
+      const monthlyAmount = this.convertToMonthlyAmount(new Decimal(payment.amount), payment.frequency);
+      return sum.plus(monthlyAmount);
+    }, new Decimal(0));
 
     const projections: SpendingProjection[] = [];
     
@@ -387,15 +411,15 @@ export class RecurringPaymentBudgetService {
       const month = format(projectionDate, 'MMM yyyy');
       
       // Estimate total spending as recurring + 50% for variable expenses
-      const estimatedTotal = monthlyRecurringTotal * 1.5;
-      const budgetRemaining = budgetData.totalBudget - estimatedTotal;
+      const estimatedTotal = monthlyRecurringTotal.mul(1.5);
+      const budgetRemaining = new Decimal(budgetData.totalBudget).minus(estimatedTotal);
       
       projections.push({
         month,
-        recurringAmount: monthlyRecurringTotal,
-        estimatedTotal,
-        budgetRemaining,
-        isOverBudget: budgetRemaining < 0,
+        recurringAmount: monthlyRecurringTotal.toNumber(),
+        estimatedTotal: estimatedTotal.toNumber(),
+        budgetRemaining: budgetRemaining.toNumber(),
+        isOverBudget: budgetRemaining.lessThan(0),
       });
     }
 
@@ -405,16 +429,16 @@ export class RecurringPaymentBudgetService {
   /**
    * Helper method to convert payment amount to monthly equivalent
    */
-  private static convertToMonthlyAmount(amount: number, frequency: string): number {
+  private static convertToMonthlyAmount(amount: Decimal, frequency: string): Decimal {
     switch (frequency) {
       case 'weekly':
-        return amount * 4.33; // Average weeks per month
+        return amount.mul(4.33); // Average weeks per month
       case 'monthly':
         return amount;
       case 'quarterly':
-        return amount / 3;
+        return amount.div(3);
       case 'yearly':
-        return amount / 12;
+        return amount.div(12);
       default:
         return amount;
     }

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils/decimal';
+import Decimal from 'decimal.js';
 import { AccountDeleteDialog } from '@/components/accounts/account-delete-dialog';
 import {
   AccountType,
@@ -127,12 +128,12 @@ export function AccountList({
   }
 
   const totalBalance = accounts.reduce((sum, account) => {
-    const balanceNum = parseFloat(account.balance);
+    const balanceDecimal = new Decimal(account.balance);
     if (account.type === AccountType.CREDIT_CARD) {
-      return sum - balanceNum;
+      return sum.minus(balanceDecimal);
     }
-    return sum + balanceNum;
-  }, 0);
+    return sum.plus(balanceDecimal);
+  }, new Decimal(0));
 
   return (
     <div className="space-y-12">
@@ -144,7 +145,7 @@ export function AccountList({
           <div className="text-center md:text-left space-y-2">
             <p className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Current Portfolio</p>
             <h2 className="text-6xl font-black text-slate-900 dark:text-white tracking-tighter">
-              {formatCurrency(totalBalance)}
+              {formatCurrency(totalBalance.toNumber())}
             </h2>
           </div>
 
@@ -152,13 +153,23 @@ export function AccountList({
             <div className="flex flex-col items-center md:items-end justify-center px-6 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Assets</span>
               <span className="text-lg font-black text-emerald-500">
-                {formatCurrency(accounts.reduce((sum, acc) => acc.type !== AccountType.CREDIT_CARD ? sum + parseFloat(acc.balance) : sum, 0))}
+                {formatCurrency(accounts.reduce((sum, acc) => {
+                  if (acc.type !== AccountType.CREDIT_CARD) {
+                    return sum.plus(new Decimal(acc.balance));
+                  }
+                  return sum;
+                }, new Decimal(0)).toNumber())}
               </span>
             </div>
             <div className="flex flex-col items-center md:items-end justify-center px-6 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Liabilities</span>
               <span className="text-lg font-black text-rose-500">
-                {formatCurrency(accounts.reduce((sum, acc) => acc.type === AccountType.CREDIT_CARD ? sum + parseFloat(acc.balance) : sum, 0))}
+                {formatCurrency(accounts.reduce((sum, acc) => {
+                  if (acc.type === AccountType.CREDIT_CARD) {
+                    return sum.plus(new Decimal(acc.balance));
+                  }
+                  return sum;
+                }, new Decimal(0)).toNumber())}
               </span>
             </div>
           </div>
@@ -170,10 +181,12 @@ export function AccountList({
         {filteredAccounts.map((account) => {
           const colors = accountTypeColors[account.type as AccountType] || accountTypeColors[AccountType.OTHER];
           const isCreditCard = account.type === AccountType.CREDIT_CARD;
-          const balanceNum = parseFloat(account.balance);
+          const balanceDecimal = new Decimal(account.balance);
           const showLimit = isCreditCard && typeof account.creditLimit === 'string';
-          const creditLimitNum = showLimit ? parseFloat(account.creditLimit as string) : 0;
-          const utilization = showLimit ? (balanceNum / creditLimitNum) * 100 : 0;
+          const creditLimitDecimal = showLimit ? new Decimal(account.creditLimit as string) : new Decimal(0);
+          const utilization = showLimit && creditLimitDecimal.greaterThan(0)
+            ? balanceDecimal.abs().div(creditLimitDecimal).mul(100).toNumber()
+            : 0;
 
           return (
             <div
@@ -213,9 +226,11 @@ export function AccountList({
                   </p>
                   <p className={cn(
                     "text-3xl font-black tracking-tighter",
-                    isCreditCard && balanceNum > 0 ? "text-rose-600 dark:text-rose-400" : "text-slate-900 dark:text-white"
+                    isCreditCard && balanceDecimal.greaterThan(0) ? "text-rose-600 dark:text-rose-400" : "text-slate-900 dark:text-white"
                   )}>
-                    {isCreditCard && balanceNum > 0 ? `-${formatCurrency(balanceNum)}` : formatCurrency(balanceNum)}
+                    {isCreditCard && balanceDecimal.greaterThan(0) 
+                      ? `-${formatCurrency(balanceDecimal.toNumber())}` 
+                      : formatCurrency(balanceDecimal.toNumber())}
                   </p>
                 </div>
 

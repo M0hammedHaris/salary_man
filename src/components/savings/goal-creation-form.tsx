@@ -62,12 +62,12 @@ export function GoalCreationForm({ onSuccess }: GoalCreationFormProps) {
           getUserCategories(),
         ]);
 
-        if (accountsData.accounts) {
-          setAccounts(accountsData.accounts);
+        if (accountsData.success && accountsData.data) {
+          setAccounts(accountsData.data.accounts as Account[]);
         }
 
-        if (categoriesData.categories) {
-          setCategories(categoriesData.categories);
+        if (categoriesData.success && categoriesData.data) {
+          setCategories(categoriesData.data.categories as Category[]);
         }
       } catch (error) {
         console.error('Error fetching data:', error);

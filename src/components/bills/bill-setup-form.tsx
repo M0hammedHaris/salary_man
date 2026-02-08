@@ -88,13 +88,18 @@ export function BillSetupForm({ bill, open, onClose, onSuccess }: BillSetupFormP
     const loadData = async () => {
       try {
         setLoadingData(true);
-        const [{ accounts }, { categories }] = await Promise.all([
+        const [accountsResponse, categoriesResponse] = await Promise.all([
           getUserAccounts(),
           getUserCategories(),
         ]);
 
-        setAccounts(accounts);
-        setCategories(categories);
+        // Handle new response format
+        if (accountsResponse.success && accountsResponse.data) {
+          setAccounts(accountsResponse.data.accounts as Account[]);
+        }
+        if (categoriesResponse.success && categoriesResponse.data) {
+          setCategories(categoriesResponse.data.categories as Category[]);
+        }
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {

@@ -6,25 +6,59 @@ import { createAccountSchema, AccountType } from '@/lib/types/account';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 
-export async function getUserAccounts() {
+// Standardized response types
+type ActionSuccess<T> = {
+  success: true;
+  data: T;
+  message?: string;
+};
+
+type ActionError = {
+  success: false;
+  error: string;
+  details?: unknown;
+};
+
+type ActionResponse<T> = ActionSuccess<T> | ActionError;
+
+export async function getUserAccounts(): Promise<ActionResponse<{ accounts: unknown[] }>> {
+  try {
     const { userId } = await auth();
 
     if (!userId) {
-        throw new Error('Unauthorized');
+      return {
+        success: false,
+        error: 'Unauthorized - Please sign in to continue',
+      };
     }
 
     const accounts = await repositories.accounts.findByUserId(userId);
 
-    // Return accounts directly. Server Actions support Date serialization.
-    // This matches the Account interface used in the client.
-    return { accounts };
+    return {
+      success: true,
+      data: { accounts },
+    };
+  } catch (error) {
+    console.error('Error fetching accounts:', error);
+    return {
+      success: false,
+      error: 'Failed to fetch accounts',
+      details: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
 }
 
-export async function createAccount(data: z.infer<typeof createAccountSchema>) {
+export async function createAccount(
+  data: z.infer<typeof createAccountSchema>
+): Promise<ActionResponse<{ account: unknown }>> {
+  try {
     const { userId } = await auth();
 
     if (!userId) {
-        throw new Error('Unauthorized');
+      return {
+        success: false,
+        error: 'Unauthorized - Please sign in to continue',
+      };
     }
 
     // Validate request body
@@ -32,30 +66,51 @@ export async function createAccount(data: z.infer<typeof createAccountSchema>) {
 
     // Create account data
     const accountData = {
-        userId,
-        name: validatedData.name,
-        type: validatedData.type as AccountType,
-        balance: validatedData.balance,
-        creditLimit: validatedData.creditLimit || null,
-        isActive: true,
+      userId,
+      name: validatedData.name,
+      type: validatedData.type as AccountType,
+      balance: validatedData.balance,
+      creditLimit: validatedData.creditLimit || null,
+      isActive: true,
     };
 
     const newAccount = await repositories.accounts.create(accountData);
 
     // Transform response
     const responseAccount = {
-        id: newAccount.id,
-        name: newAccount.name,
-        type: newAccount.type,
-        balance: newAccount.balance,
-        creditLimit: newAccount.creditLimit || undefined,
-        isActive: newAccount.isActive,
-        createdAt: newAccount.createdAt.toISOString(),
-        updatedAt: newAccount.updatedAt.toISOString(),
+      id: newAccount.id,
+      name: newAccount.name,
+      type: newAccount.type,
+      balance: newAccount.balance,
+      creditLimit: newAccount.creditLimit || undefined,
+      isActive: newAccount.isActive,
+      createdAt: newAccount.createdAt.toISOString(),
+      updatedAt: newAccount.updatedAt.toISOString(),
     };
 
     revalidatePath('/dashboard');
     revalidatePath('/accounts');
 
-    return { account: responseAccount, message: 'Account created successfully' };
+    return {
+      success: true,
+      data: { account: responseAccount },
+      message: 'Account created successfully',
+    };
+  } catch (error) {
+    console.error('Error creating account:', error);
+    
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        error: 'Validation failed',
+        details: error.issues,
+      };
+    }
+
+    return {
+      success: false,
+      error: 'Failed to create account',
+      details: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
 }

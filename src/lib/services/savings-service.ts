@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import Decimal from 'decimal.js';
 import { 
   savingsGoals, 
   goalMilestones, 
@@ -44,12 +45,16 @@ export class SavingsService {
 
     // Create default milestones (25%, 50%, 75%, 100%)
     const milestonePercentages = [25, 50, 75, 100];
-    const milestoneData = milestonePercentages.map(percentage => ({
-      goalId: goal.id,
-      userId,
-      milestonePercentage: percentage.toString(),
-      targetAmount: ((parseFloat(goalData.targetAmount) * percentage) / 100).toString(),
-    }));
+    const milestoneData = milestonePercentages.map(percentage => {
+      const targetAmountDecimal = new Decimal(goalData.targetAmount);
+      const milestoneAmount = targetAmountDecimal.mul(percentage).div(100);
+      return {
+        goalId: goal.id,
+        userId,
+        milestonePercentage: percentage.toString(),
+        targetAmount: milestoneAmount.toString(),
+      };
+    });
 
     await db.insert(goalMilestones).values(milestoneData);
 
@@ -76,15 +81,18 @@ export class SavingsService {
 
     return Promise.all(
       goalsWithDetails.map(async (goal) => {
-        const progressData = this.calculateProgress(goal.id, parseFloat(goal.currentAmount), parseFloat(goal.targetAmount));
+        const currentAmount = new Decimal(goal.currentAmount);
+        const targetAmount = new Decimal(goal.targetAmount);
+        const progressData = this.calculateProgress(goal.id, currentAmount.toNumber(), targetAmount.toNumber());
         const savingsRate = await this.calculateSavingsRate(goal.id);
+        const remainingAmount = targetAmount.minus(currentAmount);
         
         return {
           id: goal.id,
           name: goal.name,
           description: goal.description ?? undefined,
-          targetAmount: parseFloat(goal.targetAmount),
-          currentAmount: parseFloat(goal.currentAmount),
+          targetAmount: targetAmount.toNumber(),
+          currentAmount: currentAmount.toNumber(),
           targetDate: goal.targetDate,
           status: goal.status,
           priority: parseInt(goal.priority),
@@ -92,29 +100,33 @@ export class SavingsService {
           categoryName: goal.category?.name,
           categoryColor: goal.category?.color,
           progressPercentage: progressData.progressPercentage,
-          remainingAmount: parseFloat(goal.targetAmount) - parseFloat(goal.currentAmount),
+          remainingAmount: remainingAmount.toNumber(),
           daysRemaining: differenceInDays(goal.targetDate, new Date()),
           isOnTrack: this.isGoalOnTrack(
-            parseFloat(goal.currentAmount),
-            parseFloat(goal.targetAmount),
+            currentAmount.toNumber(),
+            targetAmount.toNumber(),
             goal.targetDate,
             savingsRate.dailyRate
           ),
           requiredDailySavings: this.calculateRequiredDailySavings(
-            parseFloat(goal.currentAmount),
-            parseFloat(goal.targetAmount),
+            currentAmount.toNumber(),
+            targetAmount.toNumber(),
             goal.targetDate
           ),
           actualDailySavings: savingsRate.dailyRate,
-          milestones: goal.milestones.map(m => ({
-            id: m.id,
-            percentage: parseFloat(m.milestonePercentage),
-            targetAmount: parseFloat(m.targetAmount),
-            achievedAmount: m.achievedAmount ? parseFloat(m.achievedAmount) : undefined,
-            achievedAt: m.achievedAt ?? undefined,
-            isAchieved: m.isAchieved,
-            notified: m.notified,
-          })),
+          milestones: goal.milestones.map(m => {
+            const milestoneTarget = new Decimal(m.targetAmount);
+            const milestoneAchieved = m.achievedAmount ? new Decimal(m.achievedAmount) : undefined;
+            return {
+              id: m.id,
+              percentage: parseFloat(m.milestonePercentage),
+              targetAmount: milestoneTarget.toNumber(),
+              achievedAmount: milestoneAchieved?.toNumber(),
+              achievedAt: m.achievedAt ?? undefined,
+              isAchieved: m.isAchieved,
+              notified: m.notified,
+            };
+          }),
           createdAt: goal.createdAt,
           updatedAt: goal.updatedAt,
         };
@@ -135,9 +147,9 @@ export class SavingsService {
       throw new Error('Goal not found');
     }
 
-    const previousAmount = parseFloat(goal.currentAmount);
-    const newAmount = parseFloat(goal.account.balance);
-    const changeAmount = newAmount - previousAmount;
+    const previousAmount = new Decimal(goal.currentAmount);
+    const newAmount = new Decimal(goal.account.balance);
+    const changeAmount = newAmount.minus(previousAmount);
 
     // Update goal current amount
     await db.update(savingsGoals)
@@ -148,7 +160,8 @@ export class SavingsService {
       .where(eq(savingsGoals.id, goalId));
 
     // Record progress history
-    const progressData = this.calculateProgress(goalId, newAmount, parseFloat(goal.targetAmount));
+    const targetAmount = new Decimal(goal.targetAmount);
+    const progressData = this.calculateProgress(goalId, newAmount.toNumber(), targetAmount.toNumber());
     
     await db.insert(goalProgressHistory).values({
       goalId,
@@ -162,12 +175,12 @@ export class SavingsService {
     });
 
     // Check for milestone achievements
-    const milestoneTriggered = await this.checkMilestoneAchievements(goalId, newAmount, parseFloat(goal.targetAmount));
+    const milestoneTriggered = await this.checkMilestoneAchievements(goalId, newAmount.toNumber(), targetAmount.toNumber());
 
     return {
-      previousAmount,
-      newAmount,
-      changeAmount,
+      previousAmount: previousAmount.toNumber(),
+      newAmount: newAmount.toNumber(),
+      changeAmount: changeAmount.toNumber(),
       progressPercentage: progressData.progressPercentage,
       milestoneTriggered,
     };
@@ -185,9 +198,15 @@ export class SavingsService {
     const activeGoals = goals.filter(g => g.status === 'active').length;
     const completedGoals = goals.filter(g => g.status === 'completed').length;
     
-    const totalTargetAmount = goals.reduce((sum, g) => sum + parseFloat(g.targetAmount), 0);
-    const totalCurrentAmount = goals.reduce((sum, g) => sum + parseFloat(g.currentAmount), 0);
-    const averageProgress = totalGoals > 0 ? (totalCurrentAmount / totalTargetAmount) * 100 : 0;
+    const totalTargetAmount = goals.reduce((sum, g) => 
+      sum.plus(new Decimal(g.targetAmount)), new Decimal(0)
+    );
+    const totalCurrentAmount = goals.reduce((sum, g) => 
+      sum.plus(new Decimal(g.currentAmount)), new Decimal(0)
+    );
+    const averageProgress = totalTargetAmount.greaterThan(0) 
+      ? totalCurrentAmount.div(totalTargetAmount).mul(100).toNumber() 
+      : 0;
 
     // Calculate on-track vs behind goals
     let onTrackGoals = 0;
@@ -196,9 +215,11 @@ export class SavingsService {
 
     for (const goal of goals.filter(g => g.status === 'active')) {
       const savingsRate = await this.calculateSavingsRate(goal.id);
+      const currentAmount = new Decimal(goal.currentAmount);
+      const targetAmount = new Decimal(goal.targetAmount);
       const isOnTrack = this.isGoalOnTrack(
-        parseFloat(goal.currentAmount),
-        parseFloat(goal.targetAmount),
+        currentAmount.toNumber(),
+        targetAmount.toNumber(),
         goal.targetDate,
         savingsRate.dailyRate
       );
@@ -232,30 +253,37 @@ export class SavingsService {
       totalGoals,
       activeGoals,
       completedGoals,
-      totalTargetAmount,
-      totalCurrentAmount,
+      totalTargetAmount: totalTargetAmount.toNumber(),
+      totalCurrentAmount: totalCurrentAmount.toNumber(),
       averageProgress,
       onTrackGoals,
       behindGoals,
       aheadGoals,
-      upcomingMilestones: upcomingMilestones.map(m => ({
-        id: m.id,
-        percentage: parseFloat(m.milestonePercentage),
-        targetAmount: parseFloat(m.targetAmount),
-        achievedAmount: undefined,
-        achievedAt: undefined,
-        isAchieved: false,
-        notified: false,
-      })),
-      recentAchievements: recentAchievements.map(m => ({
-        id: m.id,
-        percentage: parseFloat(m.milestonePercentage),
-        targetAmount: parseFloat(m.targetAmount),
-        achievedAmount: m.achievedAmount ? parseFloat(m.achievedAmount) : undefined,
-        achievedAt: m.achievedAt ?? undefined,
-        isAchieved: true,
-        notified: m.notified,
-      })),
+      upcomingMilestones: upcomingMilestones.map(m => {
+        const targetAmount = new Decimal(m.targetAmount);
+        return {
+          id: m.id,
+          percentage: parseFloat(m.milestonePercentage),
+          targetAmount: targetAmount.toNumber(),
+          achievedAmount: undefined,
+          achievedAt: undefined,
+          isAchieved: false,
+          notified: false,
+        };
+      }),
+      recentAchievements: recentAchievements.map(m => {
+        const targetAmount = new Decimal(m.targetAmount);
+        const achievedAmount = m.achievedAmount ? new Decimal(m.achievedAmount) : undefined;
+        return {
+          id: m.id,
+          percentage: parseFloat(m.milestonePercentage),
+          targetAmount: targetAmount.toNumber(),
+          achievedAmount: achievedAmount?.toNumber(),
+          achievedAt: m.achievedAt ?? undefined,
+          isAchieved: true,
+          notified: m.notified,
+        };
+      }),
     };
   }
 
@@ -274,11 +302,13 @@ export class SavingsService {
 
     // If target amount changed, update milestones
     if (updates.targetAmount) {
+      const targetAmountDecimal = new Decimal(updates.targetAmount);
       const milestonePercentages = [25, 50, 75, 100];
       for (const percentage of milestonePercentages) {
+        const milestoneAmount = targetAmountDecimal.mul(percentage).div(100);
         await db.update(goalMilestones)
           .set({
-            targetAmount: ((parseFloat(updates.targetAmount) * percentage) / 100).toString(),
+            targetAmount: milestoneAmount.toString(),
           })
           .where(and(
             eq(goalMilestones.goalId, goalId),
@@ -318,11 +348,13 @@ export class SavingsService {
     }
 
     const savingsRate = await this.calculateSavingsRate(goalId);
-    const currentAmount = parseFloat(goal.currentAmount);
-    const targetAmount = parseFloat(goal.targetAmount);
-    const remainingAmount = targetAmount - currentAmount;
+    const currentAmount = new Decimal(goal.currentAmount);
+    const targetAmount = new Decimal(goal.targetAmount);
+    const remainingAmount = targetAmount.minus(currentAmount);
     
-    const daysToComplete = savingsRate.dailyRate > 0 ? Math.ceil(remainingAmount / savingsRate.dailyRate) : Infinity;
+    const daysToComplete = savingsRate.dailyRate > 0 
+      ? Math.ceil(remainingAmount.div(savingsRate.dailyRate).toNumber()) 
+      : Infinity;
     const projectedCompletionDate = addDays(new Date(), daysToComplete);
     const varianceInDays = differenceInDays(projectedCompletionDate, goal.targetDate);
     const isOnTrack = varianceInDays <= 0;
@@ -334,25 +366,29 @@ export class SavingsService {
     for (let i = 0; i <= monthsToTarget; i++) {
       const projectionDate = addDays(new Date(), i * 30);
       const projectedAmount = Math.min(
-        currentAmount + (savingsRate.dailyRate * i * 30),
-        targetAmount
+        currentAmount.plus(new Decimal(savingsRate.dailyRate).mul(i * 30)).toNumber(),
+        targetAmount.toNumber()
       );
       
       projectionData.push({
         date: projectionDate,
         projectedAmount,
-        monthlyTarget: targetAmount / monthsToTarget * (i + 1),
+        monthlyTarget: targetAmount.div(monthsToTarget).mul(i + 1).toNumber(),
       });
     }
 
     return {
       goalId,
-      currentAmount,
-      targetAmount,
+      currentAmount: currentAmount.toNumber(),
+      targetAmount: targetAmount.toNumber(),
       targetDate: goal.targetDate,
       projectedCompletionDate,
       averageMonthlySavings: savingsRate.monthlyRate,
-      requiredMonthlySavings: this.calculateRequiredMonthlySavings(currentAmount, targetAmount, goal.targetDate),
+      requiredMonthlySavings: this.calculateRequiredMonthlySavings(
+        currentAmount.toNumber(), 
+        targetAmount.toNumber(), 
+        goal.targetDate
+      ),
       isOnTrack,
       varianceInDays,
       confidenceLevel: this.calculateConfidenceLevel(savingsRate),
@@ -363,7 +399,11 @@ export class SavingsService {
   // Private helper methods
 
   private calculateProgress(goalId: string, currentAmount: number, targetAmount: number): ProgressCalculation {
-    const progressPercentage = targetAmount > 0 ? (currentAmount / targetAmount) * 100 : 0;
+    const current = new Decimal(currentAmount);
+    const target = new Decimal(targetAmount);
+    const progressPercentage = target.greaterThan(0) 
+      ? current.div(target).mul(100).toNumber() 
+      : 0;
     
     return {
       previousAmount: 0, // This will be set by the caller
@@ -390,20 +430,22 @@ export class SavingsService {
       };
     }
 
-    const changes = progressHistory.map(h => parseFloat(h.changeAmount));
-    const totalChange = changes.reduce((sum, change) => sum + change, 0);
+    const changes = progressHistory.map(h => new Decimal(h.changeAmount));
+    const totalChange = changes.reduce((sum, change) => sum.plus(change), new Decimal(0));
     const days = differenceInDays(progressHistory[0].recordedAt, progressHistory[progressHistory.length - 1].recordedAt) || 1;
     
-    const dailyRate = totalChange / days;
+    const dailyRate = totalChange.div(days).toNumber();
     const weeklyRate = dailyRate * 7;
     const monthlyRate = dailyRate * 30;
-    const averageRate = totalChange / progressHistory.length;
+    const averageRate = totalChange.div(progressHistory.length).toNumber();
 
     // Calculate trend
     const recentChanges = changes.slice(0, 5);
     const olderChanges = changes.slice(-5);
-    const recentAvg = recentChanges.reduce((sum, c) => sum + c, 0) / recentChanges.length;
-    const olderAvg = olderChanges.reduce((sum, c) => sum + c, 0) / olderChanges.length;
+    const recentAvg = recentChanges.reduce((sum, c) => sum.plus(c), new Decimal(0))
+      .div(recentChanges.length).toNumber();
+    const olderAvg = olderChanges.reduce((sum, c) => sum.plus(c), new Decimal(0))
+      .div(olderChanges.length).toNumber();
     
     let trendDirection: 'increasing' | 'decreasing' | 'stable' = 'stable';
     if (recentAvg > olderAvg * 1.1) trendDirection = 'increasing';
@@ -419,18 +461,18 @@ export class SavingsService {
   }
 
   private isGoalOnTrack(currentAmount: number, targetAmount: number, targetDate: Date, dailyRate: number): boolean {
-    const remainingAmount = targetAmount - currentAmount;
+    const remainingAmount = new Decimal(targetAmount).minus(currentAmount);
     const daysRemaining = differenceInDays(targetDate, new Date());
-    const requiredDailyRate = remainingAmount / Math.max(daysRemaining, 1);
+    const requiredDailyRate = remainingAmount.div(Math.max(daysRemaining, 1)).toNumber();
     
     return dailyRate >= requiredDailyRate;
   }
 
   private calculateRequiredDailySavings(currentAmount: number, targetAmount: number, targetDate: Date): number {
-    const remainingAmount = targetAmount - currentAmount;
+    const remainingAmount = new Decimal(targetAmount).minus(currentAmount);
     const daysRemaining = Math.max(differenceInDays(targetDate, new Date()), 1);
     
-    return remainingAmount / daysRemaining;
+    return remainingAmount.div(daysRemaining).toNumber();
   }
 
   private calculateRequiredMonthlySavings(currentAmount: number, targetAmount: number, targetDate: Date): number {
@@ -452,7 +494,9 @@ export class SavingsService {
   }
 
   private async checkMilestoneAchievements(goalId: string, currentAmount: number, targetAmount: number): Promise<number | undefined> {
-    const currentProgress = (currentAmount / targetAmount) * 100;
+    const current = new Decimal(currentAmount);
+    const target = new Decimal(targetAmount);
+    const currentProgress = current.div(target).mul(100).toNumber();
     
     // Find unachieved milestones that should now be achieved
     const unachievedMilestones = await db.query.goalMilestones.findMany({
@@ -471,7 +515,7 @@ export class SavingsService {
       await db.update(goalMilestones)
         .set({
           isAchieved: true,
-          achievedAmount: currentAmount.toString(),
+          achievedAmount: current.toString(),
           achievedAt: new Date(),
         })
         .where(eq(goalMilestones.id, milestone.id));
