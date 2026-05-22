@@ -1,5 +1,30 @@
 'use client';
 
+/**
+ * @file goal-celebration.tsx
+ * @description Celebration overlay shown when a savings goal or milestone is achieved.
+ *
+ * Renders a full-screen fixed overlay with animated congratulatory content.
+ * It is triggered externally by passing `isGoalComplete={true}` or a `milestone`
+ * object, and cleaned up via the `onClose` callback.
+ *
+ * Accessibility:
+ *   - The root overlay has `role="dialog"`, `aria-modal="true"`, and
+ *     `aria-label="Goal achieved"` so screen readers announce it as a dialog
+ *     and trap focus semantically.
+ *   - Note: this is a custom overlay (not Radix Dialog) — consider migrating
+ *     to `<Dialog>` for a proper programmatic focus trap in a future iteration.
+ *
+ * Animation phases:
+ *   entering → visible → exiting
+ *   Controlled via `animationPhase` state. The component unmounts itself after
+ *   the exit animation completes by calling `onClose?.()`.
+ *
+ * PWA / notification integration:
+ *   On mount, fires a `sonner` toast so the achievement is also surfaced in
+ *   the global notification system (useful when the overlay is dismissed quickly).
+ */
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -139,6 +164,9 @@ export function GoalCelebration({
 
   return (
     <div 
+      role="dialog"
+      aria-modal="true"
+      aria-label="Goal achieved"
       className={cn(
         'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4',
         'transition-all duration-300',

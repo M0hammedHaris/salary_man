@@ -1,8 +1,36 @@
+/**
+ * globals.css
+ * -----------
+ * Global stylesheet for the SalaryMan application.
+ *
+ * Sections:
+ *  1. Tailwind CSS v4 imports and custom-variant definitions
+ *  2. @theme inline — maps CSS custom-property tokens to Tailwind utility values
+ *  3. :root — light-mode design tokens (colour, radius, shadow, typography)
+ *  4. .dark — dark-mode token overrides
+ *  5. @layer base — document-level resets and defaults
+ *  6. @layer utilities — custom utility classes (e.g. .no-scrollbar)
+ *  7. @media prefers-reduced-motion — accessibility: disable animations for
+ *     users who have enabled "Reduce Motion" in their OS accessibility settings.
+ */
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* ── 1. Custom Variants ───────────────────────────────────────────────────── */
+
+/* Enable Tailwind's `dark:` variant using a `.dark` class on a parent element
+   (set by next-themes `attribute="class"`). */
 @custom-variant dark (&:is(.dark *));
 
+/* ── 2. Theme Token Mapping ───────────────────────────────────────────────── */
+
+/*
+  @theme inline maps CSS custom properties (set in :root / .dark below) to
+  Tailwind's internal token system. This allows utilities like `bg-background`,
+  `text-primary`, `border-border`, etc. to resolve to the correct values at
+  runtime without generating duplicate CSS variables.
+*/
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -47,53 +75,82 @@
   --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
 }
 
+/* ── 3. Light-mode Design Tokens ─────────────────────────────────────────── */
+
+/*
+  All semantic colour tokens are defined here as CSS custom properties.
+  Tailwind utilities reference these via the @theme inline block above.
+  Using CSS variables (rather than hard-coded colours in utilities) means the
+  entire colour scheme can be switched at runtime simply by swapping the class
+  on <html> — which is what next-themes does.
+*/
 :root {
-  --background: #f8f9fc;
-  --foreground: #0d131c;
-  --card: #ffffff;
+  /* Surface colours */
+  --background: #f8f9fc;       /* Cool off-white page background */
+  --foreground: #0d131c;       /* Near-black default text */
+  --card: #ffffff;             /* Elevated card surface */
   --card-foreground: #0d131c;
   --popover: #ffffff;
   --popover-foreground: #0d131c;
-  --primary: #3c83f6;
+
+  /* Brand / interactive */
+  --primary: #3c83f6;          /* Blue — buttons, links, active states */
   --primary-foreground: #ffffff;
-  --secondary: #eef6ff;
+  --secondary: #eef6ff;        /* Very light blue — secondary button backgrounds */
   --secondary-foreground: #3c83f6;
-  --muted: #f1f5f9;
-  --muted-foreground: #49699c;
-  --accent: #dbeafe;
+
+  /* Subdued / neutral */
+  --muted: #f1f5f9;            /* Subtle background for non-interactive areas */
+  --muted-foreground: #49699c; /* Secondary text, placeholders */
+  --accent: #dbeafe;           /* Hover / focus highlight tint */
   --accent-foreground: #1e40af;
-  --destructive: #ef4444;
+
+  /* Semantic */
+  --destructive: #ef4444;      /* Error / danger red */
   --destructive-foreground: #ffffff;
-  --border: #e7ecf4;
-  --input: #e7ecf4;
-  --ring: #3c83f6;
-  --chart-1: #3c83f6;
-  --chart-2: #8b5cf6;
-  --chart-3: #10b981;
-  --chart-4: #f59e0b;
-  --chart-5: #ef4444;
+
+  /* Structure */
+  --border: #e7ecf4;           /* Borders and dividers */
+  --input: #e7ecf4;            /* Input field borders */
+  --ring: #3c83f6;             /* Focus ring colour */
+
+  /* Chart palette — used by Recharts via the chart.tsx wrapper */
+  --chart-1: #3c83f6;          /* Blue */
+  --chart-2: #8b5cf6;          /* Purple */
+  --chart-3: #10b981;          /* Green */
+  --chart-4: #f59e0b;          /* Amber */
+  --chart-5: #ef4444;          /* Red */
+
+  /* Global border radius — shadcn/ui components derive from this */
   --radius: 1rem;
 
-  /* Pastel Colors from Design */
+  /* Pastel accent colours used in landing-page decorative elements */
   --pastel-blue: #dbeafe;
   --pastel-green: #dcfce7;
   --pastel-purple: #f3e8ff;
   --pastel-pink: #fce7f3;
 }
 
+/* ── 4. Dark-mode Token Overrides ────────────────────────────────────────── */
+
+/*
+  Applied when next-themes sets `class="dark"` on <html>.
+  Only values that differ from the light theme need to be listed here.
+  The primary brand blue is kept identical in both modes for consistency.
+*/
 .dark {
-  --background: #101722;
-  --foreground: #f8fafc;
-  --card: #1e293b;
+  --background: #101722;       /* Deep navy page background */
+  --foreground: #f8fafc;       /* Near-white default text */
+  --card: #1e293b;             /* Dark slate card surface */
   --card-foreground: #f8fafc;
   --popover: #1e293b;
   --popover-foreground: #f8fafc;
-  --primary: #3c83f6;
+  --primary: #3c83f6;          /* Same brand blue — maintains colour recognition */
   --primary-foreground: #ffffff;
   --secondary: #1e293b;
   --secondary-foreground: #e2e8f0;
   --muted: #1e293b;
-  --muted-foreground: #94a3b8;
+  --muted-foreground: #94a3b8; /* Lighter secondary text for dark backgrounds */
   --accent: #334155;
   --accent-foreground: #e2e8f0;
   --destructive: #ef4444;
@@ -101,6 +158,7 @@
   --border: #1e293b;
   --input: #1e293b;
   --ring: #3c83f6;
+  /* Chart colours unchanged — same hues work in both light and dark contexts */
   --chart-1: #3c83f6;
   --chart-2: #8b5cf6;
   --chart-3: #10b981;
@@ -108,7 +166,10 @@
   --chart-5: #ef4444;
 }
 
+/* ── 5. Base Layer Resets ─────────────────────────────────────────────────── */
+
 @layer base {
+  /* Apply border-colour and focus-ring defaults to all elements */
   * {
     @apply border-border outline-ring/50;
   }
@@ -118,24 +179,63 @@
     letter-spacing: var(--tracking-normal);
   }
 
-  /* Defensive CSS to prevent modal overlay issues */
+  /*
+    Defensive fix: Radix UI sets `pointer-events: none` on <body> when a modal
+    is open, but can sometimes fail to restore it if the component unmounts
+    unexpectedly. This rule ensures interactivity is always restored when no
+    overlay is open.
+  */
   body:not([data-overlay-open]) {
     pointer-events: auto !important;
   }
 
-  /* Ensure modal overlays work correctly */
+  /* Ensure Radix modal content always captures pointer events */
   [data-radix-modal-content] {
     pointer-events: auto;
   }
 }
 
+/* ── 6. Utility Layer ─────────────────────────────────────────────────────── */
+
 @layer utilities {
+  /*
+    .no-scrollbar — hides the scrollbar track across all browsers while
+    preserving scroll functionality. Used on horizontally-scrollable
+    containers (e.g. tab rows, transaction lists) where the scrollbar
+    would break the visual layout.
+  */
   .no-scrollbar::-webkit-scrollbar {
-    display: none;
+    display: none; /* Chrome, Safari, Edge */
   }
 
   .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+    -ms-overflow-style: none;  /* IE 10+ */
+    scrollbar-width: none;     /* Firefox */
+  }
+}
+
+/* ── 7. Reduced Motion ────────────────────────────────────────────────────── */
+
+/*
+  WCAG 2.1 Success Criterion 2.3.3 — Animation from Interactions (Level AAA)
+  and general best practice for vestibular / motion-sensitivity accessibility.
+
+  When the user has enabled "Reduce Motion" in their OS accessibility settings
+  (System Preferences → Accessibility → Display → Reduce Motion on macOS /
+  Settings → Accessibility → Motion on iOS), this block collapses all CSS
+  animations and transitions to a near-instant 0.01ms duration.
+
+  0.01ms (not 0ms) is used intentionally: browsers may interpret `0s` as
+  "skip the transition entirely" which can cause layout jumps; 0.01ms still
+  fires the transition-end events that some JS relies on.
+*/
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
