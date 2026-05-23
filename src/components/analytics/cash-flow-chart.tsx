@@ -13,6 +13,7 @@ import {
   Bar,
   ComposedChart,
 } from 'recharts';
+import type { ValueType, NameType } from 'recharts/types/component/DefaultTooltipContent';
 import { formatCurrency } from '@/lib/utils/analytics-utils';
 import type { CashFlowData } from '@/lib/types/analytics';
 
@@ -29,16 +30,15 @@ export function CashFlowChart({
   showNetFlow = true,
   className 
 }: CashFlowChartProps) {
-  const formatTooltipValue = (value: number, name: string) => {
-    const formattedValue = formatCurrency(value);
-    
+  // Recharts 3.x Formatter type requires ValueType/NameType generics; cast inside
+  const formatTooltipValue = (value: ValueType, name: NameType): [string, string] => {
+    const formattedValue = formatCurrency(value as number);
     const labelMap: { [key: string]: string } = {
       income: 'Income',
       expenses: 'Expenses',
       netFlow: 'Net Cash Flow',
     };
-    
-    return [formattedValue, labelMap[name] || name];
+    return [formattedValue, labelMap[name as string] || (name as string)];
   };
 
   const formatTooltipLabel = (label: string) => {
@@ -99,8 +99,12 @@ export function CashFlowChart({
             width={80}
           />
           <Tooltip
-            formatter={formatTooltipValue}
-            labelFormatter={formatTooltipLabel}
+            // Recharts 3.x formatter intersection type is unsatisfiable from user-land;
+            // cast to unknown to bypass — runtime behaviour is identical.
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            formatter={formatTooltipValue as any}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            labelFormatter={formatTooltipLabel as any}
             contentStyle={{
               backgroundColor: 'hsl(var(--popover))',
               border: '1px solid hsl(var(--border))',
@@ -208,16 +212,18 @@ export function SimpleCashFlowChart({
             width={80}
           />
           <Tooltip
-            formatter={(value: number, name: string) => {
-              const formattedValue = formatCurrency(value);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            formatter={((value: ValueType, name: NameType): [string, string] => {
+              const formattedValue = formatCurrency(value as number);
               const labelMap: { [key: string]: string } = {
                 income: 'Income',
                 expenses: 'Expenses',
                 netFlow: 'Net Cash Flow',
               };
-              return [formattedValue, labelMap[name] || name];
-            }}
-            labelFormatter={(label: string) => {
+              return [formattedValue, labelMap[name as string] || (name as string)];
+            }) as any}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            labelFormatter={((label: string) => {
               try {
                 const date = new Date(label);
                 return date.toLocaleDateString('en-IN', {
@@ -225,10 +231,10 @@ export function SimpleCashFlowChart({
                   month: 'short',
                   day: 'numeric',
                 });
-              } catch {
+               } catch {
                 return label;
               }
-            }}
+            }) as any}
             contentStyle={{
               backgroundColor: 'hsl(var(--popover))',
               border: '1px solid hsl(var(--border))',

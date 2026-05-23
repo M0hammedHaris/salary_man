@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { format, eachMonthOfInterval } from 'date-fns';
 import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import type { ValueType, NameType } from 'recharts/types/component/DefaultTooltipContent';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -117,12 +118,13 @@ export function GoalTimelineChart({ goal, className }: GoalTimelineChartProps) {
                   borderRadius: '8px',
                   fontSize: '12px',
                 }}
-                formatter={(value: number, name: string) => [
-                  `₹${value?.toLocaleString() || 0}`,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                formatter={((value: ValueType, name: NameType): [string, string] => [
+                  `₹${(value as number)?.toLocaleString() || 0}`,
                   name === 'ideal' ? 'Ideal Progress' :
                   name === 'actual' ? 'Actual Progress' :
                   name === 'projected' ? 'Projected' : 'Target'
-                ]}
+                ]) as any}
                 labelFormatter={(label) => `Month: ${label}`}
               />
               <Legend 

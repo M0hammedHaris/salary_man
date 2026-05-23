@@ -14,6 +14,8 @@ import {
   YAxis,
   CartesianGrid,
 } from 'recharts';
+import type { ValueType, NameType } from 'recharts/types/component/DefaultTooltipContent';
+import type { TooltipContentProps } from 'recharts/types/component/Tooltip';
 import { formatCurrency, formatPercentage } from '@/lib/utils/analytics-utils';
 import type { SpendingCategory } from '@/lib/types/analytics';
 
@@ -46,10 +48,10 @@ export function SpendingBreakdownChart({
     '#87d068'
   ];
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const CustomPieTooltip = ({ active, payload }: { active?: boolean; payload?: any[] }) => {
+  // Use TooltipContentProps (includes active + payload injected from context)
+  const CustomPieTooltip = ({ active, payload }: TooltipContentProps<ValueType, NameType>) => {
     if (active && payload && payload.length) {
-      const data = payload[0].payload as SpendingCategory;
+      const data = (payload[0] as { payload: SpendingCategory }).payload;
       return (
         <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
           <p className="font-semibold text-popover-foreground">{data.categoryName}</p>
@@ -62,11 +64,12 @@ export function SpendingBreakdownChart({
     return null;
   };
 
-  const formatBarTooltip = (value: number, name: string) => {
+  // Recharts 3.x Formatter requires ValueType/NameType; cast inside
+  const formatBarTooltip = (value: ValueType, name: NameType): [string, string | number] => {
     if (name === 'amount') {
-      return [formatCurrency(value), 'Amount'];
+      return [formatCurrency(value as number), 'Amount'];
     }
-    return [value, name];
+    return [String(value), name as string];
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -166,7 +169,8 @@ export function SpendingBreakdownChart({
             width={80}
           />
           <Tooltip
-            formatter={formatBarTooltip}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            formatter={formatBarTooltip as any}
             labelStyle={{
               color: 'hsl(var(--popover-foreground))',
               fontWeight: 'bold',

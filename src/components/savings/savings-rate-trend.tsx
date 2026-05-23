@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { format, subDays, eachDayOfInterval } from 'date-fns';
 import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine } from 'recharts';
+import type { ValueType, NameType } from 'recharts/types/component/DefaultTooltipContent';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -165,11 +166,12 @@ export function SavingsRateTrend({ goal, className }: SavingsRateTrendProps) {
                   borderRadius: '8px',
                   fontSize: '12px',
                 }}
-                formatter={(value: number, name: string) => [
-                  `₹${value}`,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                formatter={((value: ValueType, name: NameType): [string, string] => [
+                  `₹${value as number}`,
                   name === 'actualRate' ? 'Daily Savings' :
                   name === 'weeklyAverage' ? '7-Day Average' : 'Required Rate'
-                ]}
+                ]) as any}
                 labelFormatter={(label) => `Date: ${label}`}
               />
               
