@@ -1,15 +1,26 @@
 'use client';
 
 import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
+import { shouldUseAuthenticatedAppShell } from '@/lib/app-shell';
 import { getPWANotificationManager } from '@/lib/pwa/notification-manager';
 
 export function PWARegistration() {
+  const pathname = usePathname();
+
   useEffect(() => {
-    // Initialize PWA manager on client-side only
+    // Always initialize the service worker so installability, offline support,
+    // and update checks work on both public and authenticated routes.
     const initializePWA = async () => {
       try {
         const pwaManager = getPWANotificationManager();
         await pwaManager.initialize();
+
+        // Push subscription is user-specific, so defer it until the user is in
+        // the authenticated app shell rather than on landing/auth routes.
+        if (shouldUseAuthenticatedAppShell(pathname)) {
+          await pwaManager.initializeAuthenticatedFeatures();
+        }
         
         // Get status to verify initialization
         const status = pwaManager.getStatus();
@@ -39,7 +50,7 @@ export function PWARegistration() {
         window.removeEventListener('pwa-update-available', handlePWAUpdate);
       }
     };
-  }, []);
+  }, [pathname]);
 
   return null;
 }

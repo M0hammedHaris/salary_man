@@ -4,13 +4,13 @@
  * @file conditional-main-wrapper.tsx
  * @description Layout wrapper that conditionally applies the authenticated shell.
  *
- * Authenticated pages (everything except `/`) are rendered inside a flex row
+ * Authenticated app routes are rendered inside a flex row
  * that contains:
  *   - `<Sidebar />` — desktop-only left navigation (hidden below `lg` breakpoint)
  *   - `<main>`     — primary content area
  *
- * The landing page (`/`) bypasses this wrapper entirely so it can control its
- * own full-bleed layout without sidebar chrome.
+ * Public routes (`/`, `/sign-in`, `/sign-up`) bypass this wrapper entirely so
+ * they can render focused onboarding/auth flows without app chrome.
  *
  * `pb-20 lg:pb-0` on `<main>`:
  *   On mobile the fixed `<MobileBottomNav />` (48px tall + padding) sits over
@@ -21,6 +21,7 @@
  */
 
 import { usePathname } from "next/navigation";
+import { shouldUseAuthenticatedAppShell } from "@/lib/app-shell";
 import { Sidebar } from "./sidebar";
 
 interface ConditionalMainWrapperProps {
@@ -30,10 +31,10 @@ interface ConditionalMainWrapperProps {
 export function ConditionalMainWrapper({ children }: ConditionalMainWrapperProps) {
   const pathname = usePathname();
 
-  // The landing page manages its own layout — skip the authenticated shell
-  const isLandingPage = pathname === '/';
+  // Public routes manage their own layout — skip the authenticated shell.
+  const shouldUseAppShell = shouldUseAuthenticatedAppShell(pathname);
 
-  if (!isLandingPage) {
+  if (shouldUseAppShell) {
     return (
       <div className="flex min-h-screen bg-background text-foreground">
         {/* Desktop sidebar — hidden below lg breakpoint via CSS */}
@@ -50,6 +51,6 @@ export function ConditionalMainWrapper({ children }: ConditionalMainWrapperProps
     );
   }
 
-  // Landing page — render children with no surrounding chrome
+  // Public routes — render children with no surrounding authenticated chrome.
   return <>{children}</>;
 }

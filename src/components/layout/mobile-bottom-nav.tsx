@@ -27,6 +27,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { shouldUseAuthenticatedAppShell } from "@/lib/app-shell";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -48,6 +49,12 @@ const navItems = [
 export function MobileBottomNav() {
   // usePathname drives the active-state comparison on every route change
   const pathname = usePathname();
+
+  // Public routes should feel like onboarding/auth flows, not the signed-in
+  // app shell, so the bottom tab bar stays hidden until after login.
+  if (!shouldUseAuthenticatedAppShell(pathname)) {
+    return null;
+  }
 
   return (
     <nav

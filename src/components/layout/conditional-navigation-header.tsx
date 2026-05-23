@@ -1,13 +1,14 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { shouldUseAuthenticatedAppShell } from "@/lib/app-shell";
 import { TopHeader } from "./top-header";
 
 export function ConditionalNavigationHeader() {
   const pathname = usePathname();
 
-  // Don't show navigation on landing page (root path)
-  const shouldShowNavigation = pathname !== '/';
+  // Only authenticated app routes should render the sticky top header.
+  const shouldShowNavigation = shouldUseAuthenticatedAppShell(pathname);
 
   if (!shouldShowNavigation) {
     return null;

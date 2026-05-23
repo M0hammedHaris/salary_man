@@ -55,6 +55,23 @@ export class PWANotificationManager {
   }
 
   /**
+   * Ensures push wiring only happens once the user is inside the authenticated
+   * app shell. This keeps public onboarding routes installable without trying
+   * to attach a user-specific push subscription too early.
+   */
+  async initializeAuthenticatedFeatures(): Promise<void> {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+
+    await this.setupPushSubscription();
+  }
+
+  /**
    * Initialize service worker and set up PWA functionality
    */
   private async initializeServiceWorker(): Promise<void> {
@@ -85,10 +102,6 @@ export class PWANotificationManager {
           });
         }
       });
-
-      // Set up push subscription if supported
-      await this.setupPushSubscription();
-
     } catch (error) {
       console.error('PWA: Service worker registration failed:', error);
     }
