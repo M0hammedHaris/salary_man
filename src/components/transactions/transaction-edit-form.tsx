@@ -1,10 +1,12 @@
 "use client";
 
+import * as React from "react";
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Save } from 'lucide-react';
 import { Form } from '@/components/ui/form';
+import { cn } from '@/lib/utils';
 import { 
   updateTransactionSchema, 
   type UpdateTransactionRequest,
@@ -31,18 +33,35 @@ interface TransactionEditFormProps {
   onSuccess?: () => void;
   onCancel?: () => void;
   isModal?: boolean;
+  /**
+   * Optional ref to the underlying <form> element. Lets the parent
+   * (e.g. ResponsiveModal footer) trigger submission when its own
+   * primary action button is pressed.
+   */
+  formRef?: React.RefObject<HTMLFormElement | null>;
 }
 
 export function TransactionEditForm({ 
   transaction, 
   onSuccess, 
   onCancel, 
-  isModal = false 
+  isModal = false,
+  formRef: externalFormRef,
 }: TransactionEditFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(transaction.receiptUrl || null);
   
   const { formData, isLoading, error } = useFormData();
+
+  // Track the underlying <form> element so the modal footer can
+  // call requestSubmit() to trigger react-hook-form validation/submit.
+  const internalFormRef = React.useRef<HTMLFormElement | null>(null);
+  const setRefs = (node: HTMLFormElement | null) => {
+    internalFormRef.current = node;
+    if (externalFormRef && 'current' in externalFormRef) {
+      (externalFormRef as React.MutableRefObject<HTMLFormElement | null>).current = node;
+    }
+  };
 
   const form = useForm<UpdateTransactionRequest>({
     resolver: zodResolver(updateTransactionSchema),
@@ -101,7 +120,7 @@ export function TransactionEditForm({
 
   const content = (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 sm:space-y-8">
+      <form ref={setRefs} onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 sm:space-y-8">
         {/* Main form fields with improved spacing */}
         <div className="grid gap-6 sm:gap-8">
           {/* Row 1: Account, Amount, Category */}
@@ -158,7 +177,10 @@ export function TransactionEditForm({
           </div>
         )}
 
-        <div className="pt-4 border-t">
+        {/* In modal mode the footer lives in the ResponsiveModal so the
+            Save button stays above the keyboard. We still render a hidden
+            submit trigger so requestSubmit() from the modal still works. */}
+        <div className={cn("pt-4 border-t", isModal && "hidden")}>
           <FormActions
             onCancel={onCancel}
             isSubmitting={isSubmitting}

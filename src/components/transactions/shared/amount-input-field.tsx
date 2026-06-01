@@ -56,6 +56,11 @@ export function AmountInputField<T extends FieldValues>({
               <Input
                 id="amount-input"
                 type="text"
+                inputMode="decimal"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                enterKeyHint="next"
                 placeholder={placeholder}
                 className={cn(
                   "h-14 pl-14 pr-12 text-xl font-black rounded-2xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-all focus:ring-primary/20 shadow-sm",

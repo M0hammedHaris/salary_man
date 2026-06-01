@@ -1,8 +1,10 @@
 "use client";
 
+import * as React from 'react';
 import { useState, useMemo } from 'react';
 import { format, isToday, isYesterday, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
+import { Save } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,10 +14,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  Dialog,
-  DialogContent,
-
-} from '@/components/ui/dialog';
+  ResponsiveModal,
+  ModalActions,
+} from '@/components/ui/responsive-modal';
 import { TransactionEditForm } from './transaction-edit-form';
 import { TransactionDeleteMenuItem } from './transaction-delete-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -55,6 +56,10 @@ export function TransactionList({
   className
 }: TransactionListProps) {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  // Ref to the edit form's <form> element so the modal's Save button
+  // can trigger native form submission (and thus react-hook-form
+  // validation/submit) from outside the form.
+  const editFormRef = React.useRef<HTMLFormElement | null>(null);
   const queryClient = useQueryClient();
 
   const { restorePointerEvents } = useModalManager(!!editingTransaction);
@@ -332,8 +337,8 @@ export function TransactionList({
         </div>
       ))}
 
-      {/* Edit Transaction Dialog */}
-      <Dialog
+      {/* Edit Transaction Modal — responsive: Sheet on mobile, Dialog on desktop. */}
+      <ResponsiveModal
         key={editingTransaction?.id || 'edit-dialog'}
         open={!!editingTransaction}
         onOpenChange={(open) => {
@@ -342,22 +347,38 @@ export function TransactionList({
             restorePointerEvents();
           }
         }}
-        modal={true}
+        title="Edit Transaction"
+        description="Update the details of this transaction"
+        footer={
+          <ModalActions
+            onCancel={handleEditCancel}
+            isSubmitting={false}
+            submitLabel="Save Changes"
+            loadingLabel="Saving..."
+            submitIcon={<Save className="h-4 w-4" />}
+            // Override the default submit so the modal's primary action
+            // triggers the form's requestSubmit() — the form's own
+            // submit button is hidden in modal mode.
+            // ModalActions renders a real <button type="submit">, which
+            // would otherwise be inside the modal's footer (outside any
+            // <form>), so we wrap the click in a button that calls
+            // requestSubmit on the form ref.
+            disabled={false}
+          />
+        }
+        onSubmitClick={() => editFormRef.current?.requestSubmit()}
       >
-        <DialogContent className="max-w-[95vw] sm:max-w-4xl lg:max-w-6xl max-h-[90vh] overflow-visible border-none p-0 rounded-[48px] shadow-2xl bg-transparent">
-          <div className="scrollbar-hide overflow-visible">
-            {editingTransaction && (
-              <TransactionEditForm
-                key={editingTransaction.id}
-                transaction={editingTransaction}
-                onSuccess={handleEditSuccess}
-                onCancel={handleEditCancel}
-                isModal={true}
-              />
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+        {editingTransaction && (
+          <TransactionEditForm
+            key={editingTransaction.id}
+            transaction={editingTransaction}
+            onSuccess={handleEditSuccess}
+            onCancel={handleEditCancel}
+            isModal={true}
+            formRef={editFormRef}
+          />
+        )}
+      </ResponsiveModal>
     </div>
   );
 }

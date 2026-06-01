@@ -88,7 +88,7 @@ export function TransactionDeleteDialog({
       <AlertDialogTrigger asChild>
         {trigger}
       </AlertDialogTrigger>
-      <AlertDialogContent className="sm:max-w-lg">
+      <AlertDialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-destructive" />
@@ -168,14 +168,17 @@ export function TransactionDeleteDialog({
           </div>
         )}
 
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>
+        <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:gap-2">
+          <AlertDialogCancel
+            disabled={isDeleting}
+            className="h-12 rounded-xl sm:h-10 sm:rounded-md"
+          >
             Cancel
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
             disabled={isDeleting}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            className="h-12 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 sm:h-10 sm:rounded-md"
           >
             {isDeleting ? (
               <>

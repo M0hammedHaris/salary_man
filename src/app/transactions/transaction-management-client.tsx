@@ -1,14 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { useState, useMemo, useRef } from "react";
 import {
   Tabs,
   TabsContent,
@@ -26,6 +18,10 @@ import { TransactionCreateForm } from '@/components/transactions/transaction-cre
 import { TransactionList } from '@/components/transactions/transaction-list';
 import { useAccounts } from '@/lib/hooks/use-accounts';
 import { useCategories } from '@/lib/hooks/use-categories';
+import {
+  ResponsiveModal,
+  ModalActions,
+} from '@/components/ui/responsive-modal';
 import { cn } from "@/lib/utils";
 
 interface TransactionFilters {
@@ -38,6 +34,9 @@ export function TransactionManagementClient() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [filters, setFilters] = useState<TransactionFilters>({});
   const [refreshKey, setRefreshKey] = useState(0);
+  // Ref to the create form's <form> element so the modal footer can
+  // call requestSubmit() to trigger react-hook-form validation.
+  const createFormRef = useRef<HTMLFormElement | null>(null);
 
   // Use React Query hooks for cached data
   const { data: accounts = [], isLoading: isLoadingAccounts } = useAccounts();
@@ -139,37 +138,43 @@ export function TransactionManagementClient() {
             Refresh
           </button>
 
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <button className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white rounded-2xl font-bold hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-primary/20">
-                <span className="material-symbols-outlined">add</span>
-                Add Transaction
-              </button>
-            </DialogTrigger>
-            <DialogContent className="max-w-[95vw] sm:max-w-4xl lg:max-w-6xl max-h-[90vh] overflow-visible border-none p-0 rounded-[32px] shadow-2xl">
-              <div className="p-8">
-                <DialogHeader className="mb-6">
-                  <div className="flex items-center gap-3 mb-1">
-                    <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
-                      <span className="material-symbols-outlined text-primary text-2xl">receipt_long</span>
-                    </div>
-                    <DialogTitle className="text-3xl font-black tracking-tight">New Transaction</DialogTitle>
-                  </div>
-                  <DialogDescription className="text-muted-foreground font-medium text-lg">
-                    Track a new income or expense to keep your records up to date.
-                  </DialogDescription>
-                </DialogHeader>
+          <button
+            onClick={() => setIsCreateDialogOpen(true)}
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white rounded-2xl font-bold hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-primary/20"
+          >
+            <span className="material-symbols-outlined">add</span>
+            Add Transaction
+          </button>
 
-                <div className="max-h-[70vh] overflow-y-auto pr-2 -mx-2 px-2 scrollbar-hide">
-                  <TransactionCreateForm
-                    onSuccess={handleCreateSuccess}
-                    onCancel={() => setIsCreateDialogOpen(false)}
-                    isModal={true}
-                  />
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <ResponsiveModal
+            open={isCreateDialogOpen}
+            onOpenChange={setIsCreateDialogOpen}
+            title={
+              <span className="flex items-center gap-3">
+                <span className="inline-flex w-9 h-9 rounded-2xl bg-primary/10 items-center justify-center text-primary">
+                  <span className="material-symbols-outlined text-2xl">receipt_long</span>
+                </span>
+                New Transaction
+              </span>
+            }
+            description="Track a new income or expense to keep your records up to date."
+            footer={
+              <ModalActions
+                onCancel={() => setIsCreateDialogOpen(false)}
+                isSubmitting={false}
+                submitLabel="Complete"
+                loadingLabel="Processing..."
+              />
+            }
+            onSubmitClick={() => createFormRef.current?.requestSubmit()}
+          >
+            <TransactionCreateForm
+              onSuccess={handleCreateSuccess}
+              onCancel={() => setIsCreateDialogOpen(false)}
+              isModal={true}
+              formRef={createFormRef}
+            />
+          </ResponsiveModal>
         </div>
       </div>
 

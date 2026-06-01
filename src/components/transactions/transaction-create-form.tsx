@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import * as React from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -48,6 +49,12 @@ interface TransactionCreateFormProps {
   onSuccess?: () => void;
   onCancel?: () => void;
   isModal?: boolean;
+  /**
+   * Optional ref to the underlying <form> element. Lets the parent
+   * (e.g. ResponsiveModal footer) trigger submission when its own
+   * primary action button is pressed.
+   */
+  formRef?: React.RefObject<HTMLFormElement | null>;
 }
 
 interface TransactionTemplate {
@@ -69,7 +76,19 @@ export function TransactionCreateForm({
   onSuccess,
   onCancel,
   isModal = false,
+  formRef: externalFormRef,
 }: TransactionCreateFormProps) {
+  // Internal ref always points at the <form> element; the parent
+  // can read it via the `formRef` prop to call requestSubmit() from
+  // a modal footer.
+  const internalFormRef = useRef<HTMLFormElement | null>(null);
+  const formRef = (externalFormRef ?? internalFormRef) as React.RefObject<HTMLFormElement | null>;
+  // Keep the external ref in sync if the parent supplied one.
+  React.useEffect(() => {
+    if (externalFormRef && internalFormRef.current) {
+      (externalFormRef as React.MutableRefObject<HTMLFormElement | null>).current = internalFormRef.current;
+    }
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [templates, setTemplates] = useState<TransactionTemplate[]>([]);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
@@ -190,7 +209,7 @@ export function TransactionCreateForm({
 
   const mainForm = (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-10">
+      <form ref={internalFormRef} onSubmit={form.handleSubmit(onSubmit)} className="space-y-10">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
           <div className="space-y-8">
             <AmountInputField control={form.control} name="amount" watchedAmount={watchedAmount} />
@@ -242,7 +261,7 @@ export function TransactionCreateForm({
                     <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground ml-1">Amount</label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">₹</span>
-                      <Input type="text" placeholder="0.00" className="h-12 pl-7 rounded-xl bg-white dark:bg-slate-950 border-slate-200 font-bold" value={entry.amount} onChange={(e) => updateSplitEntry(index, "amount", e.target.value)} />
+                      <Input type="text" inputMode="decimal" placeholder="0.00" className="h-12 pl-7 rounded-xl bg-white dark:bg-slate-950 border-slate-200 font-bold" value={entry.amount} onChange={(e) => updateSplitEntry(index, "amount", e.target.value)} />
                     </div>
                   </div>
                   <Button type="button" variant="ghost" size="icon" onClick={() => removeSplitEntry(index)} className="h-12 w-12 rounded-xl text-rose-500 hover:bg-rose-50"><X className="h-5 w-5" /></Button>
@@ -258,9 +277,24 @@ export function TransactionCreateForm({
             <Button type="button" variant="ghost" onClick={saveAsTemplate} className="rounded-xl px-4 py-6 h-auto font-bold text-slate-500 flex items-center gap-2 hover:bg-slate-100 transition-all"><span className="material-symbols-outlined">bookmark</span> Save as Template</Button>
             <Button type="button" variant="ghost" onClick={() => setShowSplitMode(!showSplitMode)} className={cn("rounded-xl px-4 py-6 h-auto font-bold transition-all flex items-center gap-2", showSplitMode ? "bg-primary/10 text-primary" : "text-slate-500 hover:bg-slate-100")}><span className="material-symbols-outlined">splitscreen</span> {showSplitMode ? "Cancel Split" : "Split Transaction"}</Button>
           </div>
-          <div className="flex items-center justify-end gap-4 min-h-[80px]">
-            {onCancel && <Button type="button" variant="ghost" onClick={onCancel} className="h-14 px-8 rounded-2xl font-black uppercase tracking-widest text-muted-foreground">Cancel</Button>}
-            <Button id="submit-transaction" type="submit" disabled={isSubmitting} className="h-14 px-12 rounded-2xl font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 transition-all flex items-center gap-2 min-w-[200px]">
+          {/* In modal mode the action buttons live in the ResponsiveModal
+              footer so they can stay above the iOS keyboard. We still
+              render a hidden submit trigger so requestSubmit() works. */}
+          <div className={cn("flex items-center justify-end gap-4", isModal ? "min-h-0" : "min-h-[80px]")}>
+            {!isModal && onCancel && (
+              <Button type="button" variant="ghost" onClick={onCancel} className="h-14 px-8 rounded-2xl font-black uppercase tracking-widest text-muted-foreground">
+                Cancel
+              </Button>
+            )}
+            <Button
+              id="submit-transaction"
+              type="submit"
+              disabled={isSubmitting}
+              className={cn(
+                "h-14 px-12 rounded-2xl font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 transition-all flex items-center gap-2 min-w-[200px]",
+                isModal && "hidden", // keep element in DOM so requestSubmit() still works
+              )}
+            >
               {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <span className="material-symbols-outlined">send</span>}
               <span>{isSubmitting ? "Processing..." : "Complete"}</span>
             </Button>
@@ -272,26 +306,36 @@ export function TransactionCreateForm({
 
   return (
     <Card className={cn("border-none shadow-2xl overflow-hidden rounded-[40px] bg-slate-50/50 dark:bg-slate-950/50 backdrop-blur-xl", !isModal && "max-w-4xl mx-auto")}>
-      <CardHeader className="bg-white dark:bg-slate-900 pb-8 pt-10 px-8 border-b border-slate-100 dark:border-slate-800 relative overflow-hidden">
-        <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl" />
-        <div className="flex items-center justify-between relative z-10">
-          <div className="space-y-1.5">
-            <CardTitle className="text-3xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary"><span className="material-symbols-outlined text-3xl">add_shopping_cart</span></div>
-              Add Transaction
-            </CardTitle>
-            <CardDescription className="text-base font-medium text-slate-500 ml-15">Track your spending and income with precision</CardDescription>
+      {!isModal && (
+        <CardHeader className="bg-white dark:bg-slate-900 pb-8 pt-10 px-8 border-b border-slate-100 dark:border-slate-800 relative overflow-hidden">
+          <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
+          <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl" />
+          <div className="flex items-center justify-between relative z-10">
+            <div className="space-y-1.5">
+              <CardTitle className="text-3xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary"><span className="material-symbols-outlined text-3xl">add_shopping_cart</span></div>
+                Add Transaction
+              </CardTitle>
+              <CardDescription className="text-base font-medium text-slate-500 ml-15">Track your spending and income with precision</CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              {onCancel && <Button variant="ghost" onClick={onCancel} className="rounded-2xl w-12 h-12 hover:bg-slate-100 transition-all"><X className="w-6 h-6" /></Button>}
+              <Button variant="outline" onClick={() => setShowTemplates(!showTemplates)} className={cn("rounded-2xl w-12 h-12 border-slate-200 transition-all", showTemplates ? "bg-primary text-white" : "hover:bg-slate-100")}><BookOpen className="w-5 h-5" /></Button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            {!isModal && <Button variant="ghost" onClick={onCancel} className="rounded-2xl w-12 h-12 hover:bg-slate-100 transition-all"><X className="w-6 h-6" /></Button>}
-            <Button variant="outline" onClick={() => setShowTemplates(!showTemplates)} className={cn("rounded-2xl w-12 h-12 border-slate-200 transition-all", showTemplates ? "bg-primary text-white" : "hover:bg-slate-100")}><BookOpen className="w-5 h-5" /></Button>
-          </div>
+        </CardHeader>
+      )}
+      {isModal && (
+        <div className="flex items-center justify-end gap-2 px-6 pt-4">
+          <Button variant="outline" size="sm" onClick={() => setShowTemplates(!showTemplates)} className={cn("rounded-xl border-slate-200 transition-all", showTemplates ? "bg-primary text-white" : "hover:bg-slate-100")}>
+            <BookOpen className="w-4 h-4 mr-1" />
+            Templates
+          </Button>
         </div>
-      </CardHeader>
-      <CardContent className="p-8 pt-10">
+      )}
+      <CardContent className={cn(isModal ? "p-5 pt-3" : "p-8 pt-10")}>
         {showTemplates && templates.length > 0 && (
-          <div className="mb-10 animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className={cn("animate-in fade-in slide-in-from-top-4 duration-500", isModal ? "mb-6" : "mb-10")}>
             <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-4 ml-1">Quick Templates</h3>
             <div className="flex flex-wrap gap-3">
               {templates.map((t) => (
@@ -311,3 +355,4 @@ export function TransactionCreateForm({
     </Card>
   );
 }
+
